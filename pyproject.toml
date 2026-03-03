@@ -1,0 +1,15 @@
+[project]
+name = "continual-learning"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "datasets>=4.6.1",
+    "ipykernel>=7.2.0",
+    "jupyter>=1.1.1",
+    "matplotlib>=3.10.8",
+    "pandas>=2.3.3",
+    "requests>=2.32.5",
+    "tqdm>=4.67.3",
+]
