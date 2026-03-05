@@ -319,3 +319,6 @@ class MyDataset(TemporalDataset):
 | `metadata` | Optional | Any dataset-specific extras |
 
 Once implemented, add your class to `casf/datasets/__init__.py` and `casf/__init__.py`.
+
+## TGQA minor change
+TGQA “contradictions” are defined only for exclusive relations (e.g., spouse, birthplace, deathplace, roles). Multi-valued relations like awards are not treated as contradictions.

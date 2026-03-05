@@ -5,7 +5,7 @@ from .memory import MemoryRegistry
 from .contradiction import ContradictionDetector
 from .evaluator import TemporalEvaluator
 from .data.temporal_wiki import TemporalWikiDataset
-
+from .data import TemporalWikiDataset, TSQADataset, TGQADataset
 
 __all__ = [
     "Probe", "MemorySlot", "EvalResult",
