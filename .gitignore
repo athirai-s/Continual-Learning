@@ -1,17 +1,22 @@
-# Dataset files
-casf_dataset_api/download_dataset_scripts/data/
-
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
+# ── Virtual Environment ───────────────────────────────────────────
 .venv/
+env/
 
-# uv
-uv.lock
+# ── Python ────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
 
-# Registry output
+# ── Jupyter ───────────────────────────────────────────────────────
+.ipynb_checkpoints/
+
+# ── Data ──────────────────────────────────────────────────────────
+casf_dataset_api/download_dataset_scripts/data/
+explore/TemporalWikiDataset/data/
+explore/WikiFactDiffDataset/data/
+*.zip
+*.csv
+
+# ── Other ─────────────────────────────────────────────────────────
 registry.json
-
-# Checkpoints
 checkpoints/

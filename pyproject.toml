@@ -1,13 +1,19 @@
 [project]
-name = "casf"
+name = "continual-learning"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "datasets>=4.6.1",
+    "ipykernel>=7.2.0",
+    "jupyter>=1.1.1",
+    "matplotlib>=3.10.8",
+    "pandas>=2.3.3",
     "peft>=0.18.1",
+    "requests>=2.32.5",
     "torch>=2.10.0",
     "transformers>=5.3.0",
     "trl>=0.29.0",
+    "tqdm>=4.67.3",
 ]
