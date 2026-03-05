@@ -5,7 +5,7 @@ from ..casf_types import Probe
 from ..dataset import TemporalDataset
 
 
-VALID_SPLITS = ["train", "validation", "test"]
+VALID_SPLITS = ["train", "val", "test"]
 
 
 class TSQADataset(TemporalDataset):
@@ -27,8 +27,8 @@ class TSQADataset(TemporalDataset):
         self._loaded_split: Optional[str] = None
 
     def load(self, split: str) -> None:
-        if split == "val":
-            split = "validation"
+        if split == "validation":
+            split = "val"
         if split not in VALID_SPLITS:
             raise ValueError(f"Unknown split {split!r}. Must be one of {VALID_SPLITS}")
         self._loaded_split = split
@@ -40,7 +40,8 @@ class TSQADataset(TemporalDataset):
 
     def _iter_rows(self, split: str):
         assert self._ds is not None
-        for ex in self._ds[split]:
+        hf_split = "validation" if split == "val" else split
+        for ex in self._ds[hf_split]:
             if self.source_filter and ex.get("source") != self.source_filter:
                 continue
             yield ex
