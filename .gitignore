@@ -1,0 +1,17 @@
+# ── Virtual Environment ───────────────────────────────────────────
+.venv/
+env/
+
+# ── Python ────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+
+# ── Jupyter ───────────────────────────────────────────────────────
+.ipynb_checkpoints/
+
+# ── Data ──────────────────────────────────────
+explore/TemporalWikiDataset/data/
+explore/WikiFactDiffDataset/data/
+*.zip
+*.csv
