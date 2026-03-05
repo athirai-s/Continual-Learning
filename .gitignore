@@ -11,7 +11,7 @@ __pycache__/
 .ipynb_checkpoints/
 
 # ── Data ──────────────────────────────────────
-TemporalWikiDataset/data/
-WikiFactDiffDataset/data/
+explore/TemporalWikiDataset/data/
+explore/WikiFactDiffDataset/data/
 *.zip
 *.csv
