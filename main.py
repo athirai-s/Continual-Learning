@@ -4,6 +4,8 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 from casf_dataset_api import (
     TemporalWikiDataset,
+    TSQADataset,
+    TGQADataset,
     ContradictionDetector,
     MemoryRegistry,
     TemporalEvaluator,
@@ -49,5 +51,39 @@ if __name__ == "__main__":
     # Save registry
     registry.save("registry.json")
     print("\nRegistry saved to registry.json")
+
+    # Test TSQADataset
+    print("\nLoading TSQADataset...")
+    tsqa = TSQADataset()
+    tsqa.load("train")
+    tsqa_probes = tsqa.get_probes()
+    print(f"  Train probes loaded: {len(tsqa_probes)}")
+    n_hard = sum(1 for p in tsqa_probes if p.metadata.get("is_hard_negative"))
+    print(f"  Hard negatives: {n_hard}")
+    print("\nSample TSQA probes:")
+    for p in tsqa_probes[:3]:
+        print(f"  [{p.relation}] {p.prompt[:80]}...")
+        print(f"    ground_truth: {p.ground_truth}")
+        print(f"    is_hard_negative: {p.metadata.get('is_hard_negative')}")
+        print()
+
+    # Test TGQADataset
+    print("\nLoading TGQADataset...")
+    tgqa = TGQADataset()
+    tgqa.load("train")
+    tgqa_probes = tgqa.get_probes()
+    print(f"  Train probes loaded: {len(tgqa_probes)}")
+    n_changed = sum(1 for p in tgqa_probes if p.is_changed)
+    n_contra = sum(1 for p in tgqa_probes if p.is_contradiction)
+    print(f"  Changed probes: {n_changed}")
+    print(f"  Contradiction probes: {n_contra}")
+    pairs = tgqa.get_contradiction_pairs()
+    print(f"  Contradiction pairs: {len(pairs)}")
+    print("\nSample TGQA probes:")
+    for p in tgqa_probes[:3]:
+        print(f"  [{p.relation}] {p.prompt}")
+        print(f"    ground_truth: {p.ground_truth}")
+        print(f"    timestamp:    {p.timestamp}")
+        print()
 
     print("\nDone.")
