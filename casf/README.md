@@ -320,5 +320,19 @@ class MyDataset(TemporalDataset):
 
 Once implemented, add your class to `casf/datasets/__init__.py` and `casf/__init__.py`.
 
-## TGQA minor change
-TGQA “contradictions” are defined only for exclusive relations (e.g., spouse, birthplace, deathplace, roles). Multi-valued relations like awards are not treated as contradictions.
+## TGQA Contradiction Handling
+TGQA contains temporal event sequences within each story (e.g., (subject relation object) starts at YEAR). However, not all updates represent true contradictions. Many relations in TGQA are multi-valued over time (e.g., winning multiple awards), which should not be treated as factual conflicts.
+
+To better align with the goals of Contradiction-Aware Sparse Memory Finetuning (CASF), we apply a heuristic filter that only marks contradictions for exclusive relations — relations where a new value likely supersedes the previous one. Examples include:
+- was born
+- died
+- was married
+- CEO of
+- served as
+- capital of
+- located in
+
+For these relations, if a new (subject, relation, object) fact appears with a different object later in the same story timeline, it is treated as a contradiction pair:(old_value) -> (new_value)
+
+Example: Amy J. Collins was married to Liam Harrison → Luke Sullivan
+This filtering prevents sequential achievements (e.g., multiple awards) from being incorrectly labeled as contradictions and produces a cleaner subset of versioned factual updates suitable for evaluating contradiction-aware memory systems.
