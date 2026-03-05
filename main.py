@@ -2,7 +2,7 @@ import sys
 import os
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
-from casf import (
+from casf_dataset_api import (
     TemporalWikiDataset,
     ContradictionDetector,
     MemoryRegistry,

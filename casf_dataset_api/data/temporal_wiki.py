@@ -1,6 +1,7 @@
 import io
 import zipfile
 import pandas as pd
+from pathlib import Path
 from typing import Optional
 from ..casf_types import Probe
 from ..dataset import TemporalDataset
@@ -34,9 +35,8 @@ PERIOD_BOUNDARIES = {
 PERIOD_ORDER = VALID_PERIODS
 
 # Paths to the downloaded zips — relative to project root
-PROBES_ZIP   = "casf/download_dataset_scripts/data/TWiki_Probes.zip"
-DIFFSETS_ZIP = "casf/download_dataset_scripts/data/TWiki_Diffsets.zip"
-
+PROBES_ZIP = Path(__file__).parent.parent / "download_dataset_scripts" / "data" / "TWiki_Probes.zip"
+DIFFSETS_ZIP = Path(__file__).parent.parent / "download_dataset_scripts" / "data" / "TWiki_Diffsets.zip"
 
 class TemporalWikiDataset(TemporalDataset):
 
