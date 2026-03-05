@@ -1,0 +1,17 @@
+# Dataset files
+casf/download_dataset_scripts/data/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+
+# uv
+uv.lock
+
+# Registry output
+registry.json
+
+# Checkpoints
+checkpoints/
