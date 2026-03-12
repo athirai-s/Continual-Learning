@@ -5,7 +5,7 @@ from trl import SFTTrainer
 from datasets import Dataset
 from casf_dataset_api import TSQADataset, TGQADataset
 
-MODEL_ID = "meta-llama/Llama-3.2-3B-Instruct"
+MODEL_ID = "/scratch1/ashanmug/models/Llama-3.2-3B-Instruct"
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
 tokenizer.pad_token = tokenizer.eos_token
