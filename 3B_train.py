@@ -15,6 +15,7 @@ model = AutoModelForCausalLM.from_pretrained(
     torch_dtype=torch.float16,
     device_map="auto",
 )
+model.gradient_checkpointing_enable()
 model = prepare_model_for_kbit_training(model)
 
 lora_config = LoraConfig(
@@ -102,9 +103,9 @@ def probes_to_hf(probes):
     return Dataset.from_dict({"text": [f"{p.prompt} {p.ground_truth}" for p in probes]})
 
 
-# ── Baseline evaluation ──
-print("\nBaseline evaluation (before training)")
-eval_all(wrapper, "BASELINE")
+# ── Baseline evaluation (already recorded) ──
+# BASELINE: TS-QA clean  contains=0.355 f1=0.096 | TS-QA perturbed contains=1.000 f1=0.000 | TGQA cloze contains=0.000 f1=0.035
+# eval_all(wrapper, "BASELINE")
 
 
 datasets_seq = [
@@ -120,8 +121,8 @@ for name, probes in datasets_seq:
     args = TrainingArguments(
         output_dir=f"./checkpoints/{name}",
         num_train_epochs=3,
-        per_device_train_batch_size=4,
-        gradient_accumulation_steps=4,
+        per_device_train_batch_size=1,
+        gradient_accumulation_steps=16,
         learning_rate=2e-4,
         fp16=True,
         logging_steps=10,
