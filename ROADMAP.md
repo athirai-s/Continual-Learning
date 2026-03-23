@@ -551,7 +551,7 @@ Interrupted runs become cheap to recover from safe optimizer-step boundaries, an
 
 ### PR M2.4: Add Resume Compatibility Validation And Integrity Checks
 
-- [ ] `M2.4` Add an explicit `resume_compatibility` contract, checkpoint integrity validation, and clear failure modes.
+- [x] `M2.4` Add an explicit `resume_compatibility` contract, checkpoint integrity validation, and clear failure modes.
 - Problem:
   Resume can still be unsafe if the invocation changes training semantics or if the checkpoint does not prove it came from compatible data and artifacts.
 - Proposed change:

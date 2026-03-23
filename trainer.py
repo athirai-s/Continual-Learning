@@ -20,6 +20,11 @@ from checkpointing import (
     prepare_run_root,
     resolve_checkpoint_path,
 )
+from checkpoint_manifest import (
+    CheckpointManifest,
+    validate_checkpoint_manifest,
+    write_checkpoint_manifest,
+)
 
 
 TRAINER_STATE_FILENAME = "trainer_state.pt"
@@ -88,6 +93,7 @@ class CASFTrainer:
         self.scheduler = None
         self._completed_units: list[str] = []
         self._checkpoint_state: dict[str, Any] | None = None
+        self._checkpoint_manifest: CheckpointManifest | None = None
 
     def _build_dataloader(self, passages, start_batch_index: int = 0):
         start_index = start_batch_index * self.config.batch_size
@@ -326,7 +332,13 @@ class CASFTrainer:
             "optimizer_steps_total": optimizer_steps_total,
         }
 
-    def checkpoint(self, period: str, run_root: str) -> str:
+    def checkpoint(
+        self,
+        period: str,
+        run_root: str,
+        *,
+        manifest_metadata: dict[str, Any] | None = None,
+    ) -> str:
         prepare_run_root(run_root)
         with RunRootLock(run_root):
             temp_dir = create_checkpoint_tempdir(run_root)
@@ -344,6 +356,14 @@ class CASFTrainer:
                 torch.save(
                     checkpoint_state,
                     os.path.join(temp_dir, TRAINER_STATE_FILENAME),
+                )
+            if manifest_metadata is not None:
+                write_checkpoint_manifest(
+                    temp_dir,
+                    model_name=manifest_metadata["model_name"],
+                    training_plan=manifest_metadata["training_plan"],
+                    resume_compatibility=manifest_metadata["resume_compatibility"],
+                    dataset_identity=manifest_metadata["dataset_identity"],
                 )
 
             final_dir = finalize_checkpoint(run_root, temp_dir, last_period=period)
@@ -379,6 +399,7 @@ class CASFTrainer:
                 metadata_only=True,
             )
 
+        self._checkpoint_manifest = validate_checkpoint_manifest(checkpoint_path)
         trainer_state = torch.load(trainer_state_path, map_location="cpu", weights_only=False)
         self.optimizer.load_state_dict(trainer_state["optimizer_state_dict"])
         self._move_optimizer_state_to_device()
