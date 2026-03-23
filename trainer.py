@@ -1,8 +1,9 @@
-import os
-import time
 import json
 import math
-from dataclasses import asdict
+import os
+import random
+import time
+from dataclasses import asdict, dataclass
 from typing import Any, Callable
 
 import torch
@@ -19,6 +20,10 @@ from checkpointing import (
     prepare_run_root,
     resolve_checkpoint_path,
 )
+
+
+TRAINER_STATE_FILENAME = "trainer_state.pt"
+
 
 class PassageDataset(Dataset):
     def __init__(self, passages, tokenizer, max_length=512):
@@ -43,6 +48,22 @@ class PassageDataset(Dataset):
         item["labels"] = item["input_ids"].clone()
         return item
 
+
+@dataclass
+class ResumeState:
+    checkpoint_path: str
+    last_period: str
+    current_unit: str
+    completed_units: list[str]
+    next_batch_index: int
+    total_batches: int
+    optimizer_steps_total: int
+    total_optimizer_steps: int
+    unit_snapshot: list[str]
+    unit_completed: bool
+    metadata_only: bool = False
+
+
 class CASFTrainer:
     def __init__(self, model, tokenizer, config: TrainConfig, registry: MemoryRegistry):
         self.model = model
@@ -64,16 +85,20 @@ class CASFTrainer:
             self.model.parameters(), 
             lr=self.config.learning_rate,
         )
+        self.scheduler = None
+        self._completed_units: list[str] = []
+        self._checkpoint_state: dict[str, Any] | None = None
 
-    def _build_dataloader(self, passages):
+    def _build_dataloader(self, passages, start_batch_index: int = 0):
+        start_index = start_batch_index * self.config.batch_size
         ds = PassageDataset(
-            passages,
+            passages[start_index:],
             self.tokenizer,
         )
         return DataLoader(
             ds,
             batch_size=self.config.batch_size,
-            shuffle=True,
+            shuffle=False,
         )
     
     def _train_step(self, batch) -> float:
@@ -89,84 +114,204 @@ class CASFTrainer:
         except TypeError:
             return dataset.get_probes()
 
-    def train_period(
-        self,
-        dataset: TemporalDataset,
-        period: str,
-        checkpoint_hook: Callable[[str, int], None] | None = None,
-    ) -> dict[str, Any]:
-        start = time.time()
-        print(f"Using device: {self.device}")
-
-        passages = dataset.get_train_passages()
-        probes = self._get_training_probes(dataset)
-        passages = self.filter.filter(passages)
-        
-        if self.config.max_passages_per_period is not None:
-            passages = passages[:self.config.max_passages_per_period]
-        
-        print(f"Training on {len(passages)} passages")
-
-        self.detector.check(probes, self.registry) 
-
-        dataloader = self._build_dataloader(passages)
-        
-        total_micro_steps = self.config.epochs_per_period * len(dataloader)
-        total_optimizer_steps = math.ceil(total_micro_steps / self.config.grad_accum_steps)
+    def _build_scheduler(self, total_optimizer_steps: int):
         scheduler = get_cosine_schedule_with_warmup(
             self.optimizer,
             num_warmup_steps=self.config.warmup_steps,
             num_training_steps=max(total_optimizer_steps, 1),
         )
+        self.scheduler = scheduler
+        return scheduler
+
+    def _capture_rng_state(self) -> dict[str, Any]:
+        state: dict[str, Any] = {
+            "python": random.getstate(),
+            "torch": torch.get_rng_state(),
+        }
+        if torch.cuda.is_available():
+            state["cuda"] = torch.cuda.get_rng_state_all()
+        return state
+
+    def _restore_rng_state(self, state: dict[str, Any]) -> None:
+        random.setstate(state["python"])
+        torch.set_rng_state(state["torch"])
+        if torch.cuda.is_available() and "cuda" in state:
+            torch.cuda.set_rng_state_all(state["cuda"])
+
+    def _move_optimizer_state_to_device(self) -> None:
+        for state in self.optimizer.state.values():
+            for key, value in state.items():
+                if torch.is_tensor(value):
+                    state[key] = value.to(self.device)
+
+    def _build_unit_snapshot(self, passages: list[str]) -> list[str]:
+        snapshot: list[str] = []
+        for _ in range(self.config.epochs_per_period):
+            if len(passages) <= 1:
+                snapshot.extend(passages)
+                continue
+            ordering = torch.randperm(len(passages)).tolist()
+            snapshot.extend(passages[index] for index in ordering)
+        return snapshot
+
+    def _update_checkpoint_state(
+        self,
+        *,
+        period: str,
+        last_period: str,
+        completed_units: list[str],
+        unit_snapshot: list[str],
+        next_batch_index: int,
+        total_batches: int,
+        optimizer_steps_total: int,
+        total_optimizer_steps: int,
+        unit_completed: bool,
+    ) -> None:
+        self._checkpoint_state = {
+            "schema_version": 1,
+            "last_period": last_period,
+            "current_unit": period,
+            "completed_units": completed_units,
+            "next_batch_index": next_batch_index,
+            "total_batches": total_batches,
+            "optimizer_steps_total": optimizer_steps_total,
+            "total_optimizer_steps": total_optimizer_steps,
+            "unit_snapshot": unit_snapshot,
+            "unit_completed": unit_completed,
+            "optimizer_state_dict": self.optimizer.state_dict(),
+            "scheduler_state_dict": (
+                self.scheduler.state_dict() if self.scheduler is not None else None
+            ),
+            "rng_state": self._capture_rng_state(),
+        }
+
+    def train_period(
+        self,
+        dataset: TemporalDataset | None,
+        period: str,
+        checkpoint_hook: Callable[[str, int], None] | None = None,
+        resume_state: ResumeState | None = None,
+    ) -> dict[str, Any]:
+        start = time.time()
+        print(f"Using device: {self.device}")
+
+        if dataset is None:
+            raise ValueError("dataset is required to provide probes for the training unit")
+
+        probes = self._get_training_probes(dataset)
+        if resume_state is None:
+            passages = dataset.get_train_passages()
+            passages = self.filter.filter(passages)
+            if self.config.max_passages_per_period is not None:
+                passages = passages[:self.config.max_passages_per_period]
+            unit_snapshot = self._build_unit_snapshot(passages)
+            start_batch_index = 0
+            optimizer_steps_total = 0
+            scheduler = self._build_scheduler(
+                math.ceil(math.ceil(len(unit_snapshot) / self.config.batch_size) / self.config.grad_accum_steps)
+            )
+            self.optimizer.zero_grad()
+        else:
+            unit_snapshot = list(resume_state.unit_snapshot)
+            start_batch_index = resume_state.next_batch_index
+            optimizer_steps_total = resume_state.optimizer_steps_total
+            scheduler = self._build_scheduler(resume_state.total_optimizer_steps)
+            scheduler_state = self._checkpoint_state["scheduler_state_dict"] if self._checkpoint_state else None
+            if scheduler_state is not None:
+                scheduler.load_state_dict(scheduler_state)
+            self._restore_rng_state(self._checkpoint_state["rng_state"])
+            self.optimizer.zero_grad()
+
+        print(f"Training on {len(unit_snapshot)} ordered passages")
+
+        self.detector.check(probes, self.registry) 
+        dataloader = self._build_dataloader(unit_snapshot, start_batch_index=start_batch_index)
+
+        total_micro_steps = math.ceil(len(unit_snapshot) / self.config.batch_size)
+        total_optimizer_steps = math.ceil(total_micro_steps / self.config.grad_accum_steps)
 
         self.model.train()
-        self.optimizer.zero_grad()
 
         loss_curve = []
         final_loss = 0.0
-        micro_steps_total = 0
-        optimizer_steps_total = 0
+        micro_steps_total = start_batch_index
         window_loss_total = 0.0
         window_micro_steps = 0
 
-        for epoch in range(self.config.epochs_per_period):
-            for batch in dataloader:
-                loss = self._train_step(batch)
-                micro_steps_total += 1
-                window_micro_steps += 1
-                window_loss_total += loss
+        self._update_checkpoint_state(
+            period=period,
+            last_period=resume_state.last_period if resume_state is not None else period,
+            completed_units=list(self._completed_units),
+            unit_snapshot=unit_snapshot,
+            next_batch_index=start_batch_index,
+            total_batches=total_micro_steps,
+            optimizer_steps_total=optimizer_steps_total,
+            total_optimizer_steps=total_optimizer_steps,
+            unit_completed=False,
+        )
 
-                is_window_boundary = window_micro_steps == self.config.grad_accum_steps
-                is_last_micro_step = micro_steps_total == total_micro_steps
-                if not (is_window_boundary or is_last_micro_step):
-                    continue
+        for batch in dataloader:
+            loss = self._train_step(batch)
+            micro_steps_total += 1
+            window_micro_steps += 1
+            window_loss_total += loss
 
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.grad_clip)
-                self.optimizer.step()
-                scheduler.step()
-                self.optimizer.zero_grad()
-                optimizer_steps_total += 1
+            is_window_boundary = window_micro_steps == self.config.grad_accum_steps
+            is_last_micro_step = micro_steps_total == total_micro_steps
+            if not (is_window_boundary or is_last_micro_step):
+                continue
 
-                averaged_window_loss = window_loss_total / window_micro_steps
-                final_loss = averaged_window_loss
-                if optimizer_steps_total % self.config.log_every_n_steps == 0:
-                    print(f"step={optimizer_steps_total}, loss={averaged_window_loss:.4f}")
-                    loss_curve.append((optimizer_steps_total, averaged_window_loss))
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.grad_clip)
+            self.optimizer.step()
+            scheduler.step()
+            self.optimizer.zero_grad()
+            optimizer_steps_total += 1
 
-                should_checkpoint = (
-                    checkpoint_hook is not None
-                    and self.config.checkpoint_every_n_optimizer_steps is not None
-                    and optimizer_steps_total % self.config.checkpoint_every_n_optimizer_steps == 0
-                    and optimizer_steps_total < total_optimizer_steps
-                )
-                if should_checkpoint:
-                    checkpoint_hook(period, optimizer_steps_total)
+            averaged_window_loss = window_loss_total / window_micro_steps
+            final_loss = averaged_window_loss
+            if optimizer_steps_total % self.config.log_every_n_steps == 0:
+                print(f"step={optimizer_steps_total}, loss={averaged_window_loss:.4f}")
+                loss_curve.append((optimizer_steps_total, averaged_window_loss))
 
-                window_loss_total = 0.0
-                window_micro_steps = 0
+            self._update_checkpoint_state(
+                period=period,
+                last_period=period,
+                completed_units=list(self._completed_units),
+                unit_snapshot=unit_snapshot,
+                next_batch_index=micro_steps_total,
+                total_batches=total_micro_steps,
+                optimizer_steps_total=optimizer_steps_total,
+                total_optimizer_steps=total_optimizer_steps,
+                unit_completed=False,
+            )
+
+            should_checkpoint = (
+                checkpoint_hook is not None
+                and self.config.checkpoint_every_n_optimizer_steps is not None
+                and optimizer_steps_total % self.config.checkpoint_every_n_optimizer_steps == 0
+                and optimizer_steps_total < total_optimizer_steps
+            )
+            if should_checkpoint:
+                checkpoint_hook(period, optimizer_steps_total)
+
+            window_loss_total = 0.0
+            window_micro_steps = 0
         
         for probe in probes:
             self.registry.write(probe, period)
+        if period not in self._completed_units:
+            self._completed_units.append(period)
+        self._update_checkpoint_state(
+            period=period,
+            last_period=period,
+            completed_units=list(self._completed_units),
+            unit_snapshot=unit_snapshot,
+            next_batch_index=total_micro_steps,
+            total_batches=total_micro_steps,
+            optimizer_steps_total=optimizer_steps_total,
+            total_optimizer_steps=total_optimizer_steps,
+            unit_completed=True,
+        )
 
         duration = time.time() -start
 
@@ -174,7 +319,7 @@ class CASFTrainer:
             "period": period,
             "train_loss_final": final_loss,
             "train_loss_curve": loss_curve,
-            "n_passages_trained": len(passages),
+            "n_passages_trained": len(unit_snapshot),
             "n_contradiction_passages": sum(1 for p in probes if p.is_contradiction),
             "train_duration_sec": duration,
             "micro_steps_total": micro_steps_total,
@@ -193,11 +338,18 @@ class CASFTrainer:
                 json.dump(asdict(self.config), f, indent=2)
             with open(os.path.join(temp_dir, "last_period.txt"), "w") as f:
                 f.write(period)
+            if self._checkpoint_state is not None:
+                checkpoint_state = dict(self._checkpoint_state)
+                checkpoint_state["rng_state"] = self._capture_rng_state()
+                torch.save(
+                    checkpoint_state,
+                    os.path.join(temp_dir, TRAINER_STATE_FILENAME),
+                )
 
             final_dir = finalize_checkpoint(run_root, temp_dir, last_period=period)
         return str(final_dir)
 
-    def resume(self, path: str) -> str:
+    def resume(self, path: str) -> ResumeState:
         checkpoint_path = resolve_checkpoint_path(path)
 
         registry_path = os.path.join(checkpoint_path, "memory_registry.json")
@@ -209,4 +361,40 @@ class CASFTrainer:
             raise FileNotFoundError(f"Missing checkpoint metadata: {period_file}")
 
         with open(period_file, "r") as f:
-            return f.read().strip()
+            last_period = f.read().strip()
+
+        trainer_state_path = os.path.join(checkpoint_path, TRAINER_STATE_FILENAME)
+        if not os.path.exists(trainer_state_path):
+            return ResumeState(
+                checkpoint_path=str(checkpoint_path),
+                last_period=last_period,
+                current_unit=last_period,
+                completed_units=[last_period],
+                next_batch_index=0,
+                total_batches=0,
+                optimizer_steps_total=0,
+                total_optimizer_steps=0,
+                unit_snapshot=[],
+                unit_completed=True,
+                metadata_only=True,
+            )
+
+        trainer_state = torch.load(trainer_state_path, map_location="cpu", weights_only=False)
+        self.optimizer.load_state_dict(trainer_state["optimizer_state_dict"])
+        self._move_optimizer_state_to_device()
+        self._checkpoint_state = trainer_state
+        self._completed_units = list(trainer_state["completed_units"])
+
+        return ResumeState(
+            checkpoint_path=str(checkpoint_path),
+            last_period=last_period,
+            current_unit=trainer_state["current_unit"],
+            completed_units=list(trainer_state["completed_units"]),
+            next_batch_index=trainer_state["next_batch_index"],
+            total_batches=trainer_state["total_batches"],
+            optimizer_steps_total=trainer_state["optimizer_steps_total"],
+            total_optimizer_steps=trainer_state["total_optimizer_steps"],
+            unit_snapshot=list(trainer_state["unit_snapshot"]),
+            unit_completed=bool(trainer_state["unit_completed"]),
+            metadata_only=False,
+        )

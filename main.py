@@ -17,6 +17,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--checkpoint-dir", default=DEFAULT_CHECKPOINT_DIR)
     parser.add_argument("--dataset-name", default=DEFAULT_DATASET_NAME)
     parser.add_argument("--model-name", default=DEFAULT_MODEL_NAME)
+    parser.add_argument("--resume-from")
     return parser
 
 
@@ -36,7 +37,12 @@ def make_config(args: argparse.Namespace) -> TrainConfig:
 def main() -> int:
     args = build_parser().parse_args()
     cfg = make_config(args)
-    run_mode(args.mode, cfg, checkpoint_dir=args.checkpoint_dir)
+    run_mode(
+        args.mode,
+        cfg,
+        checkpoint_dir=args.checkpoint_dir,
+        resume_from=args.resume_from,
+    )
     return 0
 
 
