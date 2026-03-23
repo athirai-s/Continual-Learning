@@ -16,6 +16,7 @@ from synthetic_backend import (
     build_synthetic_model,
     load_synthetic_model,
 )
+from run_artifacts import ensure_run_layout, write_run_manifest
 from train_config import TrainConfig
 from trainer import CASFTrainer, ResumeState
 
@@ -240,6 +241,8 @@ def run_training(
 
     results: list[dict[str, Any]] = []
     units = training_units or get_training_units(cfg)
+    ensure_run_layout(run_root, units)
+    write_run_manifest(run_root, cfg, units)
     if resume_state is not None and resume_state.current_unit not in units:
         raise ValueError(f"Resume unit {resume_state.current_unit!r} is not in the training plan")
     if resume_state is not None and not resume_state.metadata_only:
