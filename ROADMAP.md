@@ -176,7 +176,7 @@ After this milestone, future trainer work can be validated automatically instead
 
 ### PR M0.1: Add Test Harness And CI Skeleton
 
-- [ ] `M0.1` Add `pytest`-based test harness, test layout, and required CI workflow.
+- [x] `M0.1` Add `pytest`-based test harness, test layout, and required CI workflow.
 - Problem:
   The repo currently has no automated regression barrier.
 - Proposed change:
@@ -199,7 +199,7 @@ After this milestone, future trainer work can be validated automatically instead
 
 ### PR M0.2: Add Synthetic Fixtures For Offline Training Tests
 
-- [ ] `M0.2` Introduce synthetic dataset, tokenizer, and tiny causal LM fixtures for CPU-only tests.
+- [x] `M0.2` Introduce synthetic dataset, tokenizer, and tiny causal LM fixtures for CPU-only tests.
 - Problem:
   Required CI cannot depend on Hugging Face downloads or large real datasets.
 - Proposed change:
@@ -225,7 +225,7 @@ After this milestone, future trainer work can be validated automatically instead
 
 ### PR M0.3: Extract A Testable Training Runner
 
-- [ ] `M0.3` Refactor the top-level entrypoint so tests can invoke the real training flow with injected dependencies.
+- [x] `M0.3` Refactor the top-level entrypoint so tests can invoke the real training flow with injected dependencies.
 - Problem:
   `main.py` is currently hardcoded around a specific remote model and dataset selection, which blocks realistic smoke tests.
 - Proposed change:
@@ -258,7 +258,7 @@ After this milestone, future trainer work can be validated automatically instead
 
 ### PR M0.4: Cut Over Supported Launch Scripts Early
 
-- [ ] `M0.4` Move supported launch scripts onto the tested training path as soon as the injectable runner exists.
+- [x] `M0.4` Move supported launch scripts onto the tested training path as soon as the injectable runner exists.
 - Problem:
   The repo currently has a split-brain launch path: `main.py` and `trainer.py` represent the evolving training system, but `run_job.sh` still launches `3B_train.py`.
 - Proposed change:
