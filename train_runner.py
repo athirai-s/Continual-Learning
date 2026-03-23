@@ -232,11 +232,6 @@ def run_training(
     prepare_run_root(run_root)
     with RunRootLock(run_root):
         apply_global_seed(cfg.seed)
-        cfg_path = os.path.join(cfg.checkpoint_dir, f"{cfg.run_id}_config.json")
-        cfg.save_json(cfg_path)
-        print(f"Saved config to {cfg_path}\n")
-        metrics_logger = MetricsLogger(run_root)
-
         resume_path = resolve_checkpoint_path(resume_from) if resume_from is not None else None
         if resume_path is None:
             model, tokenizer = model_factory(cfg)
@@ -270,6 +265,12 @@ def run_training(
             resume_period = prepare_dataset(resume_dataset, cfg, resume_state.current_unit)
             resume_dataset_identity = build_dataset_identity(resume_dataset, cfg, resume_period)
             validate_resume_inputs(trainer, cfg, units, resume_dataset_identity)
+
+        cfg_path = os.path.join(cfg.checkpoint_dir, f"{cfg.run_id}_config.json")
+        cfg.save_json(cfg_path)
+        print(f"Saved config to {cfg_path}\n")
+        metrics_logger = MetricsLogger(run_root)
+
         if resume_state is None:
             pending_units = units
         elif resume_state.unit_completed:
