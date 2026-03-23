@@ -344,7 +344,7 @@ This milestone is intentionally not exhaustive. It should protect the public sea
 
 ### PR M1.2: Add Dataset Contract Tests
 
-- [ ] `M1.2` Add contract tests for the `TemporalDataset` interface and adapter behavior.
+- [x] `M1.2` Add contract tests for the `TemporalDataset` interface and adapter behavior.
 - Problem:
   Dataset adapters are central to the repo but currently have no stable test contract.
 - Proposed change:
@@ -353,7 +353,7 @@ This milestone is intentionally not exhaustive. It should protect the public sea
   - `get_probes()` returns `Probe` objects with required fields populated
   - `get_train_passages()` behaves correctly for train-capable splits
   - contradiction-pair methods return the documented shape
-  Use monkeypatching or local fake backing data so required CI stays offline.
+  Use monkeypatching or local fake backing data so required CI stays offline, including tiny temporary zip fixtures for `TemporalWikiDataset`.
 - Likely files:
   `tests/contracts/test_dataset_contracts.py`, adapter-specific fixtures
 - Acceptance criteria:
