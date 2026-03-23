@@ -10,7 +10,7 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from casf_dataset_api import MemoryRegistry, TemporalWikiDataset, TGQADataset, TSQADataset
-from checkpointing import prepare_run_root, resolve_checkpoint_path
+from checkpointing import RunRootLock, prepare_run_root, resolve_checkpoint_path
 from checkpoint_manifest import CheckpointManifestError
 from evaluation_runner import run_period_evaluation
 from metrics_logger import MetricsLogger
@@ -229,142 +229,145 @@ def run_training(
     os.makedirs(cfg.checkpoint_dir, exist_ok=True)
     run_root = os.path.join(cfg.checkpoint_dir, cfg.run_id)
     prepare_run_root(run_root)
-    apply_global_seed(cfg.seed)
-    cfg_path = os.path.join(cfg.checkpoint_dir, f"{cfg.run_id}_config.json")
-    cfg.save_json(cfg_path)
-    print(f"Saved config to {cfg_path}\n")
-    metrics_logger = MetricsLogger(run_root)
+    with RunRootLock(run_root):
+        apply_global_seed(cfg.seed)
+        cfg_path = os.path.join(cfg.checkpoint_dir, f"{cfg.run_id}_config.json")
+        cfg.save_json(cfg_path)
+        print(f"Saved config to {cfg_path}\n")
+        metrics_logger = MetricsLogger(run_root)
 
-    resume_path = resolve_checkpoint_path(resume_from) if resume_from is not None else None
-    if resume_path is None:
-        model, tokenizer = model_factory(cfg)
-    else:
-        if resume_model_factory is None:
-            raise ValueError("resume_model_factory is required when resume_from is set")
-        model, tokenizer = resume_model_factory(cfg, str(resume_path))
+        resume_path = resolve_checkpoint_path(resume_from) if resume_from is not None else None
+        if resume_path is None:
+            model, tokenizer = model_factory(cfg)
+        else:
+            if resume_model_factory is None:
+                raise ValueError("resume_model_factory is required when resume_from is set")
+            model, tokenizer = resume_model_factory(cfg, str(resume_path))
 
-    if getattr(tokenizer, "pad_token", None) is None:
-        tokenizer.pad_token = tokenizer.eos_token
+        if getattr(tokenizer, "pad_token", None) is None:
+            tokenizer.pad_token = tokenizer.eos_token
 
-    registry = MemoryRegistry()
-    trainer = CASFTrainer(model, tokenizer, cfg, registry)
-    resume_state: ResumeState | None = None
-    if resume_from is not None:
-        resume_state = trainer.resume(resume_from)
+        registry = MemoryRegistry()
+        trainer = CASFTrainer(model, tokenizer, cfg, registry)
+        resume_state: ResumeState | None = None
+        if resume_from is not None:
+            resume_state = trainer.resume(resume_from)
 
-    results: list[dict[str, Any]] = []
-    units = training_units or get_training_units(cfg)
-    ensure_run_layout(run_root, units)
-    write_run_manifest(
-        run_root,
-        cfg,
-        units,
-        reproducibility=collect_reproducibility_metadata(cfg, units),
-    )
-    if resume_state is not None and resume_state.current_unit not in units:
-        raise ValueError(f"Resume unit {resume_state.current_unit!r} is not in the training plan")
-    if resume_state is not None and not resume_state.metadata_only:
-        resume_dataset = dataset_factory(resume_state.current_unit, cfg)
-        resume_period = prepare_dataset(resume_dataset, cfg, resume_state.current_unit)
-        resume_dataset_identity = build_dataset_identity(resume_dataset, cfg, resume_period)
-        validate_resume_inputs(trainer, cfg, units, resume_dataset_identity)
-    if resume_state is None:
-        pending_units = units
-    elif resume_state.unit_completed:
-        current_index = units.index(resume_state.current_unit)
-        pending_units = units[current_index + 1 :]
-    else:
-        current_index = units.index(resume_state.current_unit)
-        pending_units = units[current_index:]
+        results: list[dict[str, Any]] = []
+        units = training_units or get_training_units(cfg)
+        ensure_run_layout(run_root, units)
+        write_run_manifest(
+            run_root,
+            cfg,
+            units,
+            reproducibility=collect_reproducibility_metadata(cfg, units),
+        )
+        if resume_state is not None and resume_state.current_unit not in units:
+            raise ValueError(f"Resume unit {resume_state.current_unit!r} is not in the training plan")
+        if resume_state is not None and not resume_state.metadata_only:
+            resume_dataset = dataset_factory(resume_state.current_unit, cfg)
+            resume_period = prepare_dataset(resume_dataset, cfg, resume_state.current_unit)
+            resume_dataset_identity = build_dataset_identity(resume_dataset, cfg, resume_period)
+            validate_resume_inputs(trainer, cfg, units, resume_dataset_identity)
+        if resume_state is None:
+            pending_units = units
+        elif resume_state.unit_completed:
+            current_index = units.index(resume_state.current_unit)
+            pending_units = units[current_index + 1 :]
+        else:
+            current_index = units.index(resume_state.current_unit)
+            pending_units = units[current_index:]
 
-    for unit in pending_units:
-        print(f"\n=== Training unit: {unit} ===")
-        dataset = dataset_factory(unit, cfg)
-        period_name = prepare_dataset(dataset, cfg, unit)
-        dataset_identity = build_dataset_identity(dataset, cfg, period_name)
-        if resume_state is not None and unit == resume_state.current_unit and not resume_state.metadata_only:
-            validate_resume_inputs(trainer, cfg, units, dataset_identity)
-        checkpoint_paths: list[str] = []
+        for unit in pending_units:
+            print(f"\n=== Training unit: {unit} ===")
+            dataset = dataset_factory(unit, cfg)
+            period_name = prepare_dataset(dataset, cfg, unit)
+            dataset_identity = build_dataset_identity(dataset, cfg, period_name)
+            if resume_state is not None and unit == resume_state.current_unit and not resume_state.metadata_only:
+                validate_resume_inputs(trainer, cfg, units, dataset_identity)
+            checkpoint_paths: list[str] = []
 
-        manifest_metadata = {
-            "model_name": cfg.model_name,
-            "training_plan": units,
-            "resume_compatibility": build_resume_compatibility(cfg),
-            "dataset_identity": dataset_identity,
-        }
+            manifest_metadata = {
+                "model_name": cfg.model_name,
+                "training_plan": units,
+                "resume_compatibility": build_resume_compatibility(cfg),
+                "dataset_identity": dataset_identity,
+            }
 
-        def checkpoint_hook(period: str, optimizer_step: int) -> None:
+            def checkpoint_hook(period: str, optimizer_step: int) -> None:
+                checkpoint_path = trainer.checkpoint(
+                    str(period),
+                    run_root,
+                    manifest_metadata=manifest_metadata,
+                    lock_run_root=False,
+                )
+                checkpoint_paths.append(checkpoint_path)
+                metrics_logger.emit(
+                    "checkpoint",
+                    unit=str(period),
+                    optimizer_step=optimizer_step,
+                    checkpoint_path=str(Path(checkpoint_path).relative_to(run_root)),
+                )
+                print(
+                    f"Checkpoint saved at optimizer_step={optimizer_step}: {checkpoint_path}"
+                )
+
+            def event_hook(event: dict[str, Any]) -> None:
+                event_payload = dict(event)
+                event_type = event_payload.pop("event_type")
+                metrics_logger.emit(event_type, **event_payload)
+
+            active_resume_state = (
+                resume_state
+                if resume_state is not None
+                and not resume_state.unit_completed
+                and unit == resume_state.current_unit
+                else None
+            )
+            result = trainer.train_period(
+                dataset,
+                period_name,
+                checkpoint_hook=checkpoint_hook,
+                event_hook=event_hook,
+                resume_state=active_resume_state,
+            )
             checkpoint_path = trainer.checkpoint(
-                str(period),
+                str(period_name),
                 run_root,
                 manifest_metadata=manifest_metadata,
+                lock_run_root=False,
             )
-            checkpoint_paths.append(checkpoint_path)
             metrics_logger.emit(
                 "checkpoint",
-                unit=str(period),
-                optimizer_step=optimizer_step,
+                unit=str(period_name),
+                optimizer_step=result["optimizer_steps_total"],
                 checkpoint_path=str(Path(checkpoint_path).relative_to(run_root)),
             )
-            print(
-                f"Checkpoint saved at optimizer_step={optimizer_step}: {checkpoint_path}"
-            )
 
-        def event_hook(event: dict[str, Any]) -> None:
-            event_payload = dict(event)
-            event_type = event_payload.pop("event_type")
-            metrics_logger.emit(event_type, **event_payload)
+            result["checkpoint_path"] = checkpoint_path
+            result["checkpoint_paths"] = checkpoint_paths + [checkpoint_path]
+            if cfg.eval_after_each_period:
+                eval_dataset = dataset_factory(unit, cfg)
+                result["evaluation"] = run_period_evaluation(
+                    model=trainer.model,
+                    tokenizer=trainer.tokenizer,
+                    dataset=eval_dataset,
+                    cfg=cfg,
+                    unit=period_name,
+                    run_root=run_root,
+                )
+            results.append(result)
 
-        active_resume_state = (
-            resume_state
-            if resume_state is not None
-            and not resume_state.unit_completed
-            and unit == resume_state.current_unit
-            else None
-        )
-        result = trainer.train_period(
-            dataset,
-            period_name,
-            checkpoint_hook=checkpoint_hook,
-            event_hook=event_hook,
-            resume_state=active_resume_state,
-        )
-        checkpoint_path = trainer.checkpoint(
-            str(period_name),
-            run_root,
-            manifest_metadata=manifest_metadata,
-        )
-        metrics_logger.emit(
-            "checkpoint",
-            unit=str(period_name),
-            optimizer_step=result["optimizer_steps_total"],
-            checkpoint_path=str(Path(checkpoint_path).relative_to(run_root)),
-        )
+            print("Training result:")
+            print(f"  Final loss: {result['train_loss_final']}")
+            print(f"  Passages trained: {result['n_passages_trained']}")
+            print(f"  Contradiction passages: {result['n_contradiction_passages']}")
+            print(f"  Train duration (sec): {result['train_duration_sec']:.2f}")
+            print(f"Checkpoint saved to: {checkpoint_path}")
+            resume_state = None
 
-        result["checkpoint_path"] = checkpoint_path
-        result["checkpoint_paths"] = checkpoint_paths + [checkpoint_path]
-        if cfg.eval_after_each_period:
-            eval_dataset = dataset_factory(unit, cfg)
-            result["evaluation"] = run_period_evaluation(
-                model=trainer.model,
-                tokenizer=trainer.tokenizer,
-                dataset=eval_dataset,
-                cfg=cfg,
-                unit=period_name,
-                run_root=run_root,
-            )
-        results.append(result)
-
-        print("Training result:")
-        print(f"  Final loss: {result['train_loss_final']}")
-        print(f"  Passages trained: {result['n_passages_trained']}")
-        print(f"  Contradiction passages: {result['n_contradiction_passages']}")
-        print(f"  Train duration (sec): {result['train_duration_sec']:.2f}")
-        print(f"Checkpoint saved to: {checkpoint_path}")
-        resume_state = None
-
-    print("\nDone.")
-    return results
+        print("\nDone.")
+        return results
 
 
 def run_mode(

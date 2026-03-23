@@ -385,35 +385,47 @@ class CASFTrainer:
         run_root: str,
         *,
         manifest_metadata: dict[str, Any] | None = None,
+        lock_run_root: bool = True,
     ) -> str:
         prepare_run_root(run_root)
-        with RunRootLock(run_root):
-            temp_dir = create_checkpoint_tempdir(run_root)
-            self.model.save_pretrained(temp_dir)
-            self.tokenizer.save_pretrained(temp_dir)
-            self.registry.save(os.path.join(temp_dir, "memory_registry.json"))
+        if lock_run_root:
+            with RunRootLock(run_root):
+                return self._checkpoint_unlocked(period, run_root, manifest_metadata=manifest_metadata)
+        return self._checkpoint_unlocked(period, run_root, manifest_metadata=manifest_metadata)
 
-            with open(os.path.join(temp_dir, "train_config.json"), "w") as f:
-                json.dump(asdict(self.config), f, indent=2)
-            with open(os.path.join(temp_dir, "last_period.txt"), "w") as f:
-                f.write(period)
-            if self._checkpoint_state is not None:
-                checkpoint_state = dict(self._checkpoint_state)
-                checkpoint_state["rng_state"] = self._capture_rng_state()
-                torch.save(
-                    checkpoint_state,
-                    os.path.join(temp_dir, TRAINER_STATE_FILENAME),
-                )
-            if manifest_metadata is not None:
-                write_checkpoint_manifest(
-                    temp_dir,
-                    model_name=manifest_metadata["model_name"],
-                    training_plan=manifest_metadata["training_plan"],
-                    resume_compatibility=manifest_metadata["resume_compatibility"],
-                    dataset_identity=manifest_metadata["dataset_identity"],
-                )
+    def _checkpoint_unlocked(
+        self,
+        period: str,
+        run_root: str,
+        *,
+        manifest_metadata: dict[str, Any] | None = None,
+    ) -> str:
+        temp_dir = create_checkpoint_tempdir(run_root)
+        self.model.save_pretrained(temp_dir)
+        self.tokenizer.save_pretrained(temp_dir)
+        self.registry.save(os.path.join(temp_dir, "memory_registry.json"))
 
-            final_dir = finalize_checkpoint(run_root, temp_dir, last_period=period)
+        with open(os.path.join(temp_dir, "train_config.json"), "w") as f:
+            json.dump(asdict(self.config), f, indent=2)
+        with open(os.path.join(temp_dir, "last_period.txt"), "w") as f:
+            f.write(period)
+        if self._checkpoint_state is not None:
+            checkpoint_state = dict(self._checkpoint_state)
+            checkpoint_state["rng_state"] = self._capture_rng_state()
+            torch.save(
+                checkpoint_state,
+                os.path.join(temp_dir, TRAINER_STATE_FILENAME),
+            )
+        if manifest_metadata is not None:
+            write_checkpoint_manifest(
+                temp_dir,
+                model_name=manifest_metadata["model_name"],
+                training_plan=manifest_metadata["training_plan"],
+                resume_compatibility=manifest_metadata["resume_compatibility"],
+                dataset_identity=manifest_metadata["dataset_identity"],
+            )
+
+        final_dir = finalize_checkpoint(run_root, temp_dir, last_period=period)
         return str(final_dir)
 
     def resume(self, path: str) -> ResumeState:
