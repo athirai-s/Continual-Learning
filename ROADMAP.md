@@ -773,7 +773,7 @@ The training loop becomes more faithful to period-based factual updating and mor
 
 ### PR M5.1: Add A Runner-Owned Training Plan And Multi-Unit Orchestration
 
-- [ ] `M5.1` Replace the hidden one-period run with a runner-owned training plan and tested multi-unit orchestration.
+- [x] `M5.1` Replace the hidden one-period run with a runner-owned training plan and tested multi-unit orchestration.
 - Problem:
   The current path is hardcoded to `["aug_sep"]`, which does not represent continual learning.
 - Proposed change:

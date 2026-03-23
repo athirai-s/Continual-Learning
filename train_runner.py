@@ -23,10 +23,8 @@ from synthetic_backend import (
 )
 from run_artifacts import collect_reproducibility_metadata, ensure_run_layout, write_run_manifest
 from train_config import TrainConfig
+from training_plan import build_training_plan
 from trainer import CASFTrainer, ResumeState
-
-
-PERIODS = ["aug_sep"]
 
 DatasetFactory = Callable[[str, TrainConfig], Any]
 ModelFactory = Callable[[TrainConfig], tuple[Any, Any]]
@@ -83,12 +81,6 @@ def load_synthetic_model_and_tokenizer(cfg: TrainConfig, checkpoint_path: str) -
 
 def build_synthetic_dataset(unit: str, cfg: TrainConfig):
     return SyntheticTemporalDataset()
-
-
-def get_training_units(cfg: TrainConfig) -> list[str]:
-    if cfg.dataset_name == "temporal_wiki":
-        return PERIODS
-    return [cfg.dataset_name]
 
 
 def prepare_dataset(dataset: Any, cfg: TrainConfig, unit: str) -> str:
@@ -250,14 +242,8 @@ def run_training(
             resume_state = trainer.resume(resume_from)
 
         results: list[dict[str, Any]] = []
-        units = training_units or get_training_units(cfg)
-        ensure_run_layout(run_root, units)
-        write_run_manifest(
-            run_root,
-            cfg,
-            units,
-            reproducibility=collect_reproducibility_metadata(cfg, units),
-        )
+        training_plan = build_training_plan(cfg, training_units)
+        units = training_plan.units
         if resume_state is not None and resume_state.current_unit not in units:
             raise ValueError(f"Resume unit {resume_state.current_unit!r} is not in the training plan")
         if resume_state is not None and not resume_state.metadata_only:
@@ -265,6 +251,14 @@ def run_training(
             resume_period = prepare_dataset(resume_dataset, cfg, resume_state.current_unit)
             resume_dataset_identity = build_dataset_identity(resume_dataset, cfg, resume_period)
             validate_resume_inputs(trainer, cfg, units, resume_dataset_identity)
+
+        ensure_run_layout(run_root, units)
+        write_run_manifest(
+            run_root,
+            cfg,
+            units,
+            reproducibility=collect_reproducibility_metadata(cfg, units),
+        )
 
         cfg_path = os.path.join(cfg.checkpoint_dir, f"{cfg.run_id}_config.json")
         cfg.save_json(cfg_path)

@@ -23,6 +23,7 @@ def test_synthetic_training_emits_train_step_period_end_and_checkpoint_events(tm
         model_factory=build_synthetic_model_and_tokenizer,
         dataset_factory=build_synthetic_dataset,
         checkpoint_dir=str(tmp_path),
+        training_units=["aug_sep"],
     )
 
     events_path = tmp_path / "integration-metrics-events" / "metrics" / "events.jsonl"

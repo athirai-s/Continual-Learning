@@ -23,6 +23,7 @@ def test_eval_outputs_follow_stable_artifact_contract(tmp_path):
         model_factory=build_synthetic_model_and_tokenizer,
         dataset_factory=build_synthetic_dataset,
         checkpoint_dir=str(tmp_path),
+        training_units=["aug_sep"],
     )
 
     eval_summary_path = tmp_path / "synthetic-eval-contract" / "periods" / "aug_sep" / "eval_summary.json"

@@ -25,6 +25,7 @@ def test_run_root_has_stable_manifest_and_layout(tmp_path):
         model_factory=build_synthetic_model_and_tokenizer,
         dataset_factory=build_synthetic_dataset,
         checkpoint_dir=str(tmp_path),
+        training_units=["aug_sep"],
     )
 
     run_root = tmp_path / "integration-run-layout"
@@ -50,6 +51,7 @@ def test_m2_checkpoint_paths_remain_valid_under_m3_run_layout(tmp_path):
         model_factory=build_synthetic_model_and_tokenizer,
         dataset_factory=build_synthetic_dataset,
         checkpoint_dir=str(tmp_path),
+        training_units=["aug_sep"],
     )
 
     run_root = tmp_path / "integration-run-layout"

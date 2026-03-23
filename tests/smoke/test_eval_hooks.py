@@ -23,6 +23,7 @@ def test_synthetic_training_writes_eval_summary_and_eval_metrics(tmp_path):
         model_factory=build_synthetic_model_and_tokenizer,
         dataset_factory=build_synthetic_dataset,
         checkpoint_dir=str(tmp_path),
+        training_units=["aug_sep"],
     )
 
     eval_summary_path = tmp_path / "synthetic-eval-smoke" / "periods" / "aug_sep" / "eval_summary.json"
