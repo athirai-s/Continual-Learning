@@ -87,6 +87,12 @@ def build_synthetic_model(vocab_size: int = SYNTHETIC_VOCAB_SIZE) -> GPT2LMHeadM
     return GPT2LMHeadModel(config)
 
 
+def build_synthetic_model_and_tokenizer() -> tuple[GPT2LMHeadModel, SyntheticTokenizer]:
+    tokenizer = SyntheticTokenizer()
+    model = build_synthetic_model(vocab_size=tokenizer.vocab_size)
+    return model, tokenizer
+
+
 class SyntheticTemporalDataset(TemporalDataset):
     VALID_SPLITS = {"train", "changed", "unchanged"}
 
@@ -94,9 +100,18 @@ class SyntheticTemporalDataset(TemporalDataset):
         self.snapshot_id = "synthetic"
         self._loaded_split: Optional[str] = None
         self._train_passages = [
-            "Alpha is associated with the new synthetic value.",
-            "Beta remains associated with the steady synthetic value.",
-            "Gamma switched from old to updated during this synthetic period.",
+            (
+                "Alpha is associated with the new synthetic value during this tiny offline fixture, "
+                "and this passage is intentionally long enough to survive passage filtering."
+            ),
+            (
+                "Beta remains associated with the steady synthetic value throughout the synthetic "
+                "period, and this sentence is padded with enough detail to pass filtering."
+            ),
+            (
+                "Gamma switched from an old synthetic value to an updated synthetic value in this "
+                "fixture, and the passage length is intentionally above the trainer threshold."
+            ),
         ]
         self._probes = {
             "changed": [
