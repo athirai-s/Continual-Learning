@@ -11,6 +11,7 @@ The immediate priority is not "add more trainer features." The immediate priorit
 - A PR is not complete unless its acceptance criteria and required tests are satisfied.
 - No PR should weaken CI or delete tests without replacing them with stronger coverage.
 - If a PR discovers that this roadmap is missing a prerequisite, update this document in the same PR before implementation.
+- Before non-trivial work, mirror the compact active checklist from `AGENTS.md` into the session plan or TODOs so merge-critical expectations stay near the current working context.
 
 ## Non-Negotiable Principles
 
@@ -36,6 +37,76 @@ Allowed optional checks:
 - GPU smoke jobs
 
 Optional checks may inform work, but required checks gate merges.
+
+## Pre-Merge Expectations
+
+Before merging a PR, all of the following should be true:
+
+1. Scope is grounded.
+- The PR maps to a specific roadmap box, or it updates the roadmap first if the dependency graph changed.
+- The PR description states the problem, proposed change, acceptance criteria, required tests, and non-goals.
+
+2. Behavior is proved, not asserted.
+- Every behavior change is covered by tests at the right layer.
+- New bugs found during the PR add a permanent regression test before merge.
+- If behavior cannot be tested in required CI, the PR should not claim it as guaranteed.
+
+3. Required CI is green.
+- Required checks must pass on the PR branch.
+- Flaky or quarantined tests do not count as evidence unless the quarantine policy says otherwise.
+- Optional jobs may inform the merge decision, but they do not replace required checks.
+
+4. Artifacts and contracts are updated.
+- If the PR changes checkpoint contents, artifact schema, config schema, or runner behavior, the relevant contract tests and docs are updated in the same PR.
+- If the PR changes the supported entrypoint or launch path, smoke tests must cover the supported path before merge.
+
+5. Merge is done through the PR, not by bypass.
+- Use `gh pr checks` to confirm required checks are green.
+- Merge with `gh pr merge` only after the merge contract above is satisfied.
+- Do not merge around failing required checks just because the change "looks safe."
+
+## How We Prevent Future Models From Forgetting
+
+Do not rely on chat history to preserve standards. Put the standards in repo and platform surfaces that future agents will actually read or be blocked by.
+
+Required institutional memory:
+
+1. Repo-local sources of truth
+- `ROADMAP.md` for milestone order, PR contracts, and merge expectations
+- `AGENTS.md` for always-on repo instructions
+- `README.md` or `docs/testing.md` for local developer workflow
+
+2. PR-time forcing functions
+- `.github/pull_request_template.md` should require:
+  - roadmap box
+  - behavior change
+  - tests added or updated
+  - artifact or checkpoint impact
+  - non-goals
+- CODEOWNERS or required review rules should cover the critical surfaces if the team wants human signoff in addition to CI
+
+3. Merge-time forcing functions
+- branch protection should require the fast behavioral CI suite
+- the supported entrypoint smoke test must be a required check
+- merges should happen through `gh pr merge` against protected branches rather than direct branch pushes
+
+4. Drift control
+- if a PR changes the merge contract, test pyramid, or supported entrypoint, it must update this roadmap and the corresponding docs in the same PR
+- if a bug escapes, the follow-up PR must add the missing regression test and, if needed, update the roadmap or contributor docs
+
+The goal is simple: a future model should be able to read the repo, inspect CI, and infer the correct merge standard without needing this conversation.
+
+## Active Checklist For Long Sessions
+
+This is the compact checklist that should be mirrored into the active plan or TODOs during non-trivial work:
+
+1. Roadmap box and scope are explicit.
+2. Required tests for this box are known before editing.
+3. Supported entrypoint remains the tested path.
+4. Artifact, checkpoint, config, or runner contract changes require test and doc updates.
+5. No merge until required CI is green.
+
+This checklist is not a substitute for the full merge policy above. Its purpose is to keep the critical expectations near the working set during long sessions.
 
 ## Test Pyramid For This Repo
 
@@ -759,6 +830,17 @@ A trainer-affecting PR is only done if:
 - any new artifact schema is tested
 - checkpoint compatibility impact is stated
 - non-goals are explicit
+
+## Expected GitHub Flow
+
+The intended flow, once the early roadmap items land, is:
+
+1. Create a branch for one roadmap box.
+2. Implement the box and its required tests.
+3. Open a PR that links the roadmap box and fills the PR template completely.
+4. Use `gh pr checks` to verify required CI status.
+5. Fix any failing required checks before asking for merge.
+6. Merge with `gh pr merge` only after the pre-merge expectations in this document are satisfied.
 
 ## First PR Order
 
