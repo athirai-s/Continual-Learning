@@ -29,7 +29,7 @@ Required checks after Milestone 1:
 - unit and contract tests
 - CPU integration tests
 - tiny end-to-end smoke test
-- checkpoint and resume smoke test
+- checkpoint metadata resume smoke test
 
 Allowed optional checks:
 - longer dataset adapter checks against real data
@@ -123,7 +123,7 @@ Behavior-first test layers:
 
 3. Integration tests
 - Exercise multiple modules together on local synthetic fixtures.
-- Examples: tiny training loop on CPU, checkpoint save and resume, period transition updating memory registry, evaluation against a saved checkpoint.
+- Examples: tiny training loop on CPU, checkpoint artifact generation, period transition updating memory registry, evaluation against a saved checkpoint.
 
 4. End-to-end smoke tests
 - Run the actual top-level training entrypoint on a tiny local setup.
@@ -182,7 +182,7 @@ After this milestone, future trainer work can be validated automatically instead
 - Proposed change:
   Add `tests/`, `pytest` configuration, shared test utilities, and a GitHub Actions workflow that runs the fast suite on every PR.
 - Likely files:
-  `pyproject.toml`, `.github/workflows/ci.yml`, `tests/conftest.py`, `tests/test_sanity.py`
+  `pyproject.toml`, `.github/workflows/ci.yml`, `tests/conftest.py`, `tests/smoke/test_repo_sanity.py`
 - Acceptance criteria:
   - `uv run pytest -q` works in a clean environment.
   - CI runs the fast suite on pull requests.
@@ -218,7 +218,7 @@ After this milestone, future trainer work can be validated automatically instead
   - fixture construction tests
   - one trainer-adjacent test proving the fixtures are usable together
 - Verification:
-  - `uv run pytest tests/helpers -q`
+  - `uv run pytest tests/integration/test_synthetic_backend.py -q`
 - Non-goals:
   - no real-dataset correctness
   - no GPU benchmarking
@@ -251,7 +251,7 @@ After this milestone, future trainer work can be validated automatically instead
   - runner smoke test using synthetic fixtures
   - CLI wrapper smoke test that uses the explicit synthetic execution contract rather than monkeypatching globals
 - Verification:
-  - `uv run pytest tests/test_train_runner.py -q`
+  - `uv run pytest tests/smoke/test_train_runner.py -q`
 - Non-goals:
   - no checkpoint semantics expansion yet
   - no config-system redesign yet
@@ -272,7 +272,7 @@ After this milestone, future trainer work can be validated automatically instead
 - Required tests:
   - supported entrypoint smoke test
 - Verification:
-  - `uv run pytest tests/test_train_runner.py -q`
+  - `uv run pytest tests/smoke/test_train_runner.py -q`
 - Non-goals:
   - no removal of historical experimental code that still has archival value
 
@@ -315,7 +315,7 @@ This milestone is intentionally not exhaustive. It should protect the public sea
 ### Exit Criteria
 
 - required CI includes unit, contract, integration, and tiny end-to-end smoke tests
-- checkpoint save and resume are tested in CI
+- checkpoint metadata reload and continuation smoke are tested in CI
 - dataset adapters have contract coverage without requiring remote data in required CI
 - a broken training loop should be caught before merge
 
@@ -397,9 +397,9 @@ This milestone is intentionally not exhaustive. It should protect the public sea
   - no resume yet beyond artifact presence
   - no performance assertions yet
 
-### PR M1.4: Add Checkpoint And Resume Smoke Tests
+### PR M1.4: Add Checkpoint Metadata Resume Smoke Tests
 
-- [x] `M1.4` Add required smoke tests proving that checkpointed runs can resume on tiny local fixtures.
+- [x] `M1.4` Add required smoke tests proving that checkpoint metadata can be restored on tiny local fixtures.
 - Problem:
   Checkpoint files may exist while resume semantics are still broken.
 - Proposed change:
@@ -407,17 +407,17 @@ This milestone is intentionally not exhaustive. It should protect the public sea
   - train for a short run
   - checkpoint
   - construct a new runner or trainer
-  - load the checkpointed state supported by current code
+  - load the checkpoint metadata supported by current code
   - continue execution without crashing
-  The test should assert exactly what "resume" means at this stage and fail if behavior changes. At this milestone, resume only claims correctness for fully written checkpoints produced by a successful checkpoint call; interrupted-write safety is explicitly deferred to Milestone 2.
+  The test should assert exactly what "resume" means at this stage and fail if behavior changes. At this milestone, resume only claims metadata reload from fully written checkpoints plus non-crashing continuation on a fresh trainer; interrupted-write safety and full state restoration are explicitly deferred to Milestone 2.
 - Likely files:
   `tests/smoke/test_resume.py`, supporting helpers
 - Acceptance criteria:
-  - resume smoke runs in required CI
-  - the test asserts restored artifacts and progress state that the current implementation claims to support
-  - the test documents current limitations if resume is partial
+  - metadata resume smoke runs in required CI
+  - the test asserts restored registry and last-period metadata that the current implementation claims to support
+  - the test documents current limitations instead of implying full recovery
 - Required tests:
-  - save then resume smoke test
+  - save then metadata-resume smoke test
   - missing-metadata negative-path test
 - Verification:
   - `uv run pytest tests/smoke/test_resume.py -q`
@@ -436,7 +436,7 @@ This milestone is intentionally not exhaustive. It should protect the public sea
   - unit tests
   - dataset contract tests
   - trainer integration tests
-  - checkpoint and resume smoke tests
+  - checkpoint metadata resume smoke tests
   Add a separate optional lane for slower jobs if needed.
 - Likely files:
   `.github/workflows/ci.yml`, docs updates

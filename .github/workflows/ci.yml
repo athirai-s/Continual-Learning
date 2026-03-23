@@ -68,7 +68,7 @@ jobs:
         run: uv sync --group dev
 
       - name: Run integration tests
-        run: uv run pytest tests/helpers/test_synthetic_backend.py tests/integration -q
+        run: uv run pytest tests/integration -q
 
   smoke:
     runs-on: ubuntu-latest
@@ -89,4 +89,4 @@ jobs:
         run: uv sync --group dev
 
       - name: Run smoke tests
-        run: uv run pytest tests/test_sanity.py tests/test_launchers.py tests/test_train_runner.py tests/smoke -q
+        run: uv run pytest tests/smoke -q

@@ -8,18 +8,32 @@
 #SBATCH --account=jieyuz_1727
 #SBATCH --output=train_%j.log
 
-module load gcc/12.3.0
-module load cuda/12.4.1
+set -euo pipefail
 
-cd /project2/jieyuz_1727/Continual-Learning
-source venv/bin/activate
+CONTINUAL_LEARNING_REPO="${CONTINUAL_LEARNING_REPO:-/project2/jieyuz_1727/Continual-Learning}"
+CONTINUAL_LEARNING_PYTHON="${CONTINUAL_LEARNING_PYTHON:-python}"
+CONTINUAL_LEARNING_MODE="${CONTINUAL_LEARNING_MODE:-real}"
+CONTINUAL_LEARNING_MODEL_ID="${CONTINUAL_LEARNING_MODEL_ID:-/scratch1/ashanmug/models/Llama-3.2-3B-Instruct}"
+CONTINUAL_LEARNING_DATASET="${CONTINUAL_LEARNING_DATASET:-temporal_wiki}"
+CONTINUAL_LEARNING_CHECKPOINT_DIR="${CONTINUAL_LEARNING_CHECKPOINT_DIR:-checkpoints}"
+CONTINUAL_LEARNING_RUN_ID="${CONTINUAL_LEARNING_RUN_ID:-slurm_${SLURM_JOB_ID:-manual}}"
+CONTINUAL_LEARNING_SKIP_MODULES="${CONTINUAL_LEARNING_SKIP_MODULES:-0}"
+CONTINUAL_LEARNING_SKIP_VENV="${CONTINUAL_LEARNING_SKIP_VENV:-0}"
 
-MODEL_ID="/scratch1/ashanmug/models/Llama-3.2-3B-Instruct"
-RUN_ID="slurm_${SLURM_JOB_ID:-manual}"
+if [[ "${CONTINUAL_LEARNING_SKIP_MODULES}" != "1" ]]; then
+  module load gcc/12.3.0
+  module load cuda/12.4.1
+fi
 
-python main.py \
-  --mode real \
-  --model-name "$MODEL_ID" \
-  --dataset-name temporal_wiki \
-  --run-id "$RUN_ID" \
-  --checkpoint-dir checkpoints
+cd "${CONTINUAL_LEARNING_REPO}"
+
+if [[ "${CONTINUAL_LEARNING_SKIP_VENV}" != "1" ]]; then
+  source venv/bin/activate
+fi
+
+"${CONTINUAL_LEARNING_PYTHON}" main.py \
+  --mode "${CONTINUAL_LEARNING_MODE}" \
+  --model-name "${CONTINUAL_LEARNING_MODEL_ID}" \
+  --dataset-name "${CONTINUAL_LEARNING_DATASET}" \
+  --run-id "${CONTINUAL_LEARNING_RUN_ID}" \
+  --checkpoint-dir "${CONTINUAL_LEARNING_CHECKPOINT_DIR}"
