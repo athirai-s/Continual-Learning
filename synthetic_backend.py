@@ -72,6 +72,18 @@ class SyntheticTokenizer:
                 indent=2,
             )
 
+    @classmethod
+    def from_pretrained(cls, path: str | Path) -> "SyntheticTokenizer":
+        path = Path(path)
+        with open(path / "synthetic_tokenizer.json", "r") as f:
+            data = json.load(f)
+        tokenizer = cls(vocab_size=data["vocab_size"])
+        tokenizer.pad_token = data["pad_token"]
+        tokenizer.eos_token = data["eos_token"]
+        tokenizer.pad_token_id = data["pad_token_id"]
+        tokenizer.eos_token_id = data["eos_token_id"]
+        return tokenizer
+
 
 def build_synthetic_model(vocab_size: int = SYNTHETIC_VOCAB_SIZE) -> GPT2LMHeadModel:
     config = GPT2Config(
@@ -85,6 +97,10 @@ def build_synthetic_model(vocab_size: int = SYNTHETIC_VOCAB_SIZE) -> GPT2LMHeadM
         eos_token_id=1,
     )
     return GPT2LMHeadModel(config)
+
+
+def load_synthetic_model(path: str | Path) -> GPT2LMHeadModel:
+    return GPT2LMHeadModel.from_pretrained(path)
 
 
 def build_synthetic_model_and_tokenizer() -> tuple[GPT2LMHeadModel, SyntheticTokenizer]:

@@ -11,6 +11,7 @@ EXPECTED_CHECKPOINT_FILES = {
     "memory_registry.json",
     "train_config.json",
     "last_period.txt",
+    "trainer_state.pt",
 }
 MODEL_WEIGHT_FILES = {"model.safetensors", "pytorch_model.bin"}
 

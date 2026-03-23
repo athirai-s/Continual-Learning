@@ -527,7 +527,7 @@ Interrupted runs become cheap to recover from safe optimizer-step boundaries, an
 
 ### PR M2.3: Restore Trainer State And Resume Within A Unit
 
-- [ ] `M2.3` Persist trainer state, RNG state, and a current-unit cursor so resume can continue from the next safe checkpoint boundary.
+- [x] `M2.3` Persist trainer state, RNG state, and a current-unit cursor so resume can continue from the next safe checkpoint boundary.
 - Problem:
   Restoring only model weights and metadata is not enough to continue a partially completed unit faithfully after preemption.
 - Proposed change:
