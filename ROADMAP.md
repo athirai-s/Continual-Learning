@@ -150,7 +150,7 @@ The biggest gaps are:
 
 ## Milestone Overview
 
-- [ ] Milestone 0: Testable Project Skeleton
+- [x] Milestone 0: Testable Project Skeleton
 - [ ] Milestone 1: Behavioral Safety Net In CI
 - [ ] Milestone 2: Trustworthy Checkpoint And Resume
 - [ ] Milestone 3: Reproducible And Informative Experiments
@@ -278,7 +278,7 @@ After this milestone, future trainer work can be validated automatically instead
 
 ### PR M0.5: Document Required CI And Definition Of Done
 
-- [ ] `M0.5` Add contributor-facing testing and merge rules.
+- [x] `M0.5` Add contributor-facing testing and merge rules.
 - Problem:
   Even with CI files present, the repo still lacks an explicit rule set for what every trainer PR must prove.
 - Proposed change:
