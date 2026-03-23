@@ -154,7 +154,7 @@ The biggest gaps are:
 - [x] Milestone 1: Behavioral Safety Net In CI
 - [x] Milestone 2: Trustworthy Checkpoint And Resume
 - [x] Milestone 3: Reproducible And Informative Experiments
-- [ ] Milestone 4: Measurement-Led Performance Work
+- [x] Milestone 4: Measurement-Led Performance Work
 - [ ] Milestone 5: Continual-Learning Training Quality
 
 ## Milestone 0: Testable Project Skeleton
@@ -734,7 +734,7 @@ Performance work becomes evidence-based instead of anecdotal, and the repo avoid
 
 ### PR M4.2: Address The Dominant Measured Bottleneck
 
-- [ ] `M4.2` Implement one measured optimization against the largest observed bottleneck.
+- [x] `M4.2` Implement one measured optimization against the largest observed bottleneck.
 - Problem:
   Optimization work should be driven by evidence, not by generic trainer folklore.
 - Proposed change:

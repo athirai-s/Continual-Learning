@@ -45,7 +45,7 @@ class PassageDataset(Dataset):
             text,
             truncation=True,
             max_length=self.max_length,
-            padding="max_length",
+            padding=None,
             return_tensors="pt",
         )
         item = {k: v.squeeze(0) for k, v in enc.items()}
@@ -115,6 +115,29 @@ class CASFTrainer:
             return min(candidates)
         return 512
 
+    def _collate_batch(self, batch: list[dict[str, torch.Tensor]]) -> dict[str, torch.Tensor]:
+        pad_token_id = getattr(self.tokenizer, "pad_token_id", 0) or 0
+        input_ids = torch.nn.utils.rnn.pad_sequence(
+            [item["input_ids"] for item in batch],
+            batch_first=True,
+            padding_value=pad_token_id,
+        )
+        attention_mask = torch.nn.utils.rnn.pad_sequence(
+            [item["attention_mask"] for item in batch],
+            batch_first=True,
+            padding_value=0,
+        )
+        labels = torch.nn.utils.rnn.pad_sequence(
+            [item["labels"] for item in batch],
+            batch_first=True,
+            padding_value=-100,
+        )
+        return {
+            "input_ids": input_ids,
+            "attention_mask": attention_mask,
+            "labels": labels,
+        }
+
     def _build_dataloader(self, passages, start_batch_index: int = 0):
         start_index = start_batch_index * self.config.batch_size
         ds = PassageDataset(
@@ -126,6 +149,7 @@ class CASFTrainer:
             ds,
             batch_size=self.config.batch_size,
             shuffle=False,
+            collate_fn=self._collate_batch,
         )
     
     def _train_step(self, batch) -> float:
