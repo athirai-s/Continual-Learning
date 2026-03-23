@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
-  fast-tests:
+  unit:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,5 +25,68 @@ jobs:
       - name: Sync dependencies
         run: uv sync --group dev
 
-      - name: Run pytest
-        run: uv run pytest -q
+      - name: Run unit tests
+        run: uv run pytest tests/unit -q
+
+  contract:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Sync dependencies
+        run: uv sync --group dev
+
+      - name: Run contract tests
+        run: uv run pytest tests/contracts -q
+
+  integration:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Sync dependencies
+        run: uv sync --group dev
+
+      - name: Run integration tests
+        run: uv run pytest tests/helpers/test_synthetic_backend.py tests/integration -q
+
+  smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Sync dependencies
+        run: uv sync --group dev
+
+      - name: Run smoke tests
+        run: uv run pytest tests/test_sanity.py tests/test_launchers.py tests/test_train_runner.py tests/smoke -q

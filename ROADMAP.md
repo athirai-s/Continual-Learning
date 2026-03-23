@@ -151,7 +151,7 @@ The biggest gaps are:
 ## Milestone Overview
 
 - [x] Milestone 0: Testable Project Skeleton
-- [ ] Milestone 1: Behavioral Safety Net In CI
+- [x] Milestone 1: Behavioral Safety Net In CI
 - [ ] Milestone 2: Trustworthy Checkpoint And Resume
 - [ ] Milestone 3: Reproducible And Informative Experiments
 - [ ] Milestone 4: Measurement-Led Performance Work
@@ -428,7 +428,7 @@ This milestone is intentionally not exhaustive. It should protect the public sea
 
 ### PR M1.5: Make Behavioral CI Required
 
-- [ ] `M1.5` Promote the fast behavioral suite to the required merge gate.
+- [x] `M1.5` Promote the fast behavioral suite to the required merge gate.
 - Problem:
   Tests do not protect the repo unless they are both stable and required.
 - Proposed change:

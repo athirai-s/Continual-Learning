@@ -16,6 +16,15 @@ Run the required fast suite locally:
 uv run pytest -q
 ```
 
+Run the same four CI lanes locally:
+
+```bash
+uv run pytest tests/unit -q
+uv run pytest tests/contracts -q
+uv run pytest tests/helpers/test_synthetic_backend.py tests/integration -q
+uv run pytest tests/test_sanity.py tests/test_launchers.py tests/test_train_runner.py tests/smoke -q
+```
+
 Run the tiny offline smoke path through the supported entrypoint:
 
 ```bash
@@ -36,7 +45,7 @@ Before merge:
 2. The PR description states the problem, behavior change, tests, artifact impact, and non-goals.
 3. Every behavior change is covered by tests at the right layer.
 4. If checkpoint, config, runner, dataset, or launcher contracts change, the tests and docs for those contracts change in the same PR.
-5. Required CI is green on the PR branch. Today that required gate is `fast-tests`.
+5. Required CI is green on the PR branch. The required behavioral suite is `unit`, `contract`, `integration`, and `smoke`.
 
 Use GitHub checks, not guesswork:
 
