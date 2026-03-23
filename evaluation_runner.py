@@ -60,6 +60,7 @@ class GenerationAdapter:
             return_tensors="pt",
         )
         batch = {key: value.to(self.device) for key, value in encoded.items()}
+        prompt_length = batch["input_ids"].shape[1]
         with torch.no_grad():
             output = self.model.generate(
                 **batch,
@@ -67,9 +68,10 @@ class GenerationAdapter:
                 pad_token_id=getattr(self.tokenizer, "pad_token_id", None),
                 eos_token_id=getattr(self.tokenizer, "eos_token_id", None),
             )
+        generated_tokens = output[0][prompt_length:]
         if hasattr(self.tokenizer, "decode"):
-            return self.tokenizer.decode(output[0], skip_special_tokens=True)
-        return " ".join(str(token_id) for token_id in output[0].tolist())
+            return self.tokenizer.decode(generated_tokens, skip_special_tokens=True)
+        return " ".join(str(token_id) for token_id in generated_tokens.tolist())
 
 
 def _serialize_eval_result(result: EvalResult) -> dict[str, Any]:
