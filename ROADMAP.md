@@ -152,7 +152,7 @@ The biggest gaps are:
 
 - [x] Milestone 0: Testable Project Skeleton
 - [x] Milestone 1: Behavioral Safety Net In CI
-- [ ] Milestone 2: Trustworthy Checkpoint And Resume
+- [x] Milestone 2: Trustworthy Checkpoint And Resume
 - [ ] Milestone 3: Reproducible And Informative Experiments
 - [ ] Milestone 4: Measurement-Led Performance Work
 - [ ] Milestone 5: Continual-Learning Training Quality
@@ -599,7 +599,7 @@ After this milestone, a run directory should tell you what happened, why it happ
 
 ### PR M3.1: Add An Additive Run-Root Layout And Stable Manifest
 
-- [ ] `M3.1` Standardize the run root around stable top-level artifacts without breaking Milestone 2 checkpoint paths.
+- [x] `M3.1` Standardize the run root around stable top-level artifacts without breaking Milestone 2 checkpoint paths.
 - Problem:
   Ad hoc run layouts make comparison and automation brittle.
 - Proposed change:
