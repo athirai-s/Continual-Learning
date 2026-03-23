@@ -714,7 +714,7 @@ Performance work becomes evidence-based instead of anecdotal, and the repo avoid
 
 ### PR M4.1: Add Timing And Throughput Instrumentation
 
-- [ ] `M4.1` Measure step time, data time, checkpoint time, and effective throughput.
+- [x] `M4.1` Measure step time, data time, checkpoint time, and effective throughput.
 - Problem:
   Performance work is guesswork without measurement.
 - Proposed change:
