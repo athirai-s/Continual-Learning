@@ -189,6 +189,47 @@ def test_runner_resume_rejects_incompatible_config(tmp_path):
         )
 
 
+def test_failed_resume_does_not_overwrite_existing_run_metadata(tmp_path):
+    cfg = build_config("resume-preserves-manifest")
+    initial_results = run_training(
+        cfg,
+        model_factory=build_synthetic_model_and_tokenizer,
+        resume_model_factory=lambda cfg, path: (
+            load_synthetic_model(path),
+            SyntheticTokenizer.from_pretrained(path),
+        ),
+        dataset_factory=build_synthetic_dataset,
+        checkpoint_dir=str(tmp_path),
+        training_units=["aug_sep"],
+    )
+
+    run_root = tmp_path / "resume-preserves-manifest"
+    manifest_path = run_root / "run_manifest.json"
+    config_path = tmp_path / "resume-preserves-manifest_config.json"
+    original_manifest = manifest_path.read_text()
+    original_config = config_path.read_text()
+
+    incompatible_cfg = build_config("resume-preserves-manifest")
+    incompatible_cfg.batch_size = 2
+
+    with pytest.raises(Exception, match="compatibility"):
+        run_training(
+            incompatible_cfg,
+            model_factory=build_synthetic_model_and_tokenizer,
+            resume_model_factory=lambda cfg, path: (
+                load_synthetic_model(path),
+                SyntheticTokenizer.from_pretrained(path),
+            ),
+            dataset_factory=build_synthetic_dataset,
+            checkpoint_dir=str(tmp_path),
+            training_units=["aug_sep"],
+            resume_from=initial_results[0]["checkpoint_paths"][0],
+        )
+
+    assert manifest_path.read_text() == original_manifest
+    assert config_path.read_text() == original_config
+
+
 def test_runner_resume_rejects_dataset_identity_mismatch(tmp_path):
     cfg = build_config("resume-identity")
     results = run_training(
