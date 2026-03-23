@@ -1,10 +1,12 @@
 import hashlib
 import json
 import os
+import random
 from dataclasses import replace
 from pathlib import Path
 from typing import Any, Callable
 
+import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from casf_dataset_api import MemoryRegistry, TemporalWikiDataset, TGQADataset, TSQADataset
@@ -17,7 +19,7 @@ from synthetic_backend import (
     build_synthetic_model,
     load_synthetic_model,
 )
-from run_artifacts import ensure_run_layout, write_run_manifest
+from run_artifacts import collect_reproducibility_metadata, ensure_run_layout, write_run_manifest
 from train_config import TrainConfig
 from trainer import CASFTrainer, ResumeState
 
@@ -27,6 +29,13 @@ PERIODS = ["aug_sep"]
 DatasetFactory = Callable[[str, TrainConfig], Any]
 ModelFactory = Callable[[TrainConfig], tuple[Any, Any]]
 ResumeModelFactory = Callable[[TrainConfig, str], tuple[Any, Any]]
+
+
+def apply_global_seed(seed: int) -> None:
+    random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
 
 def build_dataset(dataset_name: str, period: str | None = None):
@@ -219,6 +228,7 @@ def run_training(
     os.makedirs(cfg.checkpoint_dir, exist_ok=True)
     run_root = os.path.join(cfg.checkpoint_dir, cfg.run_id)
     prepare_run_root(run_root)
+    apply_global_seed(cfg.seed)
     cfg_path = os.path.join(cfg.checkpoint_dir, f"{cfg.run_id}_config.json")
     cfg.save_json(cfg_path)
     print(f"Saved config to {cfg_path}\n")
@@ -244,7 +254,12 @@ def run_training(
     results: list[dict[str, Any]] = []
     units = training_units or get_training_units(cfg)
     ensure_run_layout(run_root, units)
-    write_run_manifest(run_root, cfg, units)
+    write_run_manifest(
+        run_root,
+        cfg,
+        units,
+        reproducibility=collect_reproducibility_metadata(cfg, units),
+    )
     if resume_state is not None and resume_state.current_unit not in units:
         raise ValueError(f"Resume unit {resume_state.current_unit!r} is not in the training plan")
     if resume_state is not None and not resume_state.metadata_only:
