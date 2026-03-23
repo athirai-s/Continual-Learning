@@ -1,3 +1,5 @@
+import json
+import os
 import pytest
 import torch
 
@@ -151,4 +153,96 @@ def test_resume_fails_when_last_period_metadata_is_missing(tmp_path):
     trainer = build_trainer()
 
     with pytest.raises(FileNotFoundError, match="Missing checkpoint metadata"):
+        trainer.resume(checkpoint_path)
+
+
+def test_runner_resume_rejects_incompatible_config(tmp_path):
+    initial_cfg = build_config("resume-compat")
+    initial_results = run_training(
+        initial_cfg,
+        model_factory=build_synthetic_model_and_tokenizer,
+        resume_model_factory=lambda cfg, path: (
+            load_synthetic_model(path),
+            SyntheticTokenizer.from_pretrained(path),
+        ),
+        dataset_factory=build_synthetic_dataset,
+        checkpoint_dir=str(tmp_path / "initial"),
+        training_units=["aug_sep"],
+    )
+    midpoint_checkpoint = initial_results[0]["checkpoint_paths"][0]
+
+    incompatible_cfg = build_config("resume-compat")
+    incompatible_cfg.batch_size = 2
+
+    with pytest.raises(Exception, match="compatibility"):
+        run_training(
+            incompatible_cfg,
+            model_factory=build_synthetic_model_and_tokenizer,
+            resume_model_factory=lambda cfg, path: (
+                load_synthetic_model(path),
+                SyntheticTokenizer.from_pretrained(path),
+            ),
+            dataset_factory=build_synthetic_dataset,
+            checkpoint_dir=str(tmp_path / "resumed"),
+            training_units=["aug_sep"],
+            resume_from=midpoint_checkpoint,
+        )
+
+
+def test_runner_resume_rejects_dataset_identity_mismatch(tmp_path):
+    cfg = build_config("resume-identity")
+    results = run_training(
+        cfg,
+        model_factory=build_synthetic_model_and_tokenizer,
+        resume_model_factory=lambda cfg, path: (
+            load_synthetic_model(path),
+            SyntheticTokenizer.from_pretrained(path),
+        ),
+        dataset_factory=build_synthetic_dataset,
+        checkpoint_dir=str(tmp_path),
+        training_units=["aug_sep"],
+    )
+
+    checkpoint_path = results[0]["checkpoint_paths"][0]
+    manifest_path = checkpoint_path + "/checkpoint_manifest.json"
+    with open(manifest_path, "r") as f:
+        manifest = json.load(f)
+    manifest["dataset_identity"]["snapshot_id"] = "tampered"
+    with open(manifest_path, "w") as f:
+        json.dump(manifest, f, indent=2, sort_keys=True)
+
+    with pytest.raises(Exception, match="Dataset identity"):
+        run_training(
+            build_config("resume-identity"),
+            model_factory=build_synthetic_model_and_tokenizer,
+            resume_model_factory=lambda cfg, path: (
+                load_synthetic_model(path),
+                SyntheticTokenizer.from_pretrained(path),
+            ),
+            dataset_factory=build_synthetic_dataset,
+            checkpoint_dir=str(tmp_path / "resumed"),
+            training_units=["aug_sep"],
+            resume_from=checkpoint_path,
+        )
+
+
+def test_resume_fails_when_manifest_is_missing_for_trainer_state_checkpoint(tmp_path):
+    cfg = build_config("resume-missing-manifest")
+    results = run_training(
+        cfg,
+        model_factory=build_synthetic_model_and_tokenizer,
+        resume_model_factory=lambda cfg, path: (
+            load_synthetic_model(path),
+            SyntheticTokenizer.from_pretrained(path),
+        ),
+        dataset_factory=build_synthetic_dataset,
+        checkpoint_dir=str(tmp_path),
+        training_units=["aug_sep"],
+    )
+
+    checkpoint_path = results[0]["checkpoint_path"]
+    os.remove(checkpoint_path + "/checkpoint_manifest.json")
+    trainer = build_trainer("resume-missing-manifest")
+
+    with pytest.raises(FileNotFoundError, match="Missing checkpoint manifest"):
         trainer.resume(checkpoint_path)

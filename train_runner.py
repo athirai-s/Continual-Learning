@@ -1,11 +1,15 @@
+import hashlib
+import json
 import os
 from dataclasses import replace
+from pathlib import Path
 from typing import Any, Callable
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from casf_dataset_api import MemoryRegistry, TemporalWikiDataset, TGQADataset, TSQADataset
 from checkpointing import prepare_run_root, resolve_checkpoint_path
+from checkpoint_manifest import CheckpointManifestError
 from synthetic_backend import (
     SyntheticTemporalDataset,
     SyntheticTokenizer,
@@ -84,6 +88,116 @@ def prepare_dataset(dataset: Any, cfg: TrainConfig, unit: str) -> str:
     return unit
 
 
+def build_resume_compatibility(cfg: TrainConfig) -> dict[str, Any]:
+    return {
+        "dataset_name": cfg.dataset_name,
+        "precision": cfg.precision,
+        "learning_rate": cfg.learning_rate,
+        "batch_size": cfg.batch_size,
+        "grad_accum_steps": cfg.grad_accum_steps,
+        "epochs_per_period": cfg.epochs_per_period,
+        "grad_clip": cfg.grad_clip,
+        "warmup_steps": cfg.warmup_steps,
+        "min_passage_length": cfg.min_passage_length,
+        "max_passages_per_period": cfg.max_passages_per_period,
+        "log_every_n_steps": cfg.log_every_n_steps,
+        "checkpoint_every_n_optimizer_steps": cfg.checkpoint_every_n_optimizer_steps,
+    }
+
+
+def _sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _sha256_file(path: str | Path) -> str:
+    hasher = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
+def _stable_json_hash(obj: Any) -> str:
+    return _sha256_bytes(json.dumps(obj, sort_keys=True).encode("utf-8"))
+
+
+def build_dataset_identity(dataset: Any, cfg: TrainConfig, unit: str) -> dict[str, Any]:
+    if isinstance(dataset, SyntheticTemporalDataset):
+        return {
+            "kind": "synthetic",
+            "unit": unit,
+            "snapshot_id": dataset.snapshot_id,
+            "content_sha256": _stable_json_hash(
+                {
+                    "train": dataset.get_train_passages(),
+                    "changed": [probe.prompt for probe in dataset.get_probes("changed")],
+                    "unchanged": [probe.prompt for probe in dataset.get_probes("unchanged")],
+                }
+            ),
+        }
+    if isinstance(dataset, TemporalWikiDataset):
+        from casf_dataset_api.download_dataset_scripts.data.temporal_wiki import (
+            DIFFSETS_ZIP,
+            PROBES_ZIP,
+        )
+
+        return {
+            "kind": "temporal_wiki",
+            "unit": unit,
+            "probes_zip_sha256": _sha256_file(PROBES_ZIP),
+            "diffsets_zip_sha256": _sha256_file(DIFFSETS_ZIP),
+        }
+    if isinstance(dataset, TSQADataset):
+        split_name = "validation" if dataset._loaded_split == "val" else dataset._loaded_split
+        split_ds = dataset._ds[split_name]
+        fingerprint = getattr(split_ds, "_fingerprint", None)
+        return {
+            "kind": "tsqa",
+            "unit": unit,
+            "split": split_name,
+            "config": dataset.source_filter,
+            "fingerprint": fingerprint,
+            "content_sha256": None if fingerprint else _stable_json_hash(list(split_ds)),
+        }
+    if isinstance(dataset, TGQADataset):
+        split_ds = dataset._ds[dataset._loaded_split]
+        fingerprint = getattr(split_ds, "_fingerprint", None)
+        return {
+            "kind": "tgqa",
+            "unit": unit,
+            "split": dataset._loaded_split,
+            "config": dataset.config,
+            "fingerprint": fingerprint,
+            "content_sha256": None if fingerprint else _stable_json_hash(list(split_ds)),
+        }
+    raise ValueError(f"No dataset identity adapter for {type(dataset).__name__}")
+
+
+def validate_resume_inputs(
+    trainer: CASFTrainer,
+    cfg: TrainConfig,
+    training_plan: list[str],
+    dataset_identity: dict[str, Any],
+) -> None:
+    manifest = trainer._checkpoint_manifest
+    if manifest is None:
+        return
+
+    if manifest.model_name != cfg.model_name:
+        raise CheckpointManifestError(
+            f"Resume model_name mismatch: checkpoint={manifest.model_name!r}, current={cfg.model_name!r}"
+        )
+    if training_plan[: len(manifest.training_plan)] != manifest.training_plan:
+        raise CheckpointManifestError(
+            f"Resume training_plan mismatch: checkpoint={manifest.training_plan!r}, current={training_plan!r}"
+        )
+    current_compat = build_resume_compatibility(cfg)
+    if manifest.resume_compatibility != current_compat:
+        raise CheckpointManifestError("Resume compatibility settings do not match the checkpoint")
+    if manifest.dataset_identity != dataset_identity:
+        raise CheckpointManifestError("Dataset identity does not match the checkpoint")
+
+
 def run_training(
     cfg: TrainConfig,
     *,
@@ -128,6 +242,11 @@ def run_training(
     units = training_units or get_training_units(cfg)
     if resume_state is not None and resume_state.current_unit not in units:
         raise ValueError(f"Resume unit {resume_state.current_unit!r} is not in the training plan")
+    if resume_state is not None and not resume_state.metadata_only:
+        resume_dataset = dataset_factory(resume_state.current_unit, cfg)
+        resume_period = prepare_dataset(resume_dataset, cfg, resume_state.current_unit)
+        resume_dataset_identity = build_dataset_identity(resume_dataset, cfg, resume_period)
+        validate_resume_inputs(trainer, cfg, units, resume_dataset_identity)
     if resume_state is None:
         pending_units = units
     elif resume_state.unit_completed:
@@ -141,10 +260,24 @@ def run_training(
         print(f"\n=== Training unit: {unit} ===")
         dataset = dataset_factory(unit, cfg)
         period_name = prepare_dataset(dataset, cfg, unit)
+        dataset_identity = build_dataset_identity(dataset, cfg, period_name)
+        if resume_state is not None and unit == resume_state.current_unit and not resume_state.metadata_only:
+            validate_resume_inputs(trainer, cfg, units, dataset_identity)
         checkpoint_paths: list[str] = []
 
+        manifest_metadata = {
+            "model_name": cfg.model_name,
+            "training_plan": units,
+            "resume_compatibility": build_resume_compatibility(cfg),
+            "dataset_identity": dataset_identity,
+        }
+
         def checkpoint_hook(period: str, optimizer_step: int) -> None:
-            checkpoint_path = trainer.checkpoint(str(period), run_root)
+            checkpoint_path = trainer.checkpoint(
+                str(period),
+                run_root,
+                manifest_metadata=manifest_metadata,
+            )
             checkpoint_paths.append(checkpoint_path)
             print(
                 f"Checkpoint saved at optimizer_step={optimizer_step}: {checkpoint_path}"
@@ -163,7 +296,11 @@ def run_training(
             checkpoint_hook=checkpoint_hook,
             resume_state=active_resume_state,
         )
-        checkpoint_path = trainer.checkpoint(str(period_name), run_root)
+        checkpoint_path = trainer.checkpoint(
+            str(period_name),
+            run_root,
+            manifest_metadata=manifest_metadata,
+        )
 
         result["checkpoint_path"] = checkpoint_path
         result["checkpoint_paths"] = checkpoint_paths + [checkpoint_path]
