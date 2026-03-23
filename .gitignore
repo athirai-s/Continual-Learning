@@ -12,6 +12,8 @@ __pycache__/
 
 # ── Data ──────────────────────────────────────────────────────────
 casf_dataset_api/download_dataset_scripts/data/
+!casf_dataset_api/download_dataset_scripts/data/
+!casf_dataset_api/download_dataset_scripts/data/*.py
 explore/TemporalWikiDataset/data/
 explore/WikiFactDiffDataset/data/
 *.zip
