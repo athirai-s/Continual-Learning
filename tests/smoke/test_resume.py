@@ -35,7 +35,7 @@ def load_synthetic_probe_dataset() -> SyntheticTemporalDataset:
     return dataset
 
 
-def test_resume_restores_supported_metadata_and_can_continue_training(tmp_path):
+def test_metadata_resume_restores_registry_and_last_period_and_can_continue(tmp_path):
     first_trainer = build_trainer()
     dataset = load_synthetic_probe_dataset()
     checkpoint_path = tmp_path / "resume-smoke" / "aug_sep"
@@ -57,7 +57,7 @@ def test_resume_restores_supported_metadata_and_can_continue_training(tmp_path):
     assert continued_result["n_passages_trained"] == 2
 
 
-def test_resume_fails_when_last_period_metadata_is_missing(tmp_path):
+def test_metadata_resume_fails_when_last_period_metadata_is_missing(tmp_path):
     checkpoint_path = tmp_path / "missing-metadata"
     checkpoint_path.mkdir(parents=True)
     MemoryRegistry().save(checkpoint_path / "memory_registry.json")

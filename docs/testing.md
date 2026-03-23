@@ -21,8 +21,8 @@ Run the same four CI lanes locally:
 ```bash
 uv run pytest tests/unit -q
 uv run pytest tests/contracts -q
-uv run pytest tests/helpers/test_synthetic_backend.py tests/integration -q
-uv run pytest tests/test_sanity.py tests/test_launchers.py tests/test_train_runner.py tests/smoke -q
+uv run pytest tests/integration -q
+uv run pytest tests/smoke -q
 ```
 
 Run the tiny offline smoke path through the supported entrypoint:
@@ -33,9 +33,19 @@ uv run python main.py --mode synthetic --run-id local-smoke --checkpoint-dir /tm
 
 ## Supported Entrypoints
 
-- `main.py` is the supported top-level training entrypoint.
-- `run_job.sh` is the supported batch launcher and must keep pointing at `main.py --mode real`.
+- `main.py` is the primary supported training entrypoint.
+- `run_job.sh` is the supported SLURM wrapper contract and is exercised in CI in synthetic mode through `CONTINUAL_LEARNING_*` environment overrides.
 - `3B_train.py` is legacy experimental code and is not part of the supported path.
+- The defaults in `run_job.sh` are cluster-specific examples, not portability guarantees.
+
+## Checkpoint Resume Contract
+
+Before Milestone 2, checkpoint and resume only claim metadata-level restore:
+
+- `checkpoint()` writes model, tokenizer, memory registry, config, and `last_period` metadata.
+- `resume()` restores `memory_registry.json` and `last_period.txt`.
+- The smoke test proves metadata restoration plus non-crashing continuation on a fresh trainer instance.
+- Full training-state recovery, optimizer/scheduler restore, and interruption-safe recovery are deferred to Milestone 2.
 
 ## Required Merge Contract
 
@@ -68,4 +78,4 @@ If a bug escapes, the fix must add a permanent regression test in the same PR un
 - Keep one roadmap box per PR.
 - Do not weaken CI or remove tests without replacing them with stronger coverage.
 - Prefer synthetic, offline fixtures for required CI coverage.
-- Keep the supported entrypoint under smoke-test coverage whenever launch behavior changes.
+- Keep the supported entrypoint and SLURM wrapper contract under smoke-test coverage whenever launch behavior changes.
