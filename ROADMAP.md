@@ -801,11 +801,13 @@ The training loop becomes more faithful to period-based factual updating and mor
 
 ### PR M5.2: Add Project-Relevant Continual-Learning Reports Only If The Baseline Review Cycle Needs Them
 
-- [ ] `M5.2` Emit summary reports only if structured logs and eval artifacts are insufficient for comparing baseline continual-learning runs.
+- [x] `M5.2` Emit summary reports only if structured logs and eval artifacts are insufficient for comparing baseline continual-learning runs.
 - Problem:
   If raw structured metrics are too cumbersome to compare, the repo will need a stable higher-level summary artifact.
 - Proposed change:
   Add one narrow summary artifact that combines existing metrics and evaluation outputs into a stable comparison-friendly format. Skip this PR if the baseline decision workflow is already served by the Milestone 3 artifacts.
+- Skip rationale:
+  Skipped after reviewing a completed synthetic multi-unit run. `run_manifest.json` already captures config and training-plan identity, `metrics/eval.jsonl` already gives comparison-friendly per-unit eval rows, and `periods/<unit>/eval_summary.json` already provides stable unit-level rollups without scanning step logs.
 - Likely files:
   report helpers, evaluator wiring, tests
 - Acceptance criteria:
