@@ -371,7 +371,7 @@ This milestone is intentionally not exhaustive. It should protect the public sea
 
 ### PR M1.3: Add Trainer Integration Tests
 
-- [ ] `M1.3` Add CPU integration tests for the custom trainer on synthetic fixtures.
+- [x] `M1.3` Add CPU integration tests for the custom trainer on synthetic fixtures.
 - Problem:
   Unit tests alone will not catch broken training wiring, step accounting, or artifact generation.
 - Proposed change:
