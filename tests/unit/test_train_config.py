@@ -18,6 +18,7 @@ def test_make_config_returns_valid_train_config():
     assert cfg.run_id == "unit-valid"
     assert cfg.model_name == "synthetic-local-model"
     assert cfg.dataset_name == "temporal_wiki"
+    assert cfg.checkpoint_every_n_optimizer_steps is None
 
 
 @pytest.mark.parametrize(
@@ -36,6 +37,10 @@ def test_make_config_returns_valid_train_config():
             "contradiction_batch_frac must be between 0 and 1",
         ),
         ({"log_every_n_steps": 0}, "log_every_n_steps must be > 0"),
+        (
+            {"checkpoint_every_n_optimizer_steps": 0},
+            "checkpoint_every_n_optimizer_steps must be > 0",
+        ),
     ],
 )
 def test_validate_rejects_invalid_values(updates, message):

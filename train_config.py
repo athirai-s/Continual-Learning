@@ -30,6 +30,7 @@ class TrainConfig:
     eval_after_each_period: bool = True
 
     checkpoint_dir: str = "checkpoints"
+    checkpoint_every_n_optimizer_steps: Optional[int] = None
 
     def validate(self) -> None:
         if self.method not in {"full_ft", "lora", "smf"}:
@@ -52,6 +53,11 @@ class TrainConfig:
             raise ValueError("contradiction_batch_frac must be between 0 and 1")
         if self.log_every_n_steps <= 0:
             raise ValueError("log_every_n_steps must be > 0")
+        if (
+            self.checkpoint_every_n_optimizer_steps is not None
+            and self.checkpoint_every_n_optimizer_steps <= 0
+        ):
+            raise ValueError("checkpoint_every_n_optimizer_steps must be > 0")
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -70,6 +76,7 @@ class TrainConfig:
         grad_accum_steps: int = 4,
         max_passages_per_period: int | None = None,
         log_every_n_steps: int = 100,
+        checkpoint_every_n_optimizer_steps: int | None = None,
     ) -> "TrainConfig":
         cfg = TrainConfig(
             run_id=run_id,
@@ -80,6 +87,7 @@ class TrainConfig:
             grad_accum_steps=grad_accum_steps,
             max_passages_per_period=max_passages_per_period,
             log_every_n_steps=log_every_n_steps,
+            checkpoint_every_n_optimizer_steps=checkpoint_every_n_optimizer_steps,
         )
         cfg.validate()
         return cfg

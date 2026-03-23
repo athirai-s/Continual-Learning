@@ -498,7 +498,7 @@ Interrupted runs become cheap to recover from safe optimizer-step boundaries, an
 
 ### PR M2.2: Fix Step Accounting And Add Safe Checkpoint Cadence
 
-- [ ] `M2.2` Separate micro-steps from optimizer-steps, flush tail accumulation correctly, and checkpoint only at safe optimizer-step boundaries.
+- [x] `M2.2` Separate micro-steps from optimizer-steps, flush tail accumulation correctly, and checkpoint only at safe optimizer-step boundaries.
 - Problem:
   The current loop can drop the final partial accumulation window, blur micro-step and optimizer-step semantics, and only save progress at coarse boundaries.
 - Proposed change:
