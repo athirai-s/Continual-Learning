@@ -11,6 +11,13 @@ from transformers import get_cosine_schedule_with_warmup
 from train_config import TrainConfig
 from passage_filter import PassageFilter
 from casf_dataset_api import TemporalDataset, ContradictionDetector, MemoryRegistry
+from checkpointing import (
+    RunRootLock,
+    create_checkpoint_tempdir,
+    finalize_checkpoint,
+    prepare_run_root,
+    resolve_checkpoint_path,
+)
 
 class PassageDataset(Dataset):
     def __init__(self, passages, tokenizer, max_length=512):
@@ -139,23 +146,30 @@ class CASFTrainer:
             "train_duration_sec": duration,
         }
 
-    def checkpoint(self, period: str, path: str) -> None:
-        os.makedirs(path, exist_ok=True)
-        self.model.save_pretrained(path)
-        self.tokenizer.save_pretrained(path)
-        self.registry.save(os.path.join(path, "memory_registry.json"))
+    def checkpoint(self, period: str, run_root: str) -> str:
+        prepare_run_root(run_root)
+        with RunRootLock(run_root):
+            temp_dir = create_checkpoint_tempdir(run_root)
+            self.model.save_pretrained(temp_dir)
+            self.tokenizer.save_pretrained(temp_dir)
+            self.registry.save(os.path.join(temp_dir, "memory_registry.json"))
 
-        with open(os.path.join(path, "train_config.json"), "w") as f:
-            json.dump(asdict(self.config), f, indent=2)
-        with open(os.path.join(path, "last_period.txt"), "w") as f:
-            f.write(period)
+            with open(os.path.join(temp_dir, "train_config.json"), "w") as f:
+                json.dump(asdict(self.config), f, indent=2)
+            with open(os.path.join(temp_dir, "last_period.txt"), "w") as f:
+                f.write(period)
+
+            final_dir = finalize_checkpoint(run_root, temp_dir, last_period=period)
+        return str(final_dir)
 
     def resume(self, path: str) -> str:
-        registry_path = os.path.join(path, "memory_registry.json")
+        checkpoint_path = resolve_checkpoint_path(path)
+
+        registry_path = os.path.join(checkpoint_path, "memory_registry.json")
         if os.path.exists(registry_path):
             self.registry.load(registry_path)
 
-        period_file = os.path.join(path, "last_period.txt")
+        period_file = os.path.join(checkpoint_path, "last_period.txt")
         if not os.path.exists(period_file):
             raise FileNotFoundError(f"Missing checkpoint metadata: {period_file}")
 

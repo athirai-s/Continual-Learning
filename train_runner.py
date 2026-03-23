@@ -8,6 +8,7 @@ from casf_dataset_api import MemoryRegistry, TemporalWikiDataset, TGQADataset, T
 from synthetic_backend import SyntheticTemporalDataset, SyntheticTokenizer, build_synthetic_model
 from train_config import TrainConfig
 from trainer import CASFTrainer
+from checkpointing import prepare_run_root
 
 
 PERIODS = ["aug_sep"]
@@ -80,6 +81,8 @@ def run_training(
     print(cfg)
 
     os.makedirs(cfg.checkpoint_dir, exist_ok=True)
+    run_root = os.path.join(cfg.checkpoint_dir, cfg.run_id)
+    prepare_run_root(run_root)
     cfg_path = os.path.join(cfg.checkpoint_dir, f"{cfg.run_id}_config.json")
     cfg.save_json(cfg_path)
     print(f"Saved config to {cfg_path}\n")
@@ -99,8 +102,7 @@ def run_training(
         period_name = prepare_dataset(dataset, cfg, unit)
 
         result = trainer.train_period(dataset, period_name)
-        checkpoint_path = os.path.join(cfg.checkpoint_dir, cfg.run_id, str(period_name))
-        trainer.checkpoint(str(period_name), checkpoint_path)
+        checkpoint_path = trainer.checkpoint(str(period_name), run_root)
 
         result["checkpoint_path"] = checkpoint_path
         results.append(result)
