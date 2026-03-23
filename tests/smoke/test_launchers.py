@@ -47,8 +47,11 @@ def test_run_job_defaults_to_main_entrypoint(repo_root):
 
 
 def test_legacy_launcher_is_marked_experimental(repo_root):
-    legacy_script = (repo_root / "3B_train.py").read_text()
+    legacy_path = repo_root / "experiments" / "legacy" / "3B_train.py"
+    legacy_script = legacy_path.read_text()
 
+    assert not (repo_root / "3B_train.py").exists()
+    assert legacy_path.exists()
     assert "Experimental legacy script kept for reference only." in legacy_script
     assert "supported training path" in legacy_script
     assert "through `main.py`" in legacy_script

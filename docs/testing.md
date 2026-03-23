@@ -35,7 +35,7 @@ uv run python main.py --mode synthetic --run-id local-smoke --checkpoint-dir /tm
 
 - `main.py` is the primary supported training entrypoint.
 - `run_job.sh` is the supported SLURM wrapper contract and is exercised in CI in synthetic mode through `CONTINUAL_LEARNING_*` environment overrides.
-- `3B_train.py` is legacy experimental code and is not part of the supported path.
+- `experiments/legacy/3B_train.py` is legacy experimental code and is not part of the supported path.
 - The defaults in `run_job.sh` are cluster-specific examples, not portability guarantees.
 
 ## Checkpoint Resume Contract

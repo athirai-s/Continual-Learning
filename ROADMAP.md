@@ -138,7 +138,7 @@ The current repo has:
 - a custom trainer in `trainer.py`
 - config scaffolding in `train_config.py`
 - a train entrypoint in `main.py`
-- a separate older experiment path in `3B_train.py`
+- a separate older experiment path in `experiments/legacy/3B_train.py`
 - dataset adapters under `casf_dataset_api/download_dataset_scripts/data/`
 
 The biggest gaps are:
@@ -155,7 +155,7 @@ The biggest gaps are:
 - [x] Milestone 2: Trustworthy Checkpoint And Resume
 - [x] Milestone 3: Reproducible And Informative Experiments
 - [x] Milestone 4: Measurement-Led Performance Work
-- [ ] Milestone 5: Continual-Learning Training Quality
+- [x] Milestone 5: Continual-Learning Training Quality
 
 ## Milestone 0: Testable Project Skeleton
 
@@ -825,13 +825,13 @@ The training loop becomes more faithful to period-based factual updating and mor
 
 ### PR M5.3: Retire Redundant Entrypoints Once The Supported Path Is Stable
 
-- [ ] `M5.3` Remove or isolate redundant entrypoints once the supported path has stayed stable through CI-backed use.
+- [x] `M5.3` Remove or isolate redundant entrypoints once the supported path has stayed stable through CI-backed use.
 - Problem:
   Even after early launch-path cutover, old entrypoints can continue to drift unless the repo narrows the supported surface.
 - Proposed change:
   Move `3B_train.py` under `experiments/legacy/` or otherwise isolate it outside the supported surface once the `main.py` plus `run_job.sh` path has stayed stable and tested.
 - Likely files:
-  `main.py`, `3B_train.py`, `run_job.sh`, docs, tests
+  `main.py`, `experiments/legacy/3B_train.py`, `run_job.sh`, docs, tests
 - Acceptance criteria:
   - the repo has one clearly supported path
   - remaining experimental scripts are clearly outside the supported surface
