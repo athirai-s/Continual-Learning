@@ -10,6 +10,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from casf_dataset_api import MemoryRegistry, TemporalWikiDataset, TGQADataset, TSQADataset
 from checkpointing import prepare_run_root, resolve_checkpoint_path
 from checkpoint_manifest import CheckpointManifestError
+from metrics_logger import MetricsLogger
 from synthetic_backend import (
     SyntheticTemporalDataset,
     SyntheticTokenizer,
@@ -221,6 +222,7 @@ def run_training(
     cfg_path = os.path.join(cfg.checkpoint_dir, f"{cfg.run_id}_config.json")
     cfg.save_json(cfg_path)
     print(f"Saved config to {cfg_path}\n")
+    metrics_logger = MetricsLogger(run_root)
 
     resume_path = resolve_checkpoint_path(resume_from) if resume_from is not None else None
     if resume_path is None:
@@ -282,9 +284,20 @@ def run_training(
                 manifest_metadata=manifest_metadata,
             )
             checkpoint_paths.append(checkpoint_path)
+            metrics_logger.emit(
+                "checkpoint",
+                unit=str(period),
+                optimizer_step=optimizer_step,
+                checkpoint_path=str(Path(checkpoint_path).relative_to(run_root)),
+            )
             print(
                 f"Checkpoint saved at optimizer_step={optimizer_step}: {checkpoint_path}"
             )
+
+        def event_hook(event: dict[str, Any]) -> None:
+            event_payload = dict(event)
+            event_type = event_payload.pop("event_type")
+            metrics_logger.emit(event_type, **event_payload)
 
         active_resume_state = (
             resume_state
@@ -297,12 +310,19 @@ def run_training(
             dataset,
             period_name,
             checkpoint_hook=checkpoint_hook,
+            event_hook=event_hook,
             resume_state=active_resume_state,
         )
         checkpoint_path = trainer.checkpoint(
             str(period_name),
             run_root,
             manifest_metadata=manifest_metadata,
+        )
+        metrics_logger.emit(
+            "checkpoint",
+            unit=str(period_name),
+            optimizer_step=result["optimizer_steps_total"],
+            checkpoint_path=str(Path(checkpoint_path).relative_to(run_root)),
         )
 
         result["checkpoint_path"] = checkpoint_path

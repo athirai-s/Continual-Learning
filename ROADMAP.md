@@ -624,7 +624,7 @@ After this milestone, a run directory should tell you what happened, why it happ
 
 ### PR M3.2: Add Structured Metrics Logging
 
-- [ ] `M3.2` Emit step and period metrics as JSONL or similarly simple structured logs.
+- [x] `M3.2` Emit step and period metrics as JSONL or similarly simple structured logs.
 - Problem:
   Printed logs are hard to compare and automate against.
 - Proposed change:

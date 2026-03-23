@@ -217,6 +217,7 @@ class CASFTrainer:
         dataset: TemporalDataset | None,
         period: str,
         checkpoint_hook: Callable[[str, int], None] | None = None,
+        event_hook: Callable[[dict[str, Any]], None] | None = None,
         resume_state: ResumeState | None = None,
     ) -> dict[str, Any]:
         start = time.time()
@@ -296,6 +297,17 @@ class CASFTrainer:
 
             averaged_window_loss = window_loss_total / window_micro_steps
             final_loss = averaged_window_loss
+            if event_hook is not None:
+                event_hook(
+                    {
+                        "event_type": "train_step",
+                        "unit": period,
+                        "optimizer_step": optimizer_steps_total,
+                        "total_optimizer_steps": total_optimizer_steps,
+                        "micro_step": micro_steps_total,
+                        "loss": averaged_window_loss,
+                    }
+                )
             if optimizer_steps_total % self.config.log_every_n_steps == 0:
                 print(f"step={optimizer_steps_total}, loss={averaged_window_loss:.4f}")
                 loss_curve.append((optimizer_steps_total, averaged_window_loss))
@@ -340,9 +352,9 @@ class CASFTrainer:
             unit_completed=True,
         )
 
-        duration = time.time() -start
+        duration = time.time() - start
 
-        return {
+        result = {
             "period": period,
             "train_loss_final": final_loss,
             "train_loss_curve": loss_curve,
@@ -352,6 +364,20 @@ class CASFTrainer:
             "micro_steps_total": micro_steps_total,
             "optimizer_steps_total": optimizer_steps_total,
         }
+        if event_hook is not None:
+            event_hook(
+                {
+                    "event_type": "period_end",
+                    "unit": period,
+                    "train_loss_final": result["train_loss_final"],
+                    "n_passages_trained": result["n_passages_trained"],
+                    "n_contradiction_passages": result["n_contradiction_passages"],
+                    "train_duration_sec": result["train_duration_sec"],
+                    "micro_steps_total": result["micro_steps_total"],
+                    "optimizer_steps_total": result["optimizer_steps_total"],
+                }
+            )
+        return result
 
     def checkpoint(
         self,
