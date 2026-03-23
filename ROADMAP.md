@@ -399,7 +399,7 @@ This milestone is intentionally not exhaustive. It should protect the public sea
 
 ### PR M1.4: Add Checkpoint And Resume Smoke Tests
 
-- [ ] `M1.4` Add required smoke tests proving that checkpointed runs can resume on tiny local fixtures.
+- [x] `M1.4` Add required smoke tests proving that checkpointed runs can resume on tiny local fixtures.
 - Problem:
   Checkpoint files may exist while resume semantics are still broken.
 - Proposed change:
