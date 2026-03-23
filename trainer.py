@@ -44,13 +44,17 @@ class PassageDataset(Dataset):
         enc = self.tokenizer(
             text,
             truncation=True,
-            # max_length=self.max_length,
-            max_length = 128,
+            max_length=self.max_length,
             padding="max_length",
             return_tensors="pt",
         )
         item = {k: v.squeeze(0) for k, v in enc.items()}
         item["labels"] = item["input_ids"].clone()
+        attention_mask = item.get("attention_mask")
+        if attention_mask is not None:
+            item["labels"][attention_mask == 0] = -100
+        elif getattr(self.tokenizer, "pad_token_id", None) is not None:
+            item["labels"][item["labels"] == self.tokenizer.pad_token_id] = -100
         return item
 
 
@@ -95,11 +99,28 @@ class CASFTrainer:
         self._checkpoint_state: dict[str, Any] | None = None
         self._checkpoint_manifest: CheckpointManifest | None = None
 
+    def _resolve_max_length(self) -> int:
+        candidates: list[int] = []
+        tokenizer_max_length = getattr(self.tokenizer, "model_max_length", None)
+        if isinstance(tokenizer_max_length, int) and 0 < tokenizer_max_length < 100_000:
+            candidates.append(tokenizer_max_length)
+
+        model_config = getattr(self.model, "config", None)
+        for attr in ("n_positions", "max_position_embeddings", "n_ctx"):
+            value = getattr(model_config, attr, None)
+            if isinstance(value, int) and value > 0:
+                candidates.append(value)
+
+        if candidates:
+            return min(candidates)
+        return 512
+
     def _build_dataloader(self, passages, start_batch_index: int = 0):
         start_index = start_batch_index * self.config.batch_size
         ds = PassageDataset(
             passages[start_index:],
             self.tokenizer,
+            max_length=self._resolve_max_length(),
         )
         return DataLoader(
             ds,

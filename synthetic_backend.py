@@ -19,6 +19,7 @@ class SyntheticTokenizer:
         self.eos_token = "<eos>"
         self.pad_token_id = 0
         self.eos_token_id = 1
+        self.model_max_length = SYNTHETIC_MAX_LENGTH
 
     def _encode(self, text: str, max_length: int) -> list[int]:
         token_ids = [2 + (byte % (self.vocab_size - 2)) for byte in text.encode("utf-8")]
