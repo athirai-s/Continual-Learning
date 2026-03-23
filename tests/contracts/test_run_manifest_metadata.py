@@ -23,6 +23,7 @@ def test_run_manifest_persists_required_reproducibility_metadata(tmp_path):
         model_factory=build_synthetic_model_and_tokenizer,
         dataset_factory=build_synthetic_dataset,
         checkpoint_dir=str(tmp_path),
+        training_units=["aug_sep"],
     )
 
     manifest = load_run_manifest(tmp_path / "integration-run-metadata")

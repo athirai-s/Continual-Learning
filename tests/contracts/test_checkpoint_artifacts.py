@@ -36,6 +36,7 @@ def test_synthetic_training_writes_expected_checkpoint_artifacts(tmp_path):
         model_factory=build_synthetic_model_and_tokenizer,
         dataset_factory=build_synthetic_dataset,
         checkpoint_dir=str(tmp_path),
+        training_units=["aug_sep"],
     )
 
     checkpoint_path = Path(results[0]["checkpoint_path"])

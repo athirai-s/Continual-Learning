@@ -5,6 +5,7 @@ from pathlib import Path
 from checkpointing import read_latest_pointer
 from train_config import TrainConfig
 from train_runner import build_synthetic_dataset, build_synthetic_model_and_tokenizer, run_training
+from training_plan import DEFAULT_TEMPORAL_WIKI_PLAN
 
 
 def test_run_training_smoke_with_synthetic_runtime(tmp_path):
@@ -26,8 +27,8 @@ def test_run_training_smoke_with_synthetic_runtime(tmp_path):
         checkpoint_dir=str(tmp_path),
     )
 
-    assert len(results) == 1
-    checkpoint_path = Path(results[0]["checkpoint_path"])
+    assert [result["period"] for result in results] == DEFAULT_TEMPORAL_WIKI_PLAN
+    checkpoint_path = Path(results[-1]["checkpoint_path"])
     latest_pointer = read_latest_pointer(tmp_path / "synthetic-runner")
     assert (tmp_path / "synthetic-runner_config.json").exists()
     assert (checkpoint_path / "config.json").exists()
@@ -35,6 +36,7 @@ def test_run_training_smoke_with_synthetic_runtime(tmp_path):
     assert (checkpoint_path / "memory_registry.json").exists()
     assert checkpoint_path.parent == tmp_path / "synthetic-runner" / "checkpoints"
     assert latest_pointer.checkpoint_id == checkpoint_path.name
+    assert latest_pointer.last_period == "nov_dec"
 
 
 def test_main_cli_synthetic_mode_smoke(repo_root, tmp_path):
@@ -60,6 +62,7 @@ def test_main_cli_synthetic_mode_smoke(repo_root, tmp_path):
     latest_pointer = read_latest_pointer(tmp_path / "cli-smoke")
     checkpoint_path = tmp_path / "cli-smoke" / latest_pointer.checkpoint_relpath
     assert (checkpoint_path / "config.json").exists()
+    assert latest_pointer.last_period == "nov_dec"
 
 
 def test_run_training_checkpoint_cadence_uses_optimizer_steps(tmp_path):
@@ -80,6 +83,7 @@ def test_run_training_checkpoint_cadence_uses_optimizer_steps(tmp_path):
         model_factory=build_synthetic_model_and_tokenizer,
         dataset_factory=build_synthetic_dataset,
         checkpoint_dir=str(tmp_path),
+        training_units=["aug_sep"],
     )
 
     checkpoint_root = tmp_path / "cadence-runner" / "checkpoints"
