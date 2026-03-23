@@ -153,7 +153,7 @@ The biggest gaps are:
 - [x] Milestone 0: Testable Project Skeleton
 - [x] Milestone 1: Behavioral Safety Net In CI
 - [x] Milestone 2: Trustworthy Checkpoint And Resume
-- [ ] Milestone 3: Reproducible And Informative Experiments
+- [x] Milestone 3: Reproducible And Informative Experiments
 - [ ] Milestone 4: Measurement-Led Performance Work
 - [ ] Milestone 5: Continual-Learning Training Quality
 
@@ -675,7 +675,7 @@ After this milestone, a run directory should tell you what happened, why it happ
 
 ### PR M3.4: Add Lightweight Evaluation Hooks
 
-- [ ] `M3.4` Run project-relevant evaluation at useful boundaries and persist results.
+- [x] `M3.4` Run project-relevant evaluation at useful boundaries and persist results.
 - Problem:
   Training loss alone is not enough to guide continual-learning decisions.
 - Proposed change:

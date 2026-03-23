@@ -85,6 +85,19 @@ class SyntheticTokenizer:
         tokenizer.eos_token_id = data["eos_token_id"]
         return tokenizer
 
+    def decode(self, token_ids: list[int] | torch.Tensor, skip_special_tokens: bool = True) -> str:
+        if isinstance(token_ids, torch.Tensor):
+            token_ids = token_ids.tolist()
+
+        chars: list[str] = []
+        for token_id in token_ids:
+            if skip_special_tokens and token_id in {self.pad_token_id, self.eos_token_id}:
+                continue
+            if token_id < 2:
+                continue
+            chars.append(chr(32 + ((token_id - 2) % 95)))
+        return "".join(chars)
+
 
 def build_synthetic_model(vocab_size: int = SYNTHETIC_VOCAB_SIZE) -> GPT2LMHeadModel:
     config = GPT2Config(
