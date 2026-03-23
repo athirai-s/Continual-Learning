@@ -41,7 +41,25 @@ def test_metrics_events_follow_stable_schema(tmp_path):
         "total_optimizer_steps",
         "micro_step",
         "loss",
+        "tokens_in_step",
+        "data_wait_sec",
+        "forward_backward_sec",
+        "optimizer_step_sec",
+        "step_wall_sec",
+        "effective_tokens_per_sec",
     } <= train_step_event.keys()
+    for key in {
+        "loss",
+        "data_wait_sec",
+        "forward_backward_sec",
+        "optimizer_step_sec",
+        "step_wall_sec",
+        "effective_tokens_per_sec",
+    }:
+        assert isinstance(train_step_event[key], float)
+        assert train_step_event[key] >= 0.0
+    assert isinstance(train_step_event["tokens_in_step"], int)
+    assert train_step_event["tokens_in_step"] > 0
 
     period_end_event = next(event for event in events if event["event_type"] == "period_end")
     assert {
@@ -52,7 +70,26 @@ def test_metrics_events_follow_stable_schema(tmp_path):
         "train_duration_sec",
         "micro_steps_total",
         "optimizer_steps_total",
+        "tokens_trained_total",
+        "data_wait_sec_total",
+        "forward_backward_sec_total",
+        "optimizer_step_sec_total",
+        "effective_tokens_per_sec",
     } <= period_end_event.keys()
+    for key in {
+        "train_loss_final",
+        "train_duration_sec",
+        "data_wait_sec_total",
+        "forward_backward_sec_total",
+        "optimizer_step_sec_total",
+        "effective_tokens_per_sec",
+    }:
+        assert isinstance(period_end_event[key], float)
+        assert period_end_event[key] >= 0.0
+    assert isinstance(period_end_event["tokens_trained_total"], int)
+    assert period_end_event["tokens_trained_total"] > 0
 
     checkpoint_event = next(event for event in events if event["event_type"] == "checkpoint")
-    assert {"unit", "optimizer_step", "checkpoint_path"} <= checkpoint_event.keys()
+    assert {"unit", "optimizer_step", "checkpoint_path", "checkpoint_time_sec"} <= checkpoint_event.keys()
+    assert isinstance(checkpoint_event["checkpoint_time_sec"], float)
+    assert checkpoint_event["checkpoint_time_sec"] >= 0.0

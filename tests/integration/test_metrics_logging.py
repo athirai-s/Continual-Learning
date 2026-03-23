@@ -32,4 +32,8 @@ def test_synthetic_training_emits_train_step_period_end_and_checkpoint_events(tm
     assert event_types == ["train_step", "train_step", "period_end", "checkpoint"]
     assert events[-1]["checkpoint_path"] == "checkpoints/ckpt-000001"
     assert events[-1]["optimizer_step"] == results[0]["optimizer_steps_total"]
+    assert events[-1]["checkpoint_time_sec"] >= 0.0
+    assert events[0]["step_wall_sec"] >= 0.0
+    assert events[0]["effective_tokens_per_sec"] >= 0.0
+    assert events[-2]["effective_tokens_per_sec"] >= 0.0
     assert events[-2]["unit"] == "aug_sep"

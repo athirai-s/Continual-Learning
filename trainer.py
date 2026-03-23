@@ -263,8 +263,16 @@ class CASFTrainer:
         loss_curve = []
         final_loss = 0.0
         micro_steps_total = start_batch_index
+        total_tokens_trained = 0
         window_loss_total = 0.0
         window_micro_steps = 0
+        window_tokens_total = 0
+        window_data_wait_sec = 0.0
+        window_forward_backward_sec = 0.0
+        total_data_wait_sec = 0.0
+        total_forward_backward_sec = 0.0
+        total_optimizer_step_sec = 0.0
+        next_batch_wait_start = time.perf_counter()
 
         self._update_checkpoint_state(
             period=period,
@@ -279,24 +287,43 @@ class CASFTrainer:
         )
 
         for batch in dataloader:
+            batch_ready_time = time.perf_counter()
+            data_wait_sec = batch_ready_time - next_batch_wait_start
+            forward_backward_start = time.perf_counter()
             loss = self._train_step(batch)
+            forward_backward_sec = time.perf_counter() - forward_backward_start
+            batch_tokens = int(batch["attention_mask"].sum().item())
             micro_steps_total += 1
+            total_tokens_trained += batch_tokens
             window_micro_steps += 1
+            window_tokens_total += batch_tokens
             window_loss_total += loss
+            window_data_wait_sec += data_wait_sec
+            window_forward_backward_sec += forward_backward_sec
 
             is_window_boundary = window_micro_steps == self.config.grad_accum_steps
             is_last_micro_step = micro_steps_total == total_micro_steps
             if not (is_window_boundary or is_last_micro_step):
+                next_batch_wait_start = time.perf_counter()
                 continue
 
+            optimizer_step_start = time.perf_counter()
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.grad_clip)
             self.optimizer.step()
             scheduler.step()
             self.optimizer.zero_grad()
+            optimizer_step_sec = time.perf_counter() - optimizer_step_start
             optimizer_steps_total += 1
+            total_data_wait_sec += window_data_wait_sec
+            total_forward_backward_sec += window_forward_backward_sec
+            total_optimizer_step_sec += optimizer_step_sec
 
             averaged_window_loss = window_loss_total / window_micro_steps
             final_loss = averaged_window_loss
+            step_wall_sec = window_data_wait_sec + window_forward_backward_sec + optimizer_step_sec
+            effective_tokens_per_sec = (
+                window_tokens_total / step_wall_sec if step_wall_sec > 0 else 0.0
+            )
             if event_hook is not None:
                 event_hook(
                     {
@@ -306,6 +333,12 @@ class CASFTrainer:
                         "total_optimizer_steps": total_optimizer_steps,
                         "micro_step": micro_steps_total,
                         "loss": averaged_window_loss,
+                        "tokens_in_step": window_tokens_total,
+                        "data_wait_sec": window_data_wait_sec,
+                        "forward_backward_sec": window_forward_backward_sec,
+                        "optimizer_step_sec": optimizer_step_sec,
+                        "step_wall_sec": step_wall_sec,
+                        "effective_tokens_per_sec": effective_tokens_per_sec,
                     }
                 )
             if optimizer_steps_total % self.config.log_every_n_steps == 0:
@@ -335,6 +368,10 @@ class CASFTrainer:
 
             window_loss_total = 0.0
             window_micro_steps = 0
+            window_tokens_total = 0
+            window_data_wait_sec = 0.0
+            window_forward_backward_sec = 0.0
+            next_batch_wait_start = time.perf_counter()
         
         for probe in probes:
             self.registry.write(probe, period)
@@ -365,6 +402,7 @@ class CASFTrainer:
             "optimizer_steps_total": optimizer_steps_total,
         }
         if event_hook is not None:
+            effective_tokens_per_sec = total_tokens_trained / duration if duration > 0 else 0.0
             event_hook(
                 {
                     "event_type": "period_end",
@@ -375,6 +413,11 @@ class CASFTrainer:
                     "train_duration_sec": result["train_duration_sec"],
                     "micro_steps_total": result["micro_steps_total"],
                     "optimizer_steps_total": result["optimizer_steps_total"],
+                    "tokens_trained_total": total_tokens_trained,
+                    "data_wait_sec_total": total_data_wait_sec,
+                    "forward_backward_sec_total": total_forward_backward_sec,
+                    "optimizer_step_sec_total": total_optimizer_step_sec,
+                    "effective_tokens_per_sec": effective_tokens_per_sec,
                 }
             )
         return result

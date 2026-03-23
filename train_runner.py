@@ -2,6 +2,7 @@ import hashlib
 import json
 import os
 import random
+import time
 from dataclasses import replace
 from pathlib import Path
 from typing import Any, Callable
@@ -295,18 +296,21 @@ def run_training(
             }
 
             def checkpoint_hook(period: str, optimizer_step: int) -> None:
+                checkpoint_start = time.perf_counter()
                 checkpoint_path = trainer.checkpoint(
                     str(period),
                     run_root,
                     manifest_metadata=manifest_metadata,
                     lock_run_root=False,
                 )
+                checkpoint_time_sec = time.perf_counter() - checkpoint_start
                 checkpoint_paths.append(checkpoint_path)
                 metrics_logger.emit(
                     "checkpoint",
                     unit=str(period),
                     optimizer_step=optimizer_step,
                     checkpoint_path=str(Path(checkpoint_path).relative_to(run_root)),
+                    checkpoint_time_sec=checkpoint_time_sec,
                 )
                 print(
                     f"Checkpoint saved at optimizer_step={optimizer_step}: {checkpoint_path}"
@@ -331,17 +335,20 @@ def run_training(
                 event_hook=event_hook,
                 resume_state=active_resume_state,
             )
+            checkpoint_start = time.perf_counter()
             checkpoint_path = trainer.checkpoint(
                 str(period_name),
                 run_root,
                 manifest_metadata=manifest_metadata,
                 lock_run_root=False,
             )
+            checkpoint_time_sec = time.perf_counter() - checkpoint_start
             metrics_logger.emit(
                 "checkpoint",
                 unit=str(period_name),
                 optimizer_step=result["optimizer_steps_total"],
                 checkpoint_path=str(Path(checkpoint_path).relative_to(run_root)),
+                checkpoint_time_sec=checkpoint_time_sec,
             )
 
             result["checkpoint_path"] = checkpoint_path
