@@ -100,11 +100,20 @@ def run_training(
         print(f"\n=== Training unit: {unit} ===")
         dataset = dataset_factory(unit, cfg)
         period_name = prepare_dataset(dataset, cfg, unit)
+        checkpoint_paths: list[str] = []
 
-        result = trainer.train_period(dataset, period_name)
+        def checkpoint_hook(period: str, optimizer_step: int) -> None:
+            checkpoint_path = trainer.checkpoint(str(period), run_root)
+            checkpoint_paths.append(checkpoint_path)
+            print(
+                f"Checkpoint saved at optimizer_step={optimizer_step}: {checkpoint_path}"
+            )
+
+        result = trainer.train_period(dataset, period_name, checkpoint_hook=checkpoint_hook)
         checkpoint_path = trainer.checkpoint(str(period_name), run_root)
 
         result["checkpoint_path"] = checkpoint_path
+        result["checkpoint_paths"] = checkpoint_paths + [checkpoint_path]
         results.append(result)
 
         print("Training result:")

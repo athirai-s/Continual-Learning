@@ -1,8 +1,9 @@
 import os
 import time
 import json
+import math
 from dataclasses import asdict
-from typing import Any
+from typing import Any, Callable
 
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -75,12 +76,12 @@ class CASFTrainer:
             shuffle=True,
         )
     
-    def _train_step(self, batch):
+    def _train_step(self, batch) -> float:
         batch = {k: v.to(self.device) for k, v in batch.items()}
         outputs = self.model(**batch)
-        loss = outputs.loss / self.config.grad_accum_steps
-        loss.backward()
-        return loss.item()
+        raw_loss = outputs.loss
+        (raw_loss / self.config.grad_accum_steps).backward()
+        return float(raw_loss.item())
 
     def _get_training_probes(self, dataset):
         try:
@@ -88,7 +89,12 @@ class CASFTrainer:
         except TypeError:
             return dataset.get_probes()
 
-    def train_period(self, dataset: TemporalDataset, period: str) -> dict[str, Any]:
+    def train_period(
+        self,
+        dataset: TemporalDataset,
+        period: str,
+        checkpoint_hook: Callable[[str, int], None] | None = None,
+    ) -> dict[str, Any]:
         start = time.time()
         print(f"Using device: {self.device}")
 
@@ -105,32 +111,59 @@ class CASFTrainer:
 
         dataloader = self._build_dataloader(passages)
         
-        total_steps = self.config.epochs_per_period * len(dataloader)
+        total_micro_steps = self.config.epochs_per_period * len(dataloader)
+        total_optimizer_steps = math.ceil(total_micro_steps / self.config.grad_accum_steps)
         scheduler = get_cosine_schedule_with_warmup(
             self.optimizer,
             num_warmup_steps=self.config.warmup_steps,
-            num_training_steps=max(total_steps,1),
+            num_training_steps=max(total_optimizer_steps, 1),
         )
 
         self.model.train()
+        self.optimizer.zero_grad()
 
         loss_curve = []
-        global_step = 0
+        final_loss = 0.0
+        micro_steps_total = 0
+        optimizer_steps_total = 0
+        window_loss_total = 0.0
+        window_micro_steps = 0
 
         for epoch in range(self.config.epochs_per_period):
-            for step, batch in enumerate(dataloader):
+            for batch in dataloader:
                 loss = self._train_step(batch)
+                micro_steps_total += 1
+                window_micro_steps += 1
+                window_loss_total += loss
 
-                if (step + 1) % self.config.grad_accum_steps == 0:
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.grad_clip)
-                    self.optimizer.step()
-                    scheduler.step()
-                    self.optimizer.zero_grad()
-                
-                global_step += 1
-                if global_step % self.config.log_every_n_steps == 0:
-                    print(f"step={global_step}, loss={loss:.4f}")
-                    loss_curve.append((global_step, loss))
+                is_window_boundary = window_micro_steps == self.config.grad_accum_steps
+                is_last_micro_step = micro_steps_total == total_micro_steps
+                if not (is_window_boundary or is_last_micro_step):
+                    continue
+
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.grad_clip)
+                self.optimizer.step()
+                scheduler.step()
+                self.optimizer.zero_grad()
+                optimizer_steps_total += 1
+
+                averaged_window_loss = window_loss_total / window_micro_steps
+                final_loss = averaged_window_loss
+                if optimizer_steps_total % self.config.log_every_n_steps == 0:
+                    print(f"step={optimizer_steps_total}, loss={averaged_window_loss:.4f}")
+                    loss_curve.append((optimizer_steps_total, averaged_window_loss))
+
+                should_checkpoint = (
+                    checkpoint_hook is not None
+                    and self.config.checkpoint_every_n_optimizer_steps is not None
+                    and optimizer_steps_total % self.config.checkpoint_every_n_optimizer_steps == 0
+                    and optimizer_steps_total < total_optimizer_steps
+                )
+                if should_checkpoint:
+                    checkpoint_hook(period, optimizer_steps_total)
+
+                window_loss_total = 0.0
+                window_micro_steps = 0
         
         for probe in probes:
             self.registry.write(probe, period)
@@ -139,11 +172,13 @@ class CASFTrainer:
 
         return {
             "period": period,
-            "train_loss_final": loss,
+            "train_loss_final": final_loss,
             "train_loss_curve": loss_curve,
             "n_passages_trained": len(passages),
             "n_contradiction_passages": sum(1 for p in probes if p.is_contradiction),
             "train_duration_sec": duration,
+            "micro_steps_total": micro_steps_total,
+            "optimizer_steps_total": optimizer_steps_total,
         }
 
     def checkpoint(self, period: str, run_root: str) -> str:

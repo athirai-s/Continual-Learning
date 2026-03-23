@@ -60,3 +60,32 @@ def test_main_cli_synthetic_mode_smoke(repo_root, tmp_path):
     latest_pointer = read_latest_pointer(tmp_path / "cli-smoke")
     checkpoint_path = tmp_path / "cli-smoke" / latest_pointer.checkpoint_relpath
     assert (checkpoint_path / "config.json").exists()
+
+
+def test_run_training_checkpoint_cadence_uses_optimizer_steps(tmp_path):
+    cfg = TrainConfig.make_config(
+        run_id="cadence-runner",
+        model_name="synthetic-local-model",
+        method="full_ft",
+        dataset_name="temporal_wiki",
+        batch_size=1,
+        grad_accum_steps=2,
+        max_passages_per_period=3,
+        log_every_n_steps=1,
+        checkpoint_every_n_optimizer_steps=1,
+    )
+
+    results = run_training(
+        cfg,
+        model_factory=build_synthetic_model_and_tokenizer,
+        dataset_factory=build_synthetic_dataset,
+        checkpoint_dir=str(tmp_path),
+    )
+
+    checkpoint_root = tmp_path / "cadence-runner" / "checkpoints"
+    checkpoint_dirs = sorted(path.name for path in checkpoint_root.iterdir() if path.is_dir())
+
+    assert len(results) == 1
+    assert results[0]["micro_steps_total"] == 3
+    assert results[0]["optimizer_steps_total"] == 2
+    assert len(checkpoint_dirs) == 2
