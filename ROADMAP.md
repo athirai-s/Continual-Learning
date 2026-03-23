@@ -321,7 +321,7 @@ This milestone is intentionally not exhaustive. It should protect the public sea
 
 ### PR M1.1: Add Unit Tests For Core Pure Logic
 
-- [ ] `M1.1` Add unit tests for memory, contradiction detection, config validation, and passage filtering.
+- [x] `M1.1` Add unit tests for memory, contradiction detection, config validation, and passage filtering.
 - Problem:
   Core state transitions are currently unguarded and could regress silently.
 - Proposed change:
@@ -331,14 +331,14 @@ This milestone is intentionally not exhaustive. It should protect the public sea
   - `TrainConfig.validate`
   - `PassageFilter`
 - Likely files:
-  `tests/test_memory.py`, `tests/test_contradiction.py`, `tests/test_config.py`, `tests/test_passage_filter.py`
+  `tests/unit/test_memory_registry.py`, `tests/unit/test_contradiction_detector.py`, `tests/unit/test_train_config.py`, `tests/unit/test_passage_filter.py`
 - Acceptance criteria:
   - tests cover nominal cases and at least one edge case per component
   - tests do not require network, temp models, or real datasets
 - Required tests:
   - all of the above
 - Verification:
-  - `uv run pytest tests/test_memory.py tests/test_contradiction.py tests/test_config.py tests/test_passage_filter.py -q`
+  - `uv run pytest tests/unit -q`
 - Non-goals:
   - no trainer loop behavior yet
 
