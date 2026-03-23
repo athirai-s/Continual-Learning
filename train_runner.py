@@ -12,6 +12,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from casf_dataset_api import MemoryRegistry, TemporalWikiDataset, TGQADataset, TSQADataset
 from checkpointing import prepare_run_root, resolve_checkpoint_path
 from checkpoint_manifest import CheckpointManifestError
+from evaluation_runner import run_period_evaluation
 from metrics_logger import MetricsLogger
 from synthetic_backend import (
     SyntheticTemporalDataset,
@@ -342,6 +343,16 @@ def run_training(
 
         result["checkpoint_path"] = checkpoint_path
         result["checkpoint_paths"] = checkpoint_paths + [checkpoint_path]
+        if cfg.eval_after_each_period:
+            eval_dataset = dataset_factory(unit, cfg)
+            result["evaluation"] = run_period_evaluation(
+                model=trainer.model,
+                tokenizer=trainer.tokenizer,
+                dataset=eval_dataset,
+                cfg=cfg,
+                unit=period_name,
+                run_root=run_root,
+            )
         results.append(result)
 
         print("Training result:")
