@@ -31,6 +31,7 @@ class TrainConfig:
 
     checkpoint_dir: str = "checkpoints"
     checkpoint_every_n_optimizer_steps: Optional[int] = None
+    seed: int = 0
 
     def validate(self) -> None:
         if self.method not in {"full_ft", "lora", "smf"}:
@@ -58,6 +59,8 @@ class TrainConfig:
             and self.checkpoint_every_n_optimizer_steps <= 0
         ):
             raise ValueError("checkpoint_every_n_optimizer_steps must be > 0")
+        if self.seed < 0:
+            raise ValueError("seed must be >= 0")
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -77,6 +80,7 @@ class TrainConfig:
         max_passages_per_period: int | None = None,
         log_every_n_steps: int = 100,
         checkpoint_every_n_optimizer_steps: int | None = None,
+        seed: int = 0,
     ) -> "TrainConfig":
         cfg = TrainConfig(
             run_id=run_id,
@@ -88,6 +92,7 @@ class TrainConfig:
             max_passages_per_period=max_passages_per_period,
             log_every_n_steps=log_every_n_steps,
             checkpoint_every_n_optimizer_steps=checkpoint_every_n_optimizer_steps,
+            seed=seed,
         )
         cfg.validate()
         return cfg

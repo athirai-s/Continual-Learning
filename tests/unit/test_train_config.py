@@ -19,6 +19,7 @@ def test_make_config_returns_valid_train_config():
     assert cfg.model_name == "synthetic-local-model"
     assert cfg.dataset_name == "temporal_wiki"
     assert cfg.checkpoint_every_n_optimizer_steps is None
+    assert cfg.seed == 0
 
 
 @pytest.mark.parametrize(
@@ -41,6 +42,7 @@ def test_make_config_returns_valid_train_config():
             {"checkpoint_every_n_optimizer_steps": 0},
             "checkpoint_every_n_optimizer_steps must be > 0",
         ),
+        ({"seed": -1}, "seed must be >= 0"),
     ],
 )
 def test_validate_rejects_invalid_values(updates, message):

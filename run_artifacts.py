@@ -1,8 +1,14 @@
 import json
+import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import torch
+import transformers
+
+from checkpoint_manifest import CHECKPOINT_MANIFEST_SCHEMA_VERSION
 from train_config import TrainConfig
 
 
@@ -21,6 +27,7 @@ class RunManifest:
     training_plan: list[str]
     artifact_layout: dict[str, str]
     period_artifacts: dict[str, dict[str, str]]
+    reproducibility: dict[str, Any]
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -31,6 +38,7 @@ class RunManifest:
             "training_plan": self.training_plan,
             "artifact_layout": self.artifact_layout,
             "period_artifacts": self.period_artifacts,
+            "reproducibility": self.reproducibility,
         }
 
 
@@ -62,6 +70,7 @@ def write_run_manifest(
     run_root: str | Path,
     cfg: TrainConfig,
     training_plan: list[str],
+    reproducibility: dict[str, Any] | None = None,
 ) -> Path:
     run_root = Path(run_root)
     manifest = RunManifest(
@@ -79,6 +88,7 @@ def write_run_manifest(
             unit: {"path": str(period_root(run_root, unit).relative_to(run_root))}
             for unit in training_plan
         },
+        reproducibility=reproducibility or {},
     )
     path = run_manifest_path(run_root)
     with open(path, "w") as f:
@@ -102,4 +112,52 @@ def load_run_manifest(run_root: str | Path) -> RunManifest:
             unit: dict(artifact_info)
             for unit, artifact_info in data["period_artifacts"].items()
         },
+        reproducibility=dict(data.get("reproducibility", {})),
     )
+
+
+def collect_reproducibility_metadata(
+    cfg: TrainConfig,
+    training_plan: list[str],
+    *,
+    repo_root: str | Path | None = None,
+) -> dict[str, Any]:
+    repo_root = Path(repo_root) if repo_root is not None else Path(__file__).resolve().parent
+    git_commit = None
+    git_dirty = None
+
+    try:
+        git_commit = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=repo_root,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        git_dirty = bool(
+            subprocess.run(
+                ["git", "status", "--porcelain"],
+                cwd=repo_root,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+        )
+    except (FileNotFoundError, subprocess.SubprocessError):
+        git_commit = None
+        git_dirty = None
+
+    return {
+        "seed": cfg.seed,
+        "git_commit": git_commit,
+        "git_dirty": git_dirty,
+        "python_version": sys.version.split()[0],
+        "torch_version": torch.__version__,
+        "transformers_version": transformers.__version__,
+        "dataset_selection": {
+            "dataset_name": cfg.dataset_name,
+        },
+        "model_id": cfg.model_name,
+        "training_plan": list(training_plan),
+        "checkpoint_manifest_schema_version": CHECKPOINT_MANIFEST_SCHEMA_VERSION,
+    }

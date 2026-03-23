@@ -18,6 +18,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--dataset-name", default=DEFAULT_DATASET_NAME)
     parser.add_argument("--model-name", default=DEFAULT_MODEL_NAME)
     parser.add_argument("--resume-from")
+    parser.add_argument("--seed", type=int, default=0)
     return parser
 
 
@@ -31,6 +32,7 @@ def make_config(args: argparse.Namespace) -> TrainConfig:
         grad_accum_steps=1,
         max_passages_per_period=20,
         log_every_n_steps=1,
+        seed=args.seed,
     )
 
 

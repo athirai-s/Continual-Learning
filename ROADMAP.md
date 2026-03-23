@@ -649,7 +649,7 @@ After this milestone, a run directory should tell you what happened, why it happ
 
 ### PR M3.3: Persist Reproducibility Metadata
 
-- [ ] `M3.3` Record seeds and reproducibility metadata in every run manifest.
+- [x] `M3.3` Record seeds and reproducibility metadata in every run manifest.
 - Problem:
   Experiment comparisons are not trustworthy unless the causal inputs are recorded.
 - Proposed change:
