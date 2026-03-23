@@ -2,6 +2,8 @@ import os
 import subprocess
 import sys
 
+from checkpointing import read_latest_pointer
+
 
 def test_run_job_executes_synthetic_smoke_path(repo_root, tmp_path):
     env = os.environ.copy()
@@ -27,7 +29,8 @@ def test_run_job_executes_synthetic_smoke_path(repo_root, tmp_path):
         text=True,
     )
 
-    checkpoint_path = tmp_path / "launcher-smoke" / "aug_sep"
+    latest_pointer = read_latest_pointer(tmp_path / "launcher-smoke")
+    checkpoint_path = tmp_path / "launcher-smoke" / latest_pointer.checkpoint_relpath
     assert "Training config:" in result.stdout
     assert (tmp_path / "launcher-smoke_config.json").exists()
     assert (checkpoint_path / "config.json").exists()

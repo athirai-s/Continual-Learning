@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from checkpointing import read_latest_pointer
 from train_config import TrainConfig
 from train_runner import build_synthetic_dataset, build_synthetic_model_and_tokenizer, run_training
 
@@ -37,8 +38,12 @@ def test_synthetic_training_writes_expected_checkpoint_artifacts(tmp_path):
 
     checkpoint_path = Path(results[0]["checkpoint_path"])
     checkpoint_files = {path.name for path in checkpoint_path.iterdir()}
+    latest_pointer = read_latest_pointer(tmp_path / "integration-artifacts")
 
     assert (tmp_path / "integration-artifacts_config.json").exists()
+    assert checkpoint_path.parent == tmp_path / "integration-artifacts" / "checkpoints"
     assert EXPECTED_CHECKPOINT_FILES <= checkpoint_files
     assert checkpoint_files & MODEL_WEIGHT_FILES
     assert (checkpoint_path / "last_period.txt").read_text().strip() == "aug_sep"
+    assert latest_pointer.checkpoint_id == checkpoint_path.name
+    assert latest_pointer.last_period == "aug_sep"

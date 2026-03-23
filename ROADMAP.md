@@ -473,7 +473,7 @@ Interrupted runs become cheap to recover from safe optimizer-step boundaries, an
 
 ### PR M2.1: Add Versioned Checkpoints With Atomic Finalization
 
-- [ ] `M2.1` Replace in-place checkpoint writes with versioned checkpoint directories and an atomic `latest.json` pointer.
+- [x] `M2.1` Replace in-place checkpoint writes with versioned checkpoint directories and an atomic `latest.json` pointer.
 - Problem:
   Current checkpoints write directly into a target directory, which makes partial or ambiguous checkpoint state too easy to confuse with a valid resume source.
 - Proposed change:

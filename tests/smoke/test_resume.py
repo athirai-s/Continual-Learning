@@ -38,13 +38,13 @@ def load_synthetic_probe_dataset() -> SyntheticTemporalDataset:
 def test_metadata_resume_restores_registry_and_last_period_and_can_continue(tmp_path):
     first_trainer = build_trainer()
     dataset = load_synthetic_probe_dataset()
-    checkpoint_path = tmp_path / "resume-smoke" / "aug_sep"
+    run_root = tmp_path / "resume-smoke"
 
     first_trainer.train_period(dataset, "aug_sep")
-    first_trainer.checkpoint("aug_sep", checkpoint_path)
+    checkpoint_path = first_trainer.checkpoint("aug_sep", str(run_root))
 
     resumed_trainer = build_trainer()
-    restored_period = resumed_trainer.resume(checkpoint_path)
+    restored_period = resumed_trainer.resume(str(run_root))
     alpha_slot = resumed_trainer.registry.get_active("Alpha", "relation")
 
     continued_result = resumed_trainer.train_period(load_synthetic_probe_dataset(), "sep_oct")
