@@ -17,3 +17,11 @@ dependencies = [
     "trl>=0.29.0",
     "tqdm>=4.67.3",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
