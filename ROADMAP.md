@@ -457,111 +457,128 @@ This milestone is intentionally not exhaustive. It should protect the public sea
 
 ### Goal
 
-Upgrade checkpointing from "files exist" to "resume is faithful enough to trust after interruption or preemption."
+Upgrade checkpointing from "files exist" to a checkpoint-boundary resume contract that is explicit, tested, and cheap to trust after interruption or preemption.
 
 ### Delivered Value
 
-Interrupted runs become cheap to recover, and future experimentation can rely on resume semantics instead of restarting from scratch.
+Interrupted runs become cheap to recover from safe optimizer-step boundaries, and future experimentation can rely on a declared resume contract instead of restarting from scratch.
 
 ### Exit Criteria
 
-- checkpoints save all state required by the declared resume contract
-- checkpoint format is versioned
-- resume tests verify state restoration, not just file presence
-- partial training progress is not silently lost on resume
+- checkpoints are versioned and only become visible as complete after finalize
+- single-writer semantics are explicit for supported environments
+- step accounting and checkpoint cadence are defined in optimizer steps
+- resume restores trainer state, RNG state, and run cursor at safe boundaries
+- compatibility and integrity validation fail fast on unsafe resume attempts
 
-### PR M2.1: Save Full Trainer State With Atomic Checkpoint Writes
+### PR M2.1: Add Versioned Checkpoints With Atomic Finalization
 
-- [ ] `M2.1` Save optimizer, scheduler, global step, and epoch progress in checkpoints using an atomic write protocol.
+- [ ] `M2.1` Replace in-place checkpoint writes with versioned checkpoint directories and an atomic `latest.json` pointer.
 - Problem:
-  Current checkpoints only save model, tokenizer, memory registry, config, and last period.
+  Current checkpoints write directly into a target directory, which makes partial or ambiguous checkpoint state too easy to confuse with a valid resume source.
 - Proposed change:
-  Extend checkpoint contents to save the state needed for faithful continuation of the current trainer design, and write checkpoints via a temp-path plus finalize step so partially written checkpoints are never mistaken for valid ones.
+  Write each checkpoint into a unique temp directory under the run root, finalize it into a unique versioned directory such as `checkpoints/ckpt-000123/`, then atomically replace `latest.json` to point at the new checkpoint. Restrict full Milestone 2 support to environments where an advisory OS file lock on the run-root lock file is available and reliable. Clean stale temp directories during startup and checkpoint scans instead of trying to hide them.
 - Likely files:
-  `trainer.py`, new checkpoint helpers, tests
+  `trainer.py`, `train_runner.py`, new checkpoint helpers, tests
 - Acceptance criteria:
-  - checkpoint manifest explicitly lists saved state
-  - checkpoint directories are only made visible as complete once all required files are written
-  - restore path reloads the saved trainer state
-  - tests cover interrupted or incomplete checkpoint creation
+  - finalized checkpoint directories are versioned and never overwritten in place
+  - `latest.json` always points at a fully written checkpoint
+  - concurrent writers fail clearly when the run-root lock is already held
+  - unsupported locking environments fail explicitly instead of claiming safe resume
+  - stale temp directories are cleaned or reported deterministically
 - Required tests:
-  - round-trip save and restore of trainer state
-  - negative-path test for incomplete checkpoint writes
+  - checkpoint finalize test
+  - advisory-lock behavior test
+  - stale-temp cleanup test
 - Verification:
-  - targeted integration tests
+  - targeted integration and smoke tests
 - Non-goals:
-  - no distributed checkpointing
+  - no distributed or multi-writer checkpointing
+  - no fallback locking scheme that cannot guarantee single-writer safety
 
-### PR M2.2: Fix Step Accounting And Tail-Step Semantics
+### PR M2.2: Fix Step Accounting And Add Safe Checkpoint Cadence
 
-- [ ] `M2.2` Make gradient accumulation, final partial steps, and reported progress correct.
+- [ ] `M2.2` Separate micro-steps from optimizer-steps, flush tail accumulation correctly, and checkpoint only at safe optimizer-step boundaries.
 - Problem:
-  The current loop can drop the final partial accumulation window and may report progress loosely.
+  The current loop can drop the final partial accumulation window, blur micro-step and optimizer-step semantics, and only save progress at coarse boundaries.
 - Proposed change:
   Define and implement correct step semantics for:
-  - optimizer step boundaries
+  - micro-step versus optimizer-step counters
   - final incomplete accumulation windows
-  - logged global step values
-  - returned training summaries
+  - logged and persisted step values
+  - configurable checkpoint cadence in optimizer steps
+  Only emit checkpoints after completed optimizer steps with gradients cleared, while still checkpointing at training-unit end.
 - Likely files:
   `trainer.py`, tests
 - Acceptance criteria:
   - no gradients are silently discarded at the end of an epoch
   - reported progress matches actual optimizer updates
+  - configured checkpoint cadence fires only on safe optimizer-step boundaries
   - tests cover divisible and non-divisible accumulation cases
 - Required tests:
   - accumulation edge-case tests
+  - checkpoint-cadence tests
   - trainer summary correctness tests
 - Verification:
   - targeted trainer integration tests
 - Non-goals:
   - no throughput tuning yet
+  - no mid-accumulation checkpoint support
 
-### PR M2.3: Restore RNG And Data-Position Semantics
+### PR M2.3: Restore Trainer State And Resume Within A Unit
 
-- [ ] `M2.3` Make resume deterministic enough for the declared contract.
+- [ ] `M2.3` Persist trainer state, RNG state, and a current-unit cursor so resume can continue from the next safe checkpoint boundary.
 - Problem:
-  Resuming training can change data order or RNG-driven behavior in uncontrolled ways.
+  Restoring only model weights and metadata is not enough to continue a partially completed unit faithfully after preemption.
 - Proposed change:
-  Save and restore:
-  - RNG state where practical
-  - sampler or data-position state for the current trainer contract
-  If exact batch continuation is not supported, document the weaker guarantee precisely and test it.
+  Persist model, optimizer, scheduler, RNG state, current unit, completed-unit cursor, next safe optimizer-step cursor within the current unit, and step counters. At unit start, materialize a runner-owned snapshot of the filtered ordered training inputs for that unit. Resume should continue from the next safe optimizer-step boundary using that persisted unit snapshot instead of re-deriving batch order from loader randomness.
 - Likely files:
-  `trainer.py`, checkpoint helpers, tests
+  `trainer.py`, `train_runner.py`, checkpoint helpers, tests
 - Acceptance criteria:
-  - resume semantics are explicit and tested
-  - the contract says whether continuation is exact or approximate
-  - data-position behavior is no longer accidental
+  - resume semantics are explicit and tested at checkpoint boundaries
+  - the runner can continue within the current unit or skip to the next unfinished unit
+  - RNG-driven behavior is restored under supported conditions
+  - data-position behavior is driven by the persisted unit snapshot rather than incidental loader state
 - Required tests:
-  - deterministic resume test under supported conditions
-  - contract test for documented weaker behavior if exact continuation is not implemented
+  - within-unit resume test
+  - next-unit continuation test
+  - synthetic split-run versus uninterrupted equivalence test at a checkpoint boundary
 - Verification:
   - targeted resume tests
 - Non-goals:
-  - no data-loader performance changes
+  - no data-loader performance tuning
+  - no promise of distributed resume semantics
 
-### PR M2.4: Add Checkpoint Integrity Validation And Clear Failure Modes
+### PR M2.4: Add Resume Compatibility Validation And Integrity Checks
 
-- [ ] `M2.4` Add checkpoint manifest validation, integrity checks, and explicit failure behavior for corrupt artifacts.
+- [ ] `M2.4` Add an explicit `resume_compatibility` contract, checkpoint integrity validation, and clear failure modes.
 - Problem:
-  Checkpoint corruption or partial state can be mistaken for a valid resume source unless integrity is checked explicitly.
+  Resume can still be unsafe if the invocation changes training semantics or if the checkpoint does not prove it came from compatible data and artifacts.
 - Proposed change:
-  Add a checkpoint manifest that validates the presence and integrity of required files on load. If the schema changes, version it at that point; do not build a migration system before there is a real compatibility consumer.
+  Add a checkpoint manifest with:
+  - schema version
+  - model id or path
+  - ordered training plan
+  - a declared `resume_compatibility` block covering the training-semantic settings that would make resume unsafe if changed, including batch size, gradient accumulation, learning-rate and scheduler settings, max length, passage-filter settings, checkpoint cadence, and any other fields the trainer actually branches on
+  - source-specific dataset identity for the currently supported datasets
+  For TemporalWiki, use content digests of the source archives or files. For TSQA and TGQA, use dataset fingerprint or revision from the loaded Hugging Face split. Full Milestone 2 resume is supported only for datasets with a defined identity adapter. Keep M1 checkpoints readable, but explicitly treat them as metadata-only rather than full trainer-state checkpoints.
 - Likely files:
   new checkpoint manifest helper, `trainer.py`, tests
 - Acceptance criteria:
   - corrupt or incomplete checkpoints fail with a clear error
-  - load-time validation is explicit rather than accidental
-  - schema versioning is introduced only when the schema actually changes
+  - mismatched resume-compatibility settings fail before training continues
+  - dataset identity mismatches fail for the supported datasets
+  - M1 checkpoints are still readable but cannot claim full trainer-state recovery
 - Required tests:
   - manifest validation tests
+  - config-mismatch negative-path tests
+  - dataset-identity mismatch negative-path tests
   - corruption and missing-file negative-path tests
 - Verification:
   - targeted contract tests
 - Non-goals:
-  - no automatic migration framework unless a real need emerges
-  - no broad backward-compatibility promise before it is needed
+  - no full provenance system
+  - no automatic migration framework unless a real compatibility consumer appears
 
 ## Milestone 3: Reproducible And Informative Experiments
 
@@ -575,24 +592,29 @@ After this milestone, a run directory should tell you what happened, why it happ
 
 ### Exit Criteria
 
-- run artifacts have a stable layout
+- run artifacts have a stable, additive layout
 - metrics are logged in a machine-readable way
 - key experiment metadata is persisted
 - lightweight evaluation hooks run at useful boundaries
 
-### PR M3.1: Add Stable Run Manifest And Directory Layout
+### PR M3.1: Add An Additive Run-Root Layout And Stable Manifest
 
-- [ ] `M3.1` Standardize run directories and write a machine-readable manifest for every run.
+- [ ] `M3.1` Standardize the run root around stable top-level artifacts without breaking Milestone 2 checkpoint paths.
 - Problem:
   Ad hoc run layouts make comparison and automation brittle.
 - Proposed change:
-  Define a stable layout for configs, checkpoints, metrics, summaries, and environment metadata.
+  Keep the Milestone 2 checkpoint layout valid and add durable top-level artifacts around it:
+  - `run_manifest.json`
+  - `metrics/`
+  - `periods/<unit>/`
+  Readers should keep supporting the Milestone 2-only layout for at least one milestone transition so active runs remain resumable and inspectable while the new structure lands.
 - Likely files:
-  `trainer.py`, new run-artifact helpers, tests
+  `trainer.py`, `train_runner.py`, new run-artifact helpers, tests
 - Acceptance criteria:
-  - every run directory has a manifest
+  - every run root has a manifest
   - artifact paths are predictable
-  - tests assert the directory schema
+  - old Milestone 2 checkpoint paths remain valid
+  - tests assert the directory schema and compatibility window
 - Required tests:
   - manifest and layout contract tests
 - Verification:
@@ -606,12 +628,11 @@ After this milestone, a run directory should tell you what happened, why it happ
 - Problem:
   Printed logs are hard to compare and automate against.
 - Proposed change:
-  Write structured metrics for:
-  - step loss
-  - optimizer step count
-  - elapsed time
-  - tokens or examples processed if available
-  - checkpoint timings if available
+  Write a minimal structured metrics contract under `metrics/` with:
+  - `train_step` events
+  - `period_end` events
+  - `checkpoint` events
+  The initial schema should stay intentionally small and machine-readable without requiring an external service.
 - Likely files:
   `trainer.py`, logging helpers, tests
 - Acceptance criteria:
@@ -628,13 +649,20 @@ After this milestone, a run directory should tell you what happened, why it happ
 
 ### PR M3.3: Persist Reproducibility Metadata
 
-- [ ] `M3.3` Record seeds, code revision, dataset selection, and model identifiers in every run.
+- [ ] `M3.3` Record seeds and reproducibility metadata in every run manifest.
 - Problem:
   Experiment comparisons are not trustworthy unless the causal inputs are recorded.
 - Proposed change:
-  Add reproducibility metadata to the run manifest.
+  Add `TrainConfig.seed` and persist the metadata needed to explain and compare a run, including:
+  - seed
+  - git commit and dirty flag
+  - python, torch, and transformers versions
+  - dataset selection
+  - model id
+  - ordered training plan
+  - checkpoint schema version
 - Likely files:
-  run-manifest helpers, `trainer.py`, `main.py`, tests
+  run-manifest helpers, `trainer.py`, `main.py`, `train_config.py`, tests
 - Acceptance criteria:
   - metadata is captured automatically
   - tests fail if required metadata fields disappear
@@ -651,9 +679,9 @@ After this milestone, a run directory should tell you what happened, why it happ
 - Problem:
   Training loss alone is not enough to guide continual-learning decisions.
 - Proposed change:
-  Define the evaluation split contract per dataset family, then add evaluation hooks at useful boundaries with results written into structured artifacts. For TemporalWiki, the contract must explicitly evaluate `changed` and `unchanged` separately and persist both outputs rather than relying on the dataset's last-loaded split.
+  Define the evaluation split contract per dataset family, then add evaluation hooks at useful boundaries with results written into structured artifacts. Use a thin generation adapter around model plus tokenizer so the existing evaluator code can be reused without changing the Hugging Face model class. For TemporalWiki, the contract must explicitly evaluate `changed` and `unchanged` separately and persist both outputs rather than relying on the dataset's last-loaded split. TSQA and TGQA should use `val` where available.
 - Likely files:
-  `trainer.py`, `main.py`, evaluator wiring, tests
+  `trainer.py`, `main.py`, evaluator wiring, adapter helpers, tests
 - Acceptance criteria:
   - evaluation cadence is configurable
   - split selection is explicit for each dataset family
@@ -690,7 +718,7 @@ Performance work becomes evidence-based instead of anecdotal, and the repo avoid
 - Problem:
   Performance work is guesswork without measurement.
 - Proposed change:
-  Add lightweight timing instrumentation around the training loop and checkpoint path.
+  Extend structured metrics with timing fields for data loading, forward/backward, optimizer step, checkpoint time, and throughput. Keep the instrumentation lightweight enough to leave enabled for ordinary runs.
 - Likely files:
   `trainer.py`, metrics helpers, tests
 - Acceptance criteria:
@@ -710,7 +738,7 @@ Performance work becomes evidence-based instead of anecdotal, and the repo avoid
 - Problem:
   Optimization work should be driven by evidence, not by generic trainer folklore.
 - Proposed change:
-  Use the instrumentation from `M4.1` to identify the dominant bottleneck in real runs, then implement exactly one focused optimization. Candidate areas include data preparation, collation, loader settings, or checkpoint cadence, but the chosen change must match the measured hotspot.
+  Use the instrumentation from `M4.1` to identify the dominant bottleneck in real runs, then implement exactly one focused optimization. Candidate areas include data preparation, collation, loader settings, or checkpoint cadence, but the chosen change must match the measured hotspot and keep the behavior contracts from Milestones 2 and 3 intact.
 - Likely files:
   `trainer.py`, config, helpers, tests
 - Acceptance criteria:
@@ -739,24 +767,29 @@ The training loop becomes more faithful to period-based factual updating and mor
 
 ### Exit Criteria
 
-- TemporalWiki period sequencing is first-class rather than hardcoded
-- evaluation reflects plasticity and stability goals
+- multi-unit training is first-class rather than hidden behind a one-period constant
+- resumed runs can skip completed units deterministically
 - the supported training path matches the path exercised by CI
 
-### PR M5.1: Move Period Sequencing Into The Training-Owned Configuration Layer
+### PR M5.1: Add A Runner-Owned Training Plan And Multi-Unit Orchestration
 
-- [ ] `M5.1` Replace the hardcoded one-period run with configuration-driven orchestration over the existing supported TemporalWiki period sequence.
+- [ ] `M5.1` Replace the hidden one-period run with a runner-owned training plan and tested multi-unit orchestration.
 - Problem:
   The current path is hardcoded to `["aug_sep"]`, which does not represent continual learning.
 - Proposed change:
-  Add explicit support for ordered period training and period-aware checkpoints, and declare the supported training sequence in one training-owned config or runner module rather than in a hidden constant inside `main.py`. Keep dataset and memory internals unchanged unless a concrete dependency is proven during implementation.
+  Introduce a runner-owned `TrainingPlan` object and keep the ordered unit sequence in the training or orchestration layer rather than in dataset modules. For TemporalWiki, declare the default sequence in the training-plan layer as:
+  - `aug_sep`
+  - `sep_oct`
+  - `oct_nov`
+  - `nov_dec`
+  Record the chosen ordered plan in manifests and checkpoints so resumed runs can skip completed units deterministically. Keep dataset and memory internals unchanged unless a concrete dependency is proven during implementation.
 - Likely files:
-  `main.py`, `train_runner.py`, `trainer.py`, `train_config.py`, tests
+  `main.py`, `train_runner.py`, `trainer.py`, tests
 - Acceptance criteria:
   - the supported training sequence is declared in one training-owned place
-  - training orchestration uses configured period order rather than a hidden constant in `main.py`
-  - period order is explicit and tested
-  - outputs clearly separate per-period results
+  - orchestration uses the training plan rather than a hidden constant
+  - completed units are recorded and skipped correctly on resume
+  - outputs clearly separate per-unit results
 - Required tests:
   - multi-period synthetic training test
   - period-order contract test
@@ -794,7 +827,7 @@ The training loop becomes more faithful to period-based factual updating and mor
 - Problem:
   Even after early launch-path cutover, old entrypoints can continue to drift unless the repo narrows the supported surface.
 - Proposed change:
-  Fully retire or isolate redundant entrypoints such as `3B_train.py` once the supported path is stable and tested.
+  Move `3B_train.py` under `experiments/legacy/` or otherwise isolate it outside the supported surface once the `main.py` plus `run_job.sh` path has stayed stable and tested.
 - Likely files:
   `main.py`, `3B_train.py`, `run_job.sh`, docs, tests
 - Acceptance criteria:
