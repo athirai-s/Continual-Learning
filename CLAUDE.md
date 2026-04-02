@@ -2,9 +2,9 @@
 
 ## Current status
 [UPDATE THIS at the end of every session]
-Current phase: Phase 1 — TrainConfig and method-specific validation
-Last completed: Step 1 — Added SMF + CASM fields, validation, from_dict, and tests (43/43 passing)
-Next task: Step 2 — smf_model.py: frozen backbone + sparse memory module
+Current phase: Phase 2 — SMF model implementation
+Last completed: Step 2 — SMFModelWrapper (frozen backbone, sparse memory, forward hooks, optimizer branching, SMF regularization); 18/18 new tests passing, 87 existing tests unchanged
+Next task: Step 3 — trainer.py: SMF train_period() metrics (retention, forgetting, active_params)
 
 ## Architecture rules
 - TrainConfig.method is the ONLY method switch
