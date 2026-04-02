@@ -98,6 +98,7 @@ class CASFTrainer:
         self._completed_units: list[str] = []
         self._checkpoint_state: dict[str, Any] | None = None
         self._checkpoint_manifest: CheckpointManifest | None = None
+        self._model_slot_to_registry_slot_id: dict[int, int] = {}
 
     def _resolve_max_length(self) -> int:
         candidates: list[int] = []
@@ -172,7 +173,41 @@ class CASFTrainer:
                     "SMFModelWrapper has no trainable memory parameters."
                 )
             return params
+        elif self.config.method == "casm":
+            from .casm_model import CASMModelWrapper
+            if not isinstance(self.model, CASMModelWrapper):
+                raise TypeError(
+                    "method='casm' requires a CASMModelWrapper but got "
+                    f"{type(self.model).__name__}"
+                )
+            params = list(self.model.casm_parameters())
+            if not params:
+                raise ValueError(
+                    "CASMModelWrapper has no trainable CASM parameters."
+                )
+            return params
         return list(self.model.parameters())
+
+    def _rebuild_optimizer_for_casm(self) -> None:
+        """Rebuild AdamW after router expansion, preserving state for existing params."""
+        from .casm_model import CASMModelWrapper
+        if not isinstance(self.model, CASMModelWrapper):
+            return
+        # Map old param tensor id -> optimizer state entry
+        old_param_states: dict[int, dict] = {}
+        old_state = self.optimizer.state_dict()
+        flat_params = [p for g in self.optimizer.param_groups for p in g["params"]]
+        for flat_idx, param in enumerate(flat_params):
+            if flat_idx in old_state["state"]:
+                old_param_states[id(param)] = old_state["state"][flat_idx]
+        # Rebuild with full expanded param set
+        new_params = list(self.model.casm_parameters())
+        self.optimizer = torch.optim.AdamW(new_params, lr=self.config.learning_rate)
+        # Re-inject preserved state for params that existed before expansion
+        for group in self.optimizer.param_groups:
+            for param in group["params"]:
+                if id(param) in old_param_states:
+                    self.optimizer.state[param] = old_param_states[id(param)]
 
     def _train_step(self, batch) -> float:
         batch = {k: v.to(self.device) for k, v in batch.items()}
@@ -186,6 +221,16 @@ class CASFTrainer:
             if isinstance(self.model, SMFModelWrapper):
                 reg = self.model.compute_regularization_loss()
                 raw_loss = raw_loss + self.config.smf_regularization_weight * reg
+        if (
+            self.config.method == "casm"
+            and (self.config.casm_sparsity_weight > 0 or self.config.casm_overlap_weight > 0)
+        ):
+            from .casm_model import CASMModelWrapper
+            if isinstance(self.model, CASMModelWrapper):
+                if self.config.casm_sparsity_weight > 0:
+                    raw_loss = raw_loss + self.config.casm_sparsity_weight * self.model.compute_sparsity_loss()
+                if self.config.casm_overlap_weight > 0:
+                    raw_loss = raw_loss + self.config.casm_overlap_weight * self.model.compute_overlap_loss()
         (raw_loss / self.config.grad_accum_steps).backward()
         return float(raw_loss.item())
 
@@ -306,11 +351,26 @@ class CASFTrainer:
 
         print(f"Training on {len(unit_snapshot)} ordered passages")
 
-        self.detector.check(probes, self.registry) 
+        _casm_pending_slot_links: list[tuple[int, object]] = []
+        contradictions = self.detector.check(probes, self.registry)
         dataloader = self._build_dataloader(unit_snapshot, start_batch_index=start_batch_index)
 
         total_micro_steps = math.ceil(len(unit_snapshot) / self.config.batch_size)
         total_optimizer_steps = math.ceil(total_micro_steps / self.config.grad_accum_steps)
+
+        if (
+            self.config.method == "casm"
+            and self.config.casm_branch_on_contradiction
+            and contradictions
+        ):
+            from .casm_model import CASMModelWrapper
+            if isinstance(self.model, CASMModelWrapper):
+                for contradiction_probe in contradictions:
+                    new_model_slot_id = self.model.add_memory_slot()
+                    _casm_pending_slot_links.append((new_model_slot_id, contradiction_probe))
+                self._rebuild_optimizer_for_casm()
+                scheduler = self._build_scheduler(total_optimizer_steps)
+                self.optimizer.zero_grad()
 
         self.model.train()
 
@@ -427,8 +487,26 @@ class CASFTrainer:
             window_forward_backward_sec = 0.0
             next_batch_wait_start = time.perf_counter()
         
+        probe_to_registry_slot_id: dict[int, int] = {}
         for probe in probes:
-            self.registry.write(probe, period)
+            reg_slot = self.registry.write(probe, period)
+            probe_to_registry_slot_id[id(probe)] = reg_slot.slot_id
+
+        if self.config.method == "casm":
+            from .casm_model import CASMModelWrapper
+            if isinstance(self.model, CASMModelWrapper):
+                for model_slot_id, contradiction_probe in _casm_pending_slot_links:
+                    reg_slot_id = probe_to_registry_slot_id.get(id(contradiction_probe))
+                    if reg_slot_id is not None:
+                        self._model_slot_to_registry_slot_id[model_slot_id] = reg_slot_id
+                for model_slot_id, reg_slot_id in self._model_slot_to_registry_slot_id.items():
+                    count = self.model._slot_usage_counts.get(model_slot_id, 0)
+                    if count > 0:
+                        for reg_slot in self.registry._slots:
+                            if reg_slot.slot_id == reg_slot_id:
+                                reg_slot.usage_count += count
+                                break
+
         if period not in self._completed_units:
             self._completed_units.append(period)
         self._update_checkpoint_state(

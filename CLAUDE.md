@@ -2,14 +2,9 @@
 
 ## Current status
 [UPDATE THIS at the end of every session]
-Current phase: Phase 3 — CASM memory registry and router
-Last completed: Step 3 — MemoryRegistry extended (add_slot, close_slot, lookup, to_json, from_json, update_from_probes, usage_count on MemorySlot); CASMRouter + CASMModelWrapper in training/casm_model.py (frozen backbone, slot bank, routing, slot lifecycle, persistence); 64 new tests passing, all prior unit tests unchanged
-Next task: Step 4 — trainer.py: CASM branch in train_period() (contradiction detection → slot branching, registry writes, CASM loss)
-
-### Step 4 must-do notes (carry-overs from Step 3 design)
-- `_select_trainable_parameters()` in trainer.py has no CASM branch — falls through to all params. Add `method == "casm"` case that calls `model.casm_parameters()`, matching the SMF pattern.
-- `MemorySlot.usage_count` exists but is never incremented. Increment it in the CASM training step when a slot is selected by the router.
-- `add_memory_slot()` creates slots outside the router's initial output dimension — the router cannot select them. Contradiction-branching logic in Step 4 must account for this (expand router or re-init if needed).
+Current phase: Phase 4 — CASM trainer branch
+Last completed: Step 4 — CASM branch in trainer.py: _select_trainable_parameters (casm_parameters()), _rebuild_optimizer_for_casm (preserves existing param state after router expansion), CASM auxiliary losses in _train_step (sparsity + overlap), train_period contradiction branching (detector result captured → add_memory_slot per contradiction → optimizer + scheduler rebuilt → usage_count synced to registry at period end); _expand_router in casm_model.py (grows router output layer by 1, zero-init new neuron, preserves old weights); compute_overlap_loss (pairwise cosine penalty); _slot_usage_counts tracking in forward(); 31 new tests, 169 unit tests passing
+Next task: Step 5 — artifacts/checkpointing.py: persist registry + router state; resume must restore full CASM memory history
 
 ## Known pre-existing test failures (Windows — not caused by this implementation)
 23 tests fail on Windows before any of our changes. Two root causes:
