@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest tests/unit/test_train_config.py -v)",
+      "Bash(.venv/Scripts/python -m pytest tests/unit/test_train_config.py -v)",
+      "Bash(cat requirements*.txt pyproject.toml setup.cfg)",
+      "Bash(.venv/Scripts/python.exe -c \"import sys; print\\(sys.version\\)\")",
+      "Bash(.venv/Scripts/python.exe -c \"import pytest; print\\(pytest.__version__\\)\")",
+      "Bash(.venv/Scripts/python.exe -m pip install pytest --quiet)",
+      "Bash(uv run:*)"
+    ]
+  }
+}
