@@ -22,3 +22,4 @@ explore/WikiFactDiffDataset/data/
 # ── Other ─────────────────────────────────────────────────────────
 registry.json
 checkpoints/
+.claude/
