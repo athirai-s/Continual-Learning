@@ -154,6 +154,8 @@ class CASMModelWrapper(nn.Module):
         for _ in range(cfg.casm_num_slots):  # type: ignore[arg-type]
             self._create_slot()
 
+        self._slot_usage_counts: dict[int, int] = {sid: 0 for sid in self._active_slot_ids}
+
         # --- Router ---
         self.router = CASMRouter(
             hidden_size=self._hidden_size,
@@ -187,10 +189,37 @@ class CASMModelWrapper(nn.Module):
     def add_memory_slot(self) -> int:
         """Allocate a new slot (e.g., after contradiction detection).
 
-        The new slot is outside the router's initial capacity and will not
-        be selected automatically unless the router is expanded.
+        The new slot is immediately added to the router via _expand_router(),
+        so it is selectable from the next forward pass onward.
         """
-        return self._create_slot()
+        new_id = self._create_slot()
+        self._slot_usage_counts[new_id] = 0
+        self._expand_router()
+        return new_id
+
+    def _expand_router(self) -> None:
+        """Grow the router's output layer by one neuron for the latest new slot.
+
+        Preserves existing weights; zero-initialises the new neuron.
+        After this call router.num_slots == len(_active_slot_ids).
+        """
+        old_layer = self.router.net[2]  # nn.Linear(router_hidden_size, old_num_slots)
+        old_n = old_layer.out_features
+        new_n = old_n + 1
+        new_layer = nn.Linear(
+            old_layer.in_features,
+            new_n,
+            bias=(old_layer.bias is not None),
+        )
+        new_layer = new_layer.to(old_layer.weight.device)
+        with torch.no_grad():
+            new_layer.weight[:old_n] = old_layer.weight
+            new_layer.weight[old_n].zero_()
+            if old_layer.bias is not None:
+                new_layer.bias[:old_n] = old_layer.bias
+                new_layer.bias[old_n].zero_()
+        self.router.net[2] = new_layer
+        self.router.num_slots = new_n
 
     def close_memory_slot(self, slot_id: int) -> None:
         """Exclude a slot from future routing (weights are retained)."""
@@ -227,6 +256,10 @@ class CASMModelWrapper(nn.Module):
 
             top_k = min(self._casm_cfg.casm_top_k, len(self._active_slot_ids))  # type: ignore[arg-type]
             slot_ids, weights = self.router(query, top_k=top_k)  # (B, top_k)
+
+            for idx in slot_ids.view(-1).tolist():
+                if idx in self._slot_usage_counts:
+                    self._slot_usage_counts[idx] += 1
 
             # Build contribution matrix for all router-reachable slots.
             device = query.device
@@ -265,6 +298,29 @@ class CASMModelWrapper(nn.Module):
             if key in self.slot_bank:
                 total = total + self.slot_bank[key].sparsity_loss()
         return total.squeeze()
+
+    def compute_overlap_loss(self) -> torch.Tensor:
+        """Pairwise cosine similarity penalty across active slot contributions.
+
+        Encourages slots to learn distinct representations. Returns a scalar;
+        zero when fewer than two active slots exist.
+        """
+        device = next(self.slot_bank.parameters()).device
+        total = torch.zeros(1, device=device)
+        contribs = []
+        for sid in self._active_slot_ids:
+            key = str(sid)
+            if key in self.slot_bank:
+                contribs.append(_slot_contribution(self.slot_bank[key]))  # (H,)
+        if len(contribs) < 2:
+            return total.squeeze()
+        C = torch.stack(contribs, dim=0)                          # (n, H)
+        norms = C.norm(dim=1, keepdim=True).clamp(min=1e-8)
+        C_norm = C / norms                                        # (n, H)
+        sim_matrix = C_norm @ C_norm.t()                         # (n, n)
+        n = sim_matrix.shape[0]
+        mask = torch.triu(torch.ones(n, n, device=device, dtype=torch.bool), diagonal=1)
+        return sim_matrix[mask].sum()
 
     # ------------------------------------------------------------------
     # Persistence
