@@ -1,8 +1,12 @@
 import torch
 
-from synthetic_backend import load_synthetic_model
-from train_config import TrainConfig
-from train_runner import build_synthetic_dataset, build_synthetic_model_and_tokenizer, run_training
+from training.synthetic_backend import load_synthetic_model
+from training.train_config import TrainConfig
+from training.train_runner import (
+    build_synthetic_dataset,
+    build_synthetic_model_and_tokenizer,
+    run_training,
+)
 
 
 def build_config(run_id: str) -> TrainConfig:

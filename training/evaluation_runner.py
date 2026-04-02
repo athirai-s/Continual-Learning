@@ -6,8 +6,9 @@ from typing import Any
 import torch
 
 from casf_dataset_api import EvalResult, TemporalEvaluator
-from run_artifacts import metrics_root, period_root
-from train_config import TrainConfig
+
+from artifacts.run_artifacts import metrics_root, period_root
+from .train_config import TrainConfig
 
 
 EVAL_SUMMARY_FILENAME = "eval_summary.json"

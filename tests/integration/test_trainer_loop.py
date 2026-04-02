@@ -1,7 +1,11 @@
 from casf_dataset_api import MemoryRegistry
-from synthetic_backend import SyntheticTemporalDataset, SyntheticTokenizer, build_synthetic_model
-from train_config import TrainConfig
-from trainer import CASFTrainer
+from training.synthetic_backend import (
+    SyntheticTemporalDataset,
+    SyntheticTokenizer,
+    build_synthetic_model,
+)
+from training.train_config import TrainConfig
+from training.trainer import CASFTrainer
 
 
 EXPECTED_RESULT_KEYS = {

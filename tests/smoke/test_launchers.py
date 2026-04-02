@@ -2,7 +2,7 @@ import os
 import subprocess
 import sys
 
-from checkpointing import read_latest_pointer
+from artifacts.checkpointing import read_latest_pointer
 
 
 def test_run_job_executes_synthetic_smoke_path(repo_root, tmp_path):

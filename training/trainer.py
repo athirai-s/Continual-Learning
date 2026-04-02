@@ -10,21 +10,21 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from transformers import get_cosine_schedule_with_warmup
 
-from train_config import TrainConfig
-from passage_filter import PassageFilter
 from casf_dataset_api import TemporalDataset, ContradictionDetector, MemoryRegistry
-from checkpointing import (
+from artifacts.checkpoint_manifest import (
+    CheckpointManifest,
+    validate_checkpoint_manifest,
+    write_checkpoint_manifest,
+)
+from artifacts.checkpointing import (
     RunRootLock,
     create_checkpoint_tempdir,
     finalize_checkpoint,
     prepare_run_root,
     resolve_checkpoint_path,
 )
-from checkpoint_manifest import (
-    CheckpointManifest,
-    validate_checkpoint_manifest,
-    write_checkpoint_manifest,
-)
+from .passage_filter import PassageFilter
+from .train_config import TrainConfig
 
 
 TRAINER_STATE_FILENAME = "trainer_state.pt"

@@ -3,7 +3,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from run_artifacts import metrics_root
+from artifacts.run_artifacts import metrics_root
 
 
 METRICS_EVENTS_FILENAME = "events.jsonl"

@@ -1,4 +1,4 @@
-from passage_filter import PassageFilter
+from training.passage_filter import PassageFilter
 
 
 def test_deduplicate_preserves_first_seen_order():

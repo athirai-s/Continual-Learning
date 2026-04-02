@@ -1,7 +1,7 @@
 import argparse
 
-from train_config import TrainConfig
-from train_runner import run_mode
+from training.train_config import TrainConfig
+from training.train_runner import run_mode
 
 
 DEFAULT_MODEL_NAME = "meta-llama/Llama-3.2-3B"

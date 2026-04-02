@@ -1,7 +1,7 @@
 import pytest
 
-import checkpointing
-from checkpointing import (
+import artifacts.checkpointing as checkpointing
+from artifacts.checkpointing import (
     CheckpointLockHeldError,
     CheckpointLockUnsupportedError,
     RunRootLock,
