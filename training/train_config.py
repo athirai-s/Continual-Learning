@@ -48,6 +48,7 @@ class TrainConfig:
     casm_sparsity_weight: float = 0.0
     casm_overlap_weight: float = 0.0
     casm_branch_on_contradiction: bool = True
+    casm_memory_size: Optional[int] = None
 
     def validate(self) -> None:
         if self.method not in {"full_ft", "lora", "smf", "casm"}:
@@ -108,6 +109,8 @@ class TrainConfig:
             raise ValueError("casm_sparsity_weight must be >= 0")
         if self.casm_overlap_weight < 0:
             raise ValueError("casm_overlap_weight must be >= 0")
+        if self.casm_memory_size is not None and self.casm_memory_size <= 0:
+            raise ValueError("casm_memory_size must be > 0")
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

@@ -31,6 +31,7 @@ class MemorySlot:
     valid_from: str
     valid_until: Optional[str] = None
     contradicts: Optional[int] = None
+    usage_count: int = 0
 
 
 @dataclass

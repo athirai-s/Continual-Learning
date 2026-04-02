@@ -40,6 +40,70 @@ class MemoryRegistry:
         self._next_id += 1
         return slot
 
+    def add_slot(
+        self,
+        subject: str,
+        relation: str,
+        value: str,
+        valid_from: str,
+        parent_slot_id: Optional[int] = None,
+    ) -> MemorySlot:
+        """Explicitly create a new slot with the given metadata.
+
+        Unlike ``write()``, this does not perform contradiction detection or close
+        any existing active slot — the caller is responsible for that.
+
+        ``parent_slot_id`` records the slot this one was branched from (if any)
+        and is stored in the ``contradicts`` field.
+        """
+        slot = MemorySlot(
+            slot_id=self._next_id,
+            subject=subject,
+            relation=relation,
+            value=value,
+            valid_from=valid_from,
+            valid_until=None,
+            contradicts=parent_slot_id,
+        )
+        self._slots.append(slot)
+        self._next_id += 1
+        return slot
+
+    def close_slot(self, slot_id: int, valid_until: str) -> None:
+        """Mark a slot as closed by setting its ``valid_until`` field.
+
+        Closed slots remain in storage and are still queryable via ``get_at()``
+        and ``history()``.
+        """
+        for slot in self._slots:
+            if slot.slot_id == slot_id:
+                slot.valid_until = valid_until
+                return
+        raise KeyError(f"No slot with slot_id={slot_id}")
+
+    def lookup(
+        self,
+        subject: str,
+        relation: str,
+        period: Optional[str] = None,
+    ) -> Optional[MemorySlot]:
+        """Return the slot for *(subject, relation)* at the given period.
+
+        If *period* is ``None``, returns the currently active slot
+        (i.e. the one whose ``valid_until`` is ``None``).  Otherwise
+        delegates to ``get_at()``.
+        """
+        if period is None:
+            return self.get_active(subject, relation)
+        return self.get_at(subject, relation, period)
+
+    def update_from_probes(self, probes: list[Probe], period: str) -> list[MemorySlot]:
+        """Write each probe into the registry and return the created slots."""
+        created: list[MemorySlot] = []
+        for probe in probes:
+            created.append(self.write(probe, period))
+        return created
+
     def get_active(self, subject: str, relation: str) -> Optional[MemorySlot]:
         """Return the slot with valid_until=None for this (subject, relation)."""
         for slot in reversed(self._slots):
@@ -64,8 +128,12 @@ class MemoryRegistry:
         slots = [s for s in self._slots if s.subject == subject and s.relation == relation]
         return sorted(slots, key=lambda s: self._period_index(s.valid_from))
 
-    def save(self, path: str) -> None:
-        data = {
+    # ------------------------------------------------------------------
+    # Dict-based serialization
+
+    def to_json(self) -> dict:
+        """Serialize the registry to a JSON-compatible dict."""
+        return {
             "next_id": self._next_id,
             "slots": [
                 {
@@ -76,18 +144,18 @@ class MemoryRegistry:
                     "valid_from": s.valid_from,
                     "valid_until": s.valid_until,
                     "contradicts": s.contradicts,
+                    "usage_count": s.usage_count,
                 }
                 for s in self._slots
             ],
         }
-        with open(path, "w") as f:
-            json.dump(data, f, indent=2)
 
-    def load(self, path: str) -> None:
-        with open(path) as f:
-            data = json.load(f)
-        self._next_id = data["next_id"]
-        self._slots = [
+    @classmethod
+    def from_json(cls, data: dict) -> "MemoryRegistry":
+        """Restore a registry from a dict produced by ``to_json()``."""
+        registry = cls()
+        registry._next_id = data["next_id"]
+        registry._slots = [
             MemorySlot(
                 slot_id=s["slot_id"],
                 subject=s["subject"],
@@ -96,9 +164,25 @@ class MemoryRegistry:
                 valid_from=s["valid_from"],
                 valid_until=s["valid_until"],
                 contradicts=s["contradicts"],
+                usage_count=s.get("usage_count", 0),
             )
             for s in data["slots"]
         ]
+        return registry
+
+    # ------------------------------------------------------------------
+    # File-based serialization (delegates to to_json / from_json)
+
+    def save(self, path: str) -> None:
+        with open(path, "w") as f:
+            json.dump(self.to_json(), f, indent=2)
+
+    def load(self, path: str) -> None:
+        with open(path) as f:
+            data = json.load(f)
+        restored = MemoryRegistry.from_json(data)
+        self._next_id = restored._next_id
+        self._slots = restored._slots
 
     def __len__(self) -> int:
         return len(self._slots)
