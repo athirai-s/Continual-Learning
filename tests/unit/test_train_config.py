@@ -52,3 +52,143 @@ def test_validate_rejects_invalid_values(updates, message):
 
     with pytest.raises(ValueError, match=message):
         cfg.validate()
+
+
+# ---------------------------------------------------------------------------
+# SMF config tests
+# ---------------------------------------------------------------------------
+
+def _valid_smf_cfg(**overrides) -> TrainConfig:
+    defaults = dict(
+        model_name="synthetic-local-model",
+        method="smf",
+        smf_memory_size=64,
+        smf_sparsity_ratio=0.1,
+        smf_update_layers=[0, 1],
+        smf_regularization_weight=0.01,
+        smf_freeze_backbone=True,
+    )
+    defaults.update(overrides)
+    return TrainConfig(**defaults)
+
+
+def test_valid_smf_config_passes():
+    cfg = _valid_smf_cfg()
+    cfg.validate()  # must not raise
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        ({"smf_memory_size": None}, "smf_memory_size must be > 0"),
+        ({"smf_memory_size": 0}, "smf_memory_size must be > 0"),
+        ({"smf_memory_size": -1}, "smf_memory_size must be > 0"),
+        ({"smf_sparsity_ratio": None}, "smf_sparsity_ratio must be in"),
+        ({"smf_sparsity_ratio": 0.0}, "smf_sparsity_ratio must be in"),
+        ({"smf_sparsity_ratio": 1.1}, "smf_sparsity_ratio must be in"),
+        ({"smf_update_layers": None}, "smf_update_layers must be non-empty"),
+        ({"smf_update_layers": []}, "smf_update_layers must be non-empty"),
+        ({"smf_regularization_weight": -0.1}, "smf_regularization_weight must be >= 0"),
+        ({"smf_freeze_backbone": False}, "smf_freeze_backbone must be True"),
+    ],
+)
+def test_smf_config_rejects_invalid_values(overrides, message):
+    cfg = _valid_smf_cfg(**overrides)
+    with pytest.raises(ValueError, match=message):
+        cfg.validate()
+
+
+def test_smf_sparsity_ratio_boundary_one_is_valid():
+    cfg = _valid_smf_cfg(smf_sparsity_ratio=1.0)
+    cfg.validate()
+
+
+def test_smf_regularization_weight_zero_is_valid():
+    cfg = _valid_smf_cfg(smf_regularization_weight=0.0)
+    cfg.validate()
+
+
+# ---------------------------------------------------------------------------
+# CASM config tests
+# ---------------------------------------------------------------------------
+
+def _valid_casm_cfg(**overrides) -> TrainConfig:
+    defaults = dict(
+        model_name="synthetic-local-model",
+        method="casm",
+        casm_num_slots=4,
+        casm_router_hidden_size=128,
+        casm_top_k=2,
+        casm_router_temperature=1.0,
+        casm_sparsity_weight=0.01,
+        casm_overlap_weight=0.01,
+        casm_branch_on_contradiction=True,
+    )
+    defaults.update(overrides)
+    return TrainConfig(**defaults)
+
+
+def test_valid_casm_config_passes():
+    cfg = _valid_casm_cfg()
+    cfg.validate()  # must not raise
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        ({"casm_num_slots": None}, "casm_num_slots must be >= 1"),
+        ({"casm_num_slots": 0}, "casm_num_slots must be >= 1"),
+        ({"casm_top_k": None}, "casm_top_k must be >= 1"),
+        ({"casm_top_k": 0}, "casm_top_k must be >= 1"),
+        ({"casm_top_k": 5}, "casm_top_k must be <= casm_num_slots"),
+        ({"casm_router_hidden_size": None}, "casm_router_hidden_size must be > 0"),
+        ({"casm_router_hidden_size": 0}, "casm_router_hidden_size must be > 0"),
+        ({"casm_router_hidden_size": -1}, "casm_router_hidden_size must be > 0"),
+        ({"casm_sparsity_weight": -0.1}, "casm_sparsity_weight must be >= 0"),
+        ({"casm_overlap_weight": -0.1}, "casm_overlap_weight must be >= 0"),
+    ],
+)
+def test_casm_config_rejects_invalid_values(overrides, message):
+    cfg = _valid_casm_cfg(**overrides)
+    with pytest.raises(ValueError, match=message):
+        cfg.validate()
+
+
+def test_casm_top_k_equals_num_slots_is_valid():
+    cfg = _valid_casm_cfg(casm_num_slots=3, casm_top_k=3)
+    cfg.validate()
+
+
+def test_casm_zero_weights_are_valid():
+    cfg = _valid_casm_cfg(casm_sparsity_weight=0.0, casm_overlap_weight=0.0)
+    cfg.validate()
+
+
+# ---------------------------------------------------------------------------
+# from_dict round-trip tests
+# ---------------------------------------------------------------------------
+
+def test_from_dict_round_trips_full_ft():
+    cfg = TrainConfig(model_name="m", method="full_ft")
+    restored = TrainConfig.from_dict(cfg.to_dict())
+    assert restored == cfg
+
+
+def test_from_dict_round_trips_smf():
+    cfg = _valid_smf_cfg()
+    restored = TrainConfig.from_dict(cfg.to_dict())
+    assert restored == cfg
+
+
+def test_from_dict_round_trips_casm():
+    cfg = _valid_casm_cfg()
+    restored = TrainConfig.from_dict(cfg.to_dict())
+    assert restored == cfg
+
+
+def test_from_dict_ignores_unknown_keys():
+    cfg = TrainConfig(model_name="m", method="full_ft")
+    data = cfg.to_dict()
+    data["future_field"] = "some_value"
+    restored = TrainConfig.from_dict(data)
+    assert restored == cfg

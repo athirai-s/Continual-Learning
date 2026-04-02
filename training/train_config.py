@@ -33,8 +33,24 @@ class TrainConfig:
     checkpoint_every_n_optimizer_steps: Optional[int] = None
     seed: int = 0
 
+    # SMF-specific fields
+    smf_memory_size: Optional[int] = None
+    smf_sparsity_ratio: Optional[float] = None
+    smf_update_layers: Optional[list] = None
+    smf_regularization_weight: float = 0.0
+    smf_freeze_backbone: bool = True
+
+    # CASM-specific fields
+    casm_num_slots: Optional[int] = None
+    casm_router_hidden_size: Optional[int] = None
+    casm_top_k: Optional[int] = None
+    casm_router_temperature: float = 1.0
+    casm_sparsity_weight: float = 0.0
+    casm_overlap_weight: float = 0.0
+    casm_branch_on_contradiction: bool = True
+
     def validate(self) -> None:
-        if self.method not in {"full_ft", "lora", "smf"}:
+        if self.method not in {"full_ft", "lora", "smf", "casm"}:
             raise ValueError(f"Unsupported method: {self.method}")
         if self.precision not in {"bfloat16", "float16", "int8"}:
             raise ValueError(f"Unsupported precision: {self.precision}")
@@ -62,8 +78,44 @@ class TrainConfig:
         if self.seed < 0:
             raise ValueError("seed must be >= 0")
 
+        if self.method == "smf":
+            self._validate_smf()
+        elif self.method == "casm":
+            self._validate_casm()
+
+    def _validate_smf(self) -> None:
+        if self.smf_memory_size is None or self.smf_memory_size <= 0:
+            raise ValueError("smf_memory_size must be > 0 for method='smf'")
+        if self.smf_sparsity_ratio is None or not (0 < self.smf_sparsity_ratio <= 1):
+            raise ValueError("smf_sparsity_ratio must be in (0, 1] for method='smf'")
+        if not self.smf_update_layers:
+            raise ValueError("smf_update_layers must be non-empty for method='smf'")
+        if self.smf_regularization_weight < 0:
+            raise ValueError("smf_regularization_weight must be >= 0")
+        if not self.smf_freeze_backbone:
+            raise ValueError("smf_freeze_backbone must be True for method='smf'")
+
+    def _validate_casm(self) -> None:
+        if self.casm_num_slots is None or self.casm_num_slots < 1:
+            raise ValueError("casm_num_slots must be >= 1 for method='casm'")
+        if self.casm_top_k is None or self.casm_top_k < 1:
+            raise ValueError("casm_top_k must be >= 1 for method='casm'")
+        if self.casm_top_k > self.casm_num_slots:
+            raise ValueError("casm_top_k must be <= casm_num_slots")
+        if self.casm_router_hidden_size is None or self.casm_router_hidden_size <= 0:
+            raise ValueError("casm_router_hidden_size must be > 0 for method='casm'")
+        if self.casm_sparsity_weight < 0:
+            raise ValueError("casm_sparsity_weight must be >= 0")
+        if self.casm_overlap_weight < 0:
+            raise ValueError("casm_overlap_weight must be >= 0")
+
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "TrainConfig":
+        known = {k: v for k, v in data.items() if k in cls.__dataclass_fields__}
+        return cls(**known)
 
     def save_json(self, path: str) -> None:
         with open(path, "w") as f:
