@@ -22,6 +22,7 @@ from artifacts.checkpointing import (
     finalize_checkpoint,
     prepare_run_root,
     resolve_checkpoint_path,
+    validate_checkpoint_method_compatibility,
 )
 from .passage_filter import PassageFilter
 from .train_config import TrainConfig
@@ -506,6 +507,11 @@ class CASFTrainer:
                             if reg_slot.slot_id == reg_slot_id:
                                 reg_slot.usage_count += count
                                 break
+                # Reset counts so period-boundary checkpoints don't double-add
+                # on the next period's registry sync after a resume.
+                self.model._slot_usage_counts = {
+                    sid: 0 for sid in self.model._slot_usage_counts
+                }
 
         if period not in self._completed_units:
             self._completed_units.append(period)
@@ -587,6 +593,10 @@ class CASFTrainer:
         if self._checkpoint_state is not None:
             checkpoint_state = dict(self._checkpoint_state)
             checkpoint_state["rng_state"] = self._capture_rng_state()
+            if self.config.method == "casm":
+                checkpoint_state["model_slot_to_registry_slot_id"] = dict(
+                    self._model_slot_to_registry_slot_id
+                )
             torch.save(
                 checkpoint_state,
                 os.path.join(temp_dir, TRAINER_STATE_FILENAME),
@@ -605,6 +615,7 @@ class CASFTrainer:
 
     def resume(self, path: str) -> ResumeState:
         checkpoint_path = resolve_checkpoint_path(path)
+        validate_checkpoint_method_compatibility(checkpoint_path, self.config.method)
 
         registry_path = os.path.join(checkpoint_path, "memory_registry.json")
         if os.path.exists(registry_path):
@@ -639,6 +650,15 @@ class CASFTrainer:
         self._move_optimizer_state_to_device()
         self._checkpoint_state = trainer_state
         self._completed_units = list(trainer_state["completed_units"])
+
+        if self.config.method == "casm":
+            from .casm_model import CASMModelWrapper
+            if isinstance(self.model, CASMModelWrapper):
+                CASMModelWrapper.load_memory_into(self.model, str(checkpoint_path))
+            if "model_slot_to_registry_slot_id" in trainer_state:
+                self._model_slot_to_registry_slot_id = {
+                    int(k): v for k, v in trainer_state["model_slot_to_registry_slot_id"].items()
+                }
 
         return ResumeState(
             checkpoint_path=str(checkpoint_path),

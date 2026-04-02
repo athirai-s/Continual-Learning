@@ -2,9 +2,9 @@
 
 ## Current status
 [UPDATE THIS at the end of every session]
-Current phase: Phase 4 — CASM trainer branch
-Last completed: Step 4 — CASM branch in trainer.py: _select_trainable_parameters (casm_parameters()), _rebuild_optimizer_for_casm (preserves existing param state after router expansion), CASM auxiliary losses in _train_step (sparsity + overlap), train_period contradiction branching (detector result captured → add_memory_slot per contradiction → optimizer + scheduler rebuilt → usage_count synced to registry at period end); _expand_router in casm_model.py (grows router output layer by 1, zero-init new neuron, preserves old weights); compute_overlap_loss (pairwise cosine penalty); _slot_usage_counts tracking in forward(); 31 new tests, 169 unit tests passing
-Next task: Step 5 — artifacts/checkpointing.py: persist registry + router state; resume must restore full CASM memory history
+Current phase: Phase 5 — CASM checkpointing
+Last completed: Step 5 — Full CASM checkpoint/resume: save_pretrained now persists slot_usage_counts in casm_memory.pt; load_memory_into recreates extra slots (contradiction-branched), resizes router output layer before loading state dict, and restores slot_usage_counts with backward-compat fallback; _slot_usage_counts reset to zero after period-end registry sync (prevents double-counting on period-boundary resume); _model_slot_to_registry_slot_id persisted in trainer_state.pt and restored on resume; validate_checkpoint_method_compatibility added to artifacts/checkpointing.py and called in resume(); 27 new tests, 196 unit tests passing (1 pre-existing Windows lock failure unchanged)
+Next task: Step 6 — evaluation + metrics: per-period reporting for CASM (plasticity, stability, contradiction_acc, routing_acc)
 
 ## Known pre-existing test failures (Windows — not caused by this implementation)
 23 tests fail on Windows before any of our changes. Two root causes:
