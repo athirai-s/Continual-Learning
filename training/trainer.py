@@ -91,7 +91,7 @@ class CASFTrainer:
         self.model.to(self.device)
 
         self.optimizer = torch.optim.AdamW(
-            self.model.parameters(), 
+            self._select_trainable_parameters(),
             lr=self.config.learning_rate,
         )
         self.scheduler = None
@@ -152,10 +152,40 @@ class CASFTrainer:
             collate_fn=self._collate_batch,
         )
     
+    def _select_trainable_parameters(self) -> list:
+        """Return the parameter list the optimizer should update.
+
+        For SMF, only the sparse memory parameters are trainable; the
+        backbone is frozen.  For all other methods the full parameter set
+        is used.
+        """
+        if self.config.method == "smf":
+            from .smf_model import SMFModelWrapper
+            if not isinstance(self.model, SMFModelWrapper):
+                raise TypeError(
+                    "method='smf' requires an SMFModelWrapper but got "
+                    f"{type(self.model).__name__}"
+                )
+            params = list(self.model.smf_parameters())
+            if not params:
+                raise ValueError(
+                    "SMFModelWrapper has no trainable memory parameters."
+                )
+            return params
+        return list(self.model.parameters())
+
     def _train_step(self, batch) -> float:
         batch = {k: v.to(self.device) for k, v in batch.items()}
         outputs = self.model(**batch)
         raw_loss = outputs.loss
+        if (
+            self.config.method == "smf"
+            and self.config.smf_regularization_weight > 0
+        ):
+            from .smf_model import SMFModelWrapper
+            if isinstance(self.model, SMFModelWrapper):
+                reg = self.model.compute_regularization_loss()
+                raw_loss = raw_loss + self.config.smf_regularization_weight * reg
         (raw_loss / self.config.grad_accum_steps).backward()
         return float(raw_loss.item())
 
