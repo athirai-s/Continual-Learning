@@ -2,9 +2,32 @@
 
 ## Current status
 [UPDATE THIS at the end of every session]
-Current phase: Phase 2 — SMF model implementation
-Last completed: Step 2 — SMFModelWrapper (frozen backbone, sparse memory, forward hooks, optimizer branching, SMF regularization); 18/18 new tests passing, 87 existing tests unchanged
-Next task: Step 3 — trainer.py: SMF train_period() metrics (retention, forgetting, active_params)
+Current phase: Phase 3 — CASM memory registry and router
+Last completed: Step 3 — MemoryRegistry extended (add_slot, close_slot, lookup, to_json, from_json, update_from_probes, usage_count on MemorySlot); CASMRouter + CASMModelWrapper in training/casm_model.py (frozen backbone, slot bank, routing, slot lifecycle, persistence); 64 new tests passing, all prior unit tests unchanged
+Next task: Step 4 — trainer.py: CASM branch in train_period() (contradiction detection → slot branching, registry writes, CASM loss)
+
+### Step 4 must-do notes (carry-overs from Step 3 design)
+- `_select_trainable_parameters()` in trainer.py has no CASM branch — falls through to all params. Add `method == "casm"` case that calls `model.casm_parameters()`, matching the SMF pattern.
+- `MemorySlot.usage_count` exists but is never incremented. Increment it in the CASM training step when a slot is selected by the router.
+- `add_memory_slot()` creates slots outside the router's initial output dimension — the router cannot select them. Contradiction-branching logic in Step 4 must account for this (expand router or re-init if needed).
+
+## Known pre-existing test failures (Windows — not caused by this implementation)
+23 tests fail on Windows before any of our changes. Two root causes:
+
+1. **Advisory file locks unsupported on Windows** — `RunRootLock` in `artifacts/checkpointing.py` raises `CheckpointLockUnsupportedError` on this platform. Directly breaks:
+   - `tests/unit/test_checkpointing.py::test_run_root_lock_rejects_second_writer`
+   - `tests/smoke/test_run_locking.py::test_run_training_fails_fast_when_run_root_is_already_locked`
+   - All 6 `tests/smoke/test_resume.py` tests that exercise the full runner (runner acquires the lock on entry)
+
+2. **End-to-end training loop depends on the file lock** — the runner fails before writing any artifacts, so every test that asserts on output files also fails:
+   - `tests/smoke/test_train_runner.py` (3 tests)
+   - `tests/smoke/test_eval_hooks.py` (1 test)
+   - `tests/smoke/test_launchers.py` (1 test)
+   - `tests/contracts/test_checkpoint_artifacts.py`, `test_eval_artifacts.py`, `test_metrics_schema.py`, `test_run_artifacts.py` (4 tests, 2 from run_artifacts)
+   - `tests/contracts/test_run_manifest_metadata.py` (1 test)
+   - `tests/integration/test_metrics_logging.py`, `test_reproducibility.py`, `test_training_plan_orchestration.py` (3 tests)
+
+These failures are unrelated to SMF/CASM work and were confirmed present on the base commit before this branch.
 
 ## Architecture rules
 - TrainConfig.method is the ONLY method switch
