@@ -335,23 +335,63 @@ class CASMModelWrapper(nn.Module):
             "closed_slot_ids": list(self._closed_slot_ids),
             "next_slot_idx": self._next_slot_idx,
             "memory_size": self._memory_size,
+            "slot_usage_counts": dict(self._slot_usage_counts),
         }
         torch.save(state, os.path.join(path, "casm_memory.pt"))
 
     @staticmethod
     def load_memory_into(wrapper: "CASMModelWrapper", path: str) -> None:
-        """Restore slot bank and router state from a checkpoint directory."""
+        """Restore slot bank and router state from a checkpoint directory.
+
+        Handles the case where contradiction branching added slots during the
+        saved run (checkpoint has more slots than the freshly-built wrapper).
+        """
         memory_path = os.path.join(path, "casm_memory.pt")
         if not os.path.exists(memory_path):
             return
         state = torch.load(memory_path, map_location="cpu", weights_only=True)
+
+        # Create any slots present in the checkpoint but missing from the wrapper
+        # (slots added via add_memory_slot() during the saved run).
+        memory_size = state.get("memory_size", wrapper._memory_size)
+        for key in state["slot_bank"]:
+            if key not in wrapper.slot_bank:
+                wrapper.slot_bank[key] = SparseMemoryBlock(
+                    memory_size=memory_size,
+                    hidden_size=wrapper._hidden_size,
+                )
+
+        # Load slot weights.
         for key, sd in state["slot_bank"].items():
             if key in wrapper.slot_bank:
                 wrapper.slot_bank[key].load_state_dict(sd)
+
+        # Resize the router output layer to match the checkpoint before loading
+        # its state dict (router may have grown via _expand_router during the run).
+        checkpoint_num_slots = state["router"]["net.2.weight"].shape[0]
+        if checkpoint_num_slots != wrapper.router.num_slots:
+            old_layer = wrapper.router.net[2]
+            new_layer = nn.Linear(
+                old_layer.in_features,
+                checkpoint_num_slots,
+                bias=(old_layer.bias is not None),
+            )
+            wrapper.router.net[2] = new_layer
+            wrapper.router.num_slots = checkpoint_num_slots
+
         wrapper.router.load_state_dict(state["router"])
         wrapper._active_slot_ids = list(state["active_slot_ids"])
         wrapper._closed_slot_ids = set(state["closed_slot_ids"])
         wrapper._next_slot_idx = state["next_slot_idx"]
+
+        # Restore per-slot usage counts (saved post-reset at period boundaries,
+        # or mid-period when a within-period checkpoint was written).
+        if "slot_usage_counts" in state:
+            wrapper._slot_usage_counts = {int(k): v for k, v in state["slot_usage_counts"].items()}
+        else:
+            # Backward compat: checkpoint predates usage-count persistence.
+            all_slot_ids = set(state["active_slot_ids"]) | set(state["closed_slot_ids"])
+            wrapper._slot_usage_counts = {sid: 0 for sid in all_slot_ids}
 
     # ------------------------------------------------------------------
     # Backbone config delegation

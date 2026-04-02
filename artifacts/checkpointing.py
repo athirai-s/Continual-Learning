@@ -174,3 +174,24 @@ def read_latest_pointer(run_root: str | Path) -> CheckpointPointer:
         checkpoint_relpath=data["checkpoint_relpath"],
         last_period=data["last_period"],
     )
+
+
+def validate_checkpoint_method_compatibility(
+    checkpoint_path: str | Path, expected_method: str
+) -> None:
+    """Raise CheckpointError if the saved config's method doesn't match *expected_method*.
+
+    Skips the check silently when train_config.json is absent (e.g., old
+    checkpoints or test fixtures that don't write a full config).
+    """
+    config_path = Path(checkpoint_path) / "train_config.json"
+    if not config_path.exists():
+        return
+    with open(config_path) as f:
+        config = json.load(f)
+    saved_method = config.get("method")
+    if saved_method is not None and saved_method != expected_method:
+        raise CheckpointError(
+            f"Checkpoint method '{saved_method}' is incompatible with the current "
+            f"training method '{expected_method}'. Cannot resume across methods."
+        )

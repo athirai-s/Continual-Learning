@@ -53,17 +53,33 @@ def build_dataset(dataset_name: str, period: str | None = None):
     raise ValueError(f"Unsupported dataset_name: {dataset_name}")
 
 
+def _wrap_model_for_method(model: Any, cfg: TrainConfig) -> Any:
+    """Wrap a bare backbone in the method-specific trainable wrapper.
+
+    SMF and CASM each freeze the backbone and attach their own trainable
+    parameters; all other methods use the backbone directly.  Memory state
+    is *not* loaded here — that happens inside ``CASFTrainer.resume()``.
+    """
+    if cfg.method == "smf":
+        from .smf_model import SMFModelWrapper
+        return SMFModelWrapper(model, cfg)
+    if cfg.method == "casm":
+        from .casm_model import CASMModelWrapper
+        return CASMModelWrapper(model, cfg)
+    return model
+
+
 def build_real_model_and_tokenizer(cfg: TrainConfig) -> tuple[Any, Any]:
     print(f"Loading model: {cfg.model_name}")
     tokenizer = AutoTokenizer.from_pretrained(cfg.model_name)
     model = AutoModelForCausalLM.from_pretrained(cfg.model_name)
-    return model, tokenizer
+    return _wrap_model_for_method(model, cfg), tokenizer
 
 
 def load_real_model_and_tokenizer(cfg: TrainConfig, checkpoint_path: str) -> tuple[Any, Any]:
     tokenizer = AutoTokenizer.from_pretrained(checkpoint_path)
     model = AutoModelForCausalLM.from_pretrained(checkpoint_path)
-    return model, tokenizer
+    return _wrap_model_for_method(model, cfg), tokenizer
 
 
 def build_real_dataset(unit: str, cfg: TrainConfig):
@@ -75,13 +91,13 @@ def build_real_dataset(unit: str, cfg: TrainConfig):
 def build_synthetic_model_and_tokenizer(cfg: TrainConfig) -> tuple[Any, Any]:
     tokenizer = SyntheticTokenizer()
     model = build_synthetic_model(vocab_size=tokenizer.vocab_size)
-    return model, tokenizer
+    return _wrap_model_for_method(model, cfg), tokenizer
 
 
 def load_synthetic_model_and_tokenizer(cfg: TrainConfig, checkpoint_path: str) -> tuple[Any, Any]:
     tokenizer = SyntheticTokenizer.from_pretrained(checkpoint_path)
     model = load_synthetic_model(checkpoint_path)
-    return model, tokenizer
+    return _wrap_model_for_method(model, cfg), tokenizer
 
 
 def build_synthetic_dataset(unit: str, cfg: TrainConfig):

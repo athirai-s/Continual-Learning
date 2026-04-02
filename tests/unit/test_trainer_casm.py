@@ -425,12 +425,12 @@ class TestTrainPeriodCASMBranching:
         # The mapping must exist (contradictions fired)
         assert len(trainer._model_slot_to_registry_slot_id) > 0
 
-        # For each mapped (model_slot → registry_slot), if model used the slot,
-        # the registry slot's usage_count must reflect it
+        # After the period the model-side counts are reset to zero (to prevent
+        # double-counting on the next period's registry sync after a resume).
+        # The registry slot must exist; its usage_count reflects what was synced.
         for model_slot_id, reg_slot_id in trainer._model_slot_to_registry_slot_id.items():
-            model_count = trainer.model._slot_usage_counts.get(model_slot_id, 0)
+            assert trainer.model._slot_usage_counts.get(model_slot_id, 0) == 0
             reg_slot = next(
                 (s for s in registry._slots if s.slot_id == reg_slot_id), None
             )
             assert reg_slot is not None
-            assert reg_slot.usage_count == model_count
