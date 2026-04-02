@@ -651,6 +651,11 @@ class CASFTrainer:
         self._checkpoint_state = trainer_state
         self._completed_units = list(trainer_state["completed_units"])
 
+        if self.config.method == "smf":
+            from .smf_model import SMFModelWrapper
+            if isinstance(self.model, SMFModelWrapper):
+                SMFModelWrapper.load_memory_into(self.model, str(checkpoint_path))
+
         if self.config.method == "casm":
             from .casm_model import CASMModelWrapper
             if isinstance(self.model, CASMModelWrapper):

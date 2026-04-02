@@ -2,8 +2,8 @@
 
 ## Current status
 [UPDATE THIS at the end of every session]
-Current phase: Phase 5 — CASM checkpointing
-Last completed: Step 5 — Full CASM checkpoint/resume: save_pretrained now persists slot_usage_counts in casm_memory.pt; load_memory_into recreates extra slots (contradiction-branched), resizes router output layer before loading state dict, and restores slot_usage_counts with backward-compat fallback; _slot_usage_counts reset to zero after period-end registry sync (prevents double-counting on period-boundary resume); _model_slot_to_registry_slot_id persisted in trainer_state.pt and restored on resume; validate_checkpoint_method_compatibility added to artifacts/checkpointing.py and called in resume(); 27 new tests, 196 unit tests passing (1 pre-existing Windows lock failure unchanged)
+Current phase: Phase 5 — CASM checkpointing (complete)
+Last completed: Step 5 — Full SMF + CASM checkpoint/resume. CASM: save_pretrained persists slot_usage_counts; load_memory_into recreates extra slots (contradiction-branched), resizes router output layer, restores slot_usage_counts (backward-compat fallback for old checkpoints); _slot_usage_counts reset to zero after period-end registry sync (prevents double-counting on period-boundary resume); _model_slot_to_registry_slot_id persisted in trainer_state.pt and restored on resume. SMF: resume() now calls SMFModelWrapper.load_memory_into (was silently skipped). Runner: _wrap_model_for_method helper wraps backbone in SMFModelWrapper or CASMModelWrapper based on cfg.method; all four model factories (build/load × real/synthetic) updated to use it — CASFTrainer no longer receives bare backbone for smf/casm methods. validate_checkpoint_method_compatibility added to artifacts/checkpointing.py and called at resume() entry. 47 new tests, 216 unit tests passing (1 pre-existing Windows lock failure unchanged)
 Next task: Step 6 — evaluation + metrics: per-period reporting for CASM (plasticity, stability, contradiction_acc, routing_acc)
 
 ## Known pre-existing test failures (Windows — not caused by this implementation)
