@@ -4,18 +4,18 @@ import pytest
 import torch
 
 from casf_dataset_api import MemoryRegistry
-from synthetic_backend import (
+from training.synthetic_backend import (
     SyntheticTokenizer,
     build_synthetic_model,
     load_synthetic_model,
 )
-from train_config import TrainConfig
-from train_runner import (
+from training.train_config import TrainConfig
+from training.train_runner import (
     build_synthetic_dataset,
     build_synthetic_model_and_tokenizer,
     run_training,
 )
-from trainer import CASFTrainer
+from training.trainer import CASFTrainer
 
 
 def build_config(run_id: str, *, checkpoint_every_n_optimizer_steps: int | None = None) -> TrainConfig:

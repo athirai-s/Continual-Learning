@@ -1,7 +1,7 @@
 import torch
 
 from casf_dataset_api import Probe, TemporalEvaluator
-from evaluation_runner import GenerationAdapter
+from training.evaluation_runner import GenerationAdapter
 
 
 class FakeTokenizer:

@@ -1,5 +1,5 @@
-from train_config import TrainConfig
-from training_plan import DEFAULT_TEMPORAL_WIKI_PLAN, build_training_plan
+from training.train_config import TrainConfig
+from training.training_plan import DEFAULT_TEMPORAL_WIKI_PLAN, build_training_plan
 
 
 def build_config(dataset_name: str) -> TrainConfig:

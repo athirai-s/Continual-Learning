@@ -2,10 +2,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-from checkpointing import read_latest_pointer
-from train_config import TrainConfig
-from train_runner import build_synthetic_dataset, build_synthetic_model_and_tokenizer, run_training
-from training_plan import DEFAULT_TEMPORAL_WIKI_PLAN
+from artifacts.checkpointing import read_latest_pointer
+from training.train_config import TrainConfig
+from training.train_runner import (
+    build_synthetic_dataset,
+    build_synthetic_model_and_tokenizer,
+    run_training,
+)
+from training.training_plan import DEFAULT_TEMPORAL_WIKI_PLAN
 
 
 def test_run_training_smoke_with_synthetic_runtime(tmp_path):

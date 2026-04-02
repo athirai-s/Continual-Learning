@@ -1,9 +1,13 @@
 from pathlib import Path
 
-from checkpointing import read_latest_pointer
-from run_artifacts import load_run_manifest
-from train_config import TrainConfig
-from train_runner import build_synthetic_dataset, build_synthetic_model_and_tokenizer, run_training
+from artifacts.checkpointing import read_latest_pointer
+from artifacts.run_artifacts import load_run_manifest
+from training.train_config import TrainConfig
+from training.train_runner import (
+    build_synthetic_dataset,
+    build_synthetic_model_and_tokenizer,
+    run_training,
+)
 
 
 def build_config() -> TrainConfig:

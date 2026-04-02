@@ -1,10 +1,10 @@
 import torch
 
 from casf_dataset_api import MemoryRegistry
-from synthetic_backend import SyntheticTokenizer
-from synthetic_backend import build_synthetic_model
-from train_config import TrainConfig
-from trainer import CASFTrainer, PassageDataset
+from training.synthetic_backend import SyntheticTokenizer
+from training.synthetic_backend import build_synthetic_model
+from training.train_config import TrainConfig
+from training.trainer import CASFTrainer, PassageDataset
 
 
 def test_passage_dataset_honors_max_length_and_masks_padding_labels():

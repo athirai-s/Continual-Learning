@@ -8,8 +8,9 @@ from typing import Any
 import torch
 import transformers
 
-from checkpoint_manifest import CHECKPOINT_MANIFEST_SCHEMA_VERSION
-from train_config import TrainConfig
+from training.train_config import TrainConfig
+
+from .checkpoint_manifest import CHECKPOINT_MANIFEST_SCHEMA_VERSION
 
 
 RUN_MANIFEST_FILENAME = "run_manifest.json"

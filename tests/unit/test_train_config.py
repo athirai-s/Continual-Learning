@@ -1,6 +1,6 @@
 import pytest
 
-from train_config import TrainConfig
+from training.train_config import TrainConfig
 
 
 def test_make_config_returns_valid_train_config():

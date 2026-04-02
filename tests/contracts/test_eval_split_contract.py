@@ -1,5 +1,5 @@
-from evaluation_runner import determine_eval_splits
-from train_config import TrainConfig
+from training.evaluation_runner import determine_eval_splits
+from training.train_config import TrainConfig
 
 
 def build_config(dataset_name: str) -> TrainConfig:

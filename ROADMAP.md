@@ -135,8 +135,8 @@ This repo does not currently need full production-style E2E testing. The closest
 ## Current Baseline
 
 The current repo has:
-- a custom trainer in `trainer.py`
-- config scaffolding in `train_config.py`
+- a custom trainer in `training/trainer.py`
+- config scaffolding in `training/train_config.py`
 - a train entrypoint in `main.py`
 - a separate older experiment path in `experiments/legacy/3B_train.py`
 - dataset adapters under `casf_dataset_api/download_dataset_scripts/data/`
@@ -241,7 +241,7 @@ After this milestone, future trainer work can be validated automatically instead
   - explicit output directory
   Keep `main.py` as a thin CLI wrapper around that runner.
 - Likely files:
-  `main.py`, new `train_runner.py`, related tests
+  `main.py`, new `training/train_runner.py`, related tests
 - Acceptance criteria:
   - the core training flow is invocable without patching globals
   - `main.py` remains usable as a human entrypoint
@@ -260,7 +260,7 @@ After this milestone, future trainer work can be validated automatically instead
 
 - [x] `M0.4` Move supported launch scripts onto the tested training path as soon as the injectable runner exists.
 - Problem:
-  The repo currently has a split-brain launch path: `main.py` and `trainer.py` represent the evolving training system, but `run_job.sh` still launches `3B_train.py`.
+  The repo currently has a split-brain launch path: `main.py` and `training/trainer.py` represent the evolving training system, but `run_job.sh` still launches `3B_train.py`.
 - Proposed change:
   After `M0.3`, update supported launch scripts to invoke the new runner path. If `3B_train.py` is kept temporarily, mark it clearly as a non-supported experiment path and keep it out of the default launch flow.
 - Likely files:
@@ -479,7 +479,7 @@ Interrupted runs become cheap to recover from safe optimizer-step boundaries, an
 - Proposed change:
   Write each checkpoint into a unique temp directory under the run root, finalize it into a unique versioned directory such as `checkpoints/ckpt-000123/`, then atomically replace `latest.json` to point at the new checkpoint. Restrict full Milestone 2 support to environments where an advisory OS file lock on the run-root lock file is available and reliable. Clean stale temp directories during startup and checkpoint scans instead of trying to hide them.
 - Likely files:
-  `trainer.py`, `train_runner.py`, new checkpoint helpers, tests
+  `training/trainer.py`, `training/train_runner.py`, new checkpoint helpers, tests
 - Acceptance criteria:
   - finalized checkpoint directories are versioned and never overwritten in place
   - `latest.json` always points at a fully written checkpoint
@@ -509,7 +509,7 @@ Interrupted runs become cheap to recover from safe optimizer-step boundaries, an
   - configurable checkpoint cadence in optimizer steps
   Only emit checkpoints after completed optimizer steps with gradients cleared, while still checkpointing at training-unit end.
 - Likely files:
-  `trainer.py`, tests
+  `training/trainer.py`, tests
 - Acceptance criteria:
   - no gradients are silently discarded at the end of an epoch
   - reported progress matches actual optimizer updates
@@ -533,7 +533,7 @@ Interrupted runs become cheap to recover from safe optimizer-step boundaries, an
 - Proposed change:
   Persist model, optimizer, scheduler, RNG state, current unit, completed-unit cursor, next safe optimizer-step cursor within the current unit, and step counters. At unit start, materialize a runner-owned snapshot of the filtered ordered training inputs for that unit. Resume should continue from the next safe optimizer-step boundary using that persisted unit snapshot instead of re-deriving batch order from loader randomness.
 - Likely files:
-  `trainer.py`, `train_runner.py`, checkpoint helpers, tests
+  `training/trainer.py`, `training/train_runner.py`, checkpoint helpers, tests
 - Acceptance criteria:
   - resume semantics are explicit and tested at checkpoint boundaries
   - the runner can continue within the current unit or skip to the next unfinished unit
@@ -563,7 +563,7 @@ Interrupted runs become cheap to recover from safe optimizer-step boundaries, an
   - source-specific dataset identity for the currently supported datasets
   For TemporalWiki, use content digests of the source archives or files. For TSQA and TGQA, use dataset fingerprint or revision from the loaded Hugging Face split. Full Milestone 2 resume is supported only for datasets with a defined identity adapter. Keep M1 checkpoints readable, but explicitly treat them as metadata-only rather than full trainer-state checkpoints.
 - Likely files:
-  new checkpoint manifest helper, `trainer.py`, tests
+  new checkpoint manifest helper, `training/trainer.py`, tests
 - Acceptance criteria:
   - corrupt or incomplete checkpoints fail with a clear error
   - mismatched resume-compatibility settings fail before training continues
@@ -609,7 +609,7 @@ After this milestone, a run directory should tell you what happened, why it happ
   - `periods/<unit>/`
   Readers should keep supporting the Milestone 2-only layout for at least one milestone transition so active runs remain resumable and inspectable while the new structure lands.
 - Likely files:
-  `trainer.py`, `train_runner.py`, new run-artifact helpers, tests
+  `training/trainer.py`, `training/train_runner.py`, new run-artifact helpers, tests
 - Acceptance criteria:
   - every run root has a manifest
   - artifact paths are predictable
@@ -634,7 +634,7 @@ After this milestone, a run directory should tell you what happened, why it happ
   - `checkpoint` events
   The initial schema should stay intentionally small and machine-readable without requiring an external service.
 - Likely files:
-  `trainer.py`, logging helpers, tests
+  `training/trainer.py`, logging helpers, tests
 - Acceptance criteria:
   - metrics schema is versioned or explicitly contracted
   - logs remain human-readable enough to inspect locally
@@ -662,7 +662,7 @@ After this milestone, a run directory should tell you what happened, why it happ
   - ordered training plan
   - checkpoint schema version
 - Likely files:
-  run-manifest helpers, `trainer.py`, `main.py`, `train_config.py`, tests
+  run-manifest helpers, `training/trainer.py`, `main.py`, `training/train_config.py`, tests
 - Acceptance criteria:
   - metadata is captured automatically
   - tests fail if required metadata fields disappear
@@ -681,7 +681,7 @@ After this milestone, a run directory should tell you what happened, why it happ
 - Proposed change:
   Define the evaluation split contract per dataset family, then add evaluation hooks at useful boundaries with results written into structured artifacts. Use a thin generation adapter around model plus tokenizer so the existing evaluator code can be reused without changing the Hugging Face model class. For TemporalWiki, the contract must explicitly evaluate `changed` and `unchanged` separately and persist both outputs rather than relying on the dataset's last-loaded split. TSQA and TGQA should use `val` where available.
 - Likely files:
-  `trainer.py`, `main.py`, evaluator wiring, adapter helpers, tests
+  `training/trainer.py`, `main.py`, evaluator wiring, adapter helpers, tests
 - Acceptance criteria:
   - evaluation cadence is configurable
   - split selection is explicit for each dataset family
@@ -720,7 +720,7 @@ Performance work becomes evidence-based instead of anecdotal, and the repo avoid
 - Proposed change:
   Extend structured metrics with timing fields for data loading, forward/backward, optimizer step, checkpoint time, and throughput. Keep the instrumentation lightweight enough to leave enabled for ordinary runs.
 - Likely files:
-  `trainer.py`, metrics helpers, tests
+  `training/trainer.py`, metrics helpers, tests
 - Acceptance criteria:
   - timings appear in structured logs
   - instrumentation overhead is small for normal runs
@@ -740,7 +740,7 @@ Performance work becomes evidence-based instead of anecdotal, and the repo avoid
 - Proposed change:
   Use the instrumentation from `M4.1` to identify the dominant bottleneck in real runs, then implement exactly one focused optimization. Candidate areas include data preparation, collation, loader settings, or checkpoint cadence, but the chosen change must match the measured hotspot and keep the behavior contracts from Milestones 2 and 3 intact.
 - Likely files:
-  `trainer.py`, config, helpers, tests
+  `training/trainer.py`, config, helpers, tests
 - Acceptance criteria:
   - the PR names the measured bottleneck explicitly
   - before/after timing evidence is captured
@@ -784,7 +784,7 @@ The training loop becomes more faithful to period-based factual updating and mor
   - `nov_dec`
   Record the chosen ordered plan in manifests and checkpoints so resumed runs can skip completed units deterministically. Keep dataset and memory internals unchanged unless a concrete dependency is proven during implementation.
 - Likely files:
-  `main.py`, `train_runner.py`, `trainer.py`, tests
+  `main.py`, `training/train_runner.py`, `training/trainer.py`, tests
 - Acceptance criteria:
   - the supported training sequence is declared in one training-owned place
   - orchestration uses the training plan rather than a hidden constant

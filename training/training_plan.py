@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from train_config import TrainConfig
+from .train_config import TrainConfig
 
 
 DEFAULT_TEMPORAL_WIKI_PLAN = [

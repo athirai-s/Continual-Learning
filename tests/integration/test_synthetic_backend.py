@@ -1,4 +1,8 @@
-from synthetic_backend import SyntheticTemporalDataset, SyntheticTokenizer, build_synthetic_model
+from training.synthetic_backend import (
+    SyntheticTemporalDataset,
+    SyntheticTokenizer,
+    build_synthetic_model,
+)
 
 
 def test_synthetic_tokenizer_returns_padded_tensors():
