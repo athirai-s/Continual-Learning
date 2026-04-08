@@ -32,4 +32,4 @@ print(f"SMF memory size: {cfg.smf_memory_size}")
 print(f"SMF update layers: {cfg.smf_update_layers}")
 print(f"SMF sparsity ratio: {cfg.smf_sparsity_ratio}")
 
-run_mode("real", cfg, checkpoint_dir="checkpoints")
+run_mode("real", cfg, checkpoint_dir="/scratch1/ashanmug/checkpoints")
