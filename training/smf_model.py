@@ -191,6 +191,10 @@ class SMFModelWrapper(nn.Module):
     # ------------------------------------------------------------------
     # Delegate attribute look-ups needed by the trainer
 
+    def generate(self, **kwargs: Any) -> Any:
+        """Delegate generation to backbone; hooks still inject memory."""
+        return self.backbone.generate(**kwargs)
+
     @property
     def config(self) -> Any:
         """Expose backbone model config (needed by trainer for max_length)."""

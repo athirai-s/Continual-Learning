@@ -57,7 +57,7 @@ class GenerationAdapter:
             prompt,
             truncation=True,
             max_length=self._resolve_max_length(),
-            padding=None,
+            padding="do_not_pad",
             return_tensors="pt",
         )
         batch = {key: value.to(self.device) for key, value in encoded.items()}
