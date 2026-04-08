@@ -1,10 +1,3 @@
-"""Experimental legacy script kept for reference only.
-
-This file is not part of the supported training path. Supported launches go
-through `main.py`, which is covered by the synthetic smoke tests and the batch
-launcher in `run_job.sh`.
-"""
-
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
