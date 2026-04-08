@@ -40,8 +40,8 @@ class SparseMemoryBlock(nn.Module):
         gate = torch.sigmoid(self.gate_logits)
         # contribution: (hidden_size,) — weighted sum over memory slots
         contribution = (gate.unsqueeze(-1) * self.memory).sum(0)
-        # broadcast over (batch, seq_len) dimensions
-        return hidden_states + contribution
+        # broadcast over (batch, seq_len) dimensions; cast to match backbone dtype
+        return hidden_states + contribution.to(hidden_states.dtype)
 
     def sparsity_loss(self) -> torch.Tensor:
         """L1 penalty on the soft gate activations (encourages sparsity)."""
