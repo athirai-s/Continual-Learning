@@ -46,7 +46,7 @@ class PassageDataset(Dataset):
             text,
             truncation=True,
             max_length=self.max_length,
-            padding=None,
+            padding="do_not_pad",
             return_tensors="pt",
         )
         item = {k: v.squeeze(0) for k, v in enc.items()}
