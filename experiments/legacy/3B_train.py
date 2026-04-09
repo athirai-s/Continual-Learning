@@ -1,3 +1,9 @@
+"""Experimental legacy script kept for reference only.
+
+This is not the supported training path; run the maintained workflow through `main.py`
+instead.
+"""
+
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training

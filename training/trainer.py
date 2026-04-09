@@ -166,10 +166,17 @@ class CASFTrainer:
     def _select_trainable_parameters(self) -> list:
         """Return the parameter list the optimizer should update.
 
-        For SMF, only the sparse memory parameters are trainable; the
-        backbone is frozen.  For all other methods the full parameter set
-        is used.
+        For LoRA, only the adapter parameters are trainable (peft freezes
+        the base model).  For SMF/CASM, only the sparse memory parameters
+        are trainable.  For all other methods the full parameter set is used.
         """
+        if self.config.method == "lora":
+            params = [p for p in self.model.parameters() if p.requires_grad]
+            if not params:
+                raise ValueError(
+                    "LoRA model has no trainable parameters — check peft wrapping."
+                )
+            return params
         if self.config.method == "smf":
             from .smf_model import SMFModelWrapper
             if not isinstance(self.model, SMFModelWrapper):
