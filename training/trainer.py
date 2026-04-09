@@ -96,9 +96,9 @@ class CASFTrainer:
             if self.config.method == "smf" and self.config.smf_learning_rate is not None
             else self.config.learning_rate
         )
-        # SMF memory params start from random init and should not be penalised
+        # SMF/CASM params start from random init and should not be penalised
         # by weight decay — they need to grow freely from near-zero.
-        _weight_decay = 0.0 if self.config.method == "smf" else 0.01
+        _weight_decay = 0.0 if self.config.method in {"smf", "casm"} else 0.01
         self.optimizer = torch.optim.AdamW(
             self._select_trainable_parameters(),
             lr=_lr,
@@ -212,7 +212,7 @@ class CASFTrainer:
                 old_param_states[id(param)] = old_state["state"][flat_idx]
         # Rebuild with full expanded param set
         new_params = list(self.model.casm_parameters())
-        self.optimizer = torch.optim.AdamW(new_params, lr=self.config.learning_rate)
+        self.optimizer = torch.optim.AdamW(new_params, lr=self.config.learning_rate, weight_decay=0.0)
         # Re-inject preserved state for params that existed before expansion
         for group in self.optimizer.param_groups:
             for param in group["params"]:
@@ -368,8 +368,14 @@ class CASFTrainer:
         total_micro_steps = math.ceil(len(unit_snapshot) / self.config.batch_size)
         total_optimizer_steps = math.ceil(total_micro_steps / self.config.grad_accum_steps)
 
+        # Only branch on contradictions at the true start of a period.
+        # On a mid-period resume the slots were already created before the
+        # checkpoint was written and are restored by load_memory_into(); creating
+        # them again would cause slot duplication.
+        _is_period_start = resume_state is None or resume_state.next_batch_index == 0
         if (
-            self.config.method == "casm"
+            _is_period_start
+            and self.config.method == "casm"
             and self.config.casm_branch_on_contradiction
             and contradictions
         ):
