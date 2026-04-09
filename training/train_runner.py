@@ -19,7 +19,8 @@ from artifacts.run_artifacts import (
     ensure_run_layout,
     write_run_manifest,
 )
-from .evaluation_runner import run_period_evaluation
+from .activation_capture import capture_period_activations
+from .evaluation_runner import determine_eval_splits, run_period_evaluation
 from .metrics_logger import MetricsLogger
 from .synthetic_backend import (
     SyntheticTemporalDataset,
@@ -379,6 +380,19 @@ def run_training(
                     unit=period_name,
                     run_root=run_root,
                 )
+                if cfg.capture_activations:
+                    probes_by_split: dict = {}
+                    for split in determine_eval_splits(cfg):
+                        eval_dataset.load(split)
+                        probes_by_split[split] = eval_dataset.get_probes(split)
+                    capture_period_activations(
+                        model=trainer.model,
+                        tokenizer=trainer.tokenizer,
+                        probes_by_split=probes_by_split,
+                        period=period_name,
+                        run_root=run_root,
+                        cfg=cfg,
+                    )
             results.append(result)
 
             print("Training result:")
