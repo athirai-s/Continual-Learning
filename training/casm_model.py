@@ -263,13 +263,18 @@ class CASMModelWrapper(nn.Module):
                     self._slot_usage_counts[idx] += 1
 
             # Build contribution matrix for all router-reachable slots.
+            # torch.stack preserves the autograd graph; in-place index
+            # assignment on a zeros tensor does not reliably track gradients.
             device = query.device
             n = self.router.num_slots
-            all_contribs = torch.zeros(n, self._hidden_size, device=device)
-            for i in range(n):
-                key = str(i)
-                if key in self.slot_bank and i not in self._closed_slot_ids:
-                    all_contribs[i] = _slot_contribution(self.slot_bank[key])
+            zero = torch.zeros(self._hidden_size, device=device)
+            contrib_list = [
+                _slot_contribution(self.slot_bank[str(i)])
+                if str(i) in self.slot_bank and i not in self._closed_slot_ids
+                else zero
+                for i in range(n)
+            ]
+            all_contribs = torch.stack(contrib_list, dim=0)  # (n, H)
 
             # Index and weight: (B, top_k, H) → sum over top_k → (B, H)
             batch_size = query.shape[0]
@@ -394,6 +399,10 @@ class CASMModelWrapper(nn.Module):
             # Backward compat: checkpoint predates usage-count persistence.
             all_slot_ids = set(state["active_slot_ids"]) | set(state["closed_slot_ids"])
             wrapper._slot_usage_counts = {sid: 0 for sid in all_slot_ids}
+
+    def generate(self, **kwargs: Any) -> Any:
+        """Delegate generation to backbone; memory hook still fires."""
+        return self.backbone.generate(**kwargs)
 
     # ------------------------------------------------------------------
     # Backbone config delegation
