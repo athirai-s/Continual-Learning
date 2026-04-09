@@ -172,4 +172,4 @@ if __name__ == "__main__":
         else:
             print(f"\nSkipping {name}: checkpoint not found at {path}")
 
-    print("\n\nDone! Compare the numbers above for your final report.")
+    print("\n\nDone!")
