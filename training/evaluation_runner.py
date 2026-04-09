@@ -57,12 +57,15 @@ class GenerationAdapter:
         "Do not repeat the question, explain, or add punctuation beyond the answer itself."
     )
 
+    _MAX_NEW_TOKENS = 8
+
     def generate(self, prompt: str) -> str:
         full_prompt = f"{self._SYSTEM_PROMPT}\n\n{prompt}"
+        max_prompt_length = self._resolve_max_length() - self._MAX_NEW_TOKENS
         encoded = self.tokenizer(
             full_prompt,
             truncation=True,
-            max_length=self._resolve_max_length(),
+            max_length=max_prompt_length,
             padding="do_not_pad",
             return_tensors="pt",
         )
@@ -71,7 +74,7 @@ class GenerationAdapter:
         with torch.no_grad():
             output = self.model.generate(
                 **batch,
-                max_new_tokens=8,
+                max_new_tokens=self._MAX_NEW_TOKENS,
                 pad_token_id=getattr(self.tokenizer, "pad_token_id", None),
                 eos_token_id=getattr(self.tokenizer, "eos_token_id", None),
             )
