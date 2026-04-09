@@ -52,9 +52,15 @@ class GenerationAdapter:
 
         return min(candidates) if candidates else 512
 
+    _SYSTEM_PROMPT = (
+        "Complete the sentence with only the answer — a name, place, date, or short phrase. "
+        "Do not repeat the question, explain, or add punctuation beyond the answer itself."
+    )
+
     def generate(self, prompt: str) -> str:
+        full_prompt = f"{self._SYSTEM_PROMPT}\n\n{prompt}"
         encoded = self.tokenizer(
-            prompt,
+            full_prompt,
             truncation=True,
             max_length=self._resolve_max_length(),
             padding="do_not_pad",
