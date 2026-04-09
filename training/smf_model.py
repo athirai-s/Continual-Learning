@@ -7,8 +7,9 @@ receive gradient updates.
 
 from __future__ import annotations
 
+import math
 import os
-from typing import Any
+from typing import Any, Optional
 
 import torch
 import torch.nn as nn
@@ -20,31 +21,60 @@ class SparseMemoryBlock(nn.Module):
     """Additive sparse memory injected after a single transformer layer.
 
     The block holds a bank of ``memory_size`` vectors of ``hidden_size``
-    dimensions.  A learned gate logit per slot determines each slot's
-    contribution.  The overall contribution is the weighted sum over all
-    slots and is broadcast-added to every token position in the hidden
-    state.
+    dimensions.  A query projection maps each token's hidden state to
+    per-slot attention weights, making the memory contribution
+    content-dependent rather than a position-independent bias.
 
-    Sparsity is encouraged by including ``sparsity_loss()`` in the
-    training objective: the L1 norm of the soft gate activations.
+    A global gate bias per slot is initialized so that
+    ``sigmoid(bias) ≈ sparsity_ratio``, giving sparse activations from
+    the start.  Sparsity is further encouraged by including
+    ``sparsity_loss()`` in the training objective.
     """
 
-    def __init__(self, memory_size: int, hidden_size: int) -> None:
+    def __init__(
+        self,
+        memory_size: int,
+        hidden_size: int,
+        sparsity_ratio: float = 0.1,
+        query_dependent: bool = True,
+    ) -> None:
         super().__init__()
         self.memory = nn.Parameter(torch.empty(memory_size, hidden_size))
-        self.gate_logits = nn.Parameter(torch.zeros(memory_size))
         nn.init.normal_(self.memory, std=0.02)
 
+        # Global gate bias: initialized so sigmoid(bias) ≈ sparsity_ratio,
+        # giving a sparse starting point instead of all gates at 0.5.
+        init_logit = math.log(sparsity_ratio / (1.0 - sparsity_ratio))
+        self.gate_logits = nn.Parameter(torch.full((memory_size,), init_logit))
+
+        # Query projection: maps token hidden states -> per-slot scores so
+        # the memory contribution is content-dependent rather than a
+        # position-independent bias.  Initialized to zero so the block
+        # starts as a pure global-gate memory and becomes query-dependent
+        # as it learns.  Set query_dependent=False (e.g. in CASM) when the
+        # calling code computes the contribution itself.
+        if query_dependent:
+            self.query_proj: Optional[nn.Linear] = nn.Linear(hidden_size, memory_size, bias=False)
+            nn.init.zeros_(self.query_proj.weight)
+        else:
+            self.query_proj = None
+
     def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
-        # gate: (memory_size,)  soft values in [0, 1]
-        gate = torch.sigmoid(self.gate_logits)
-        # contribution: (hidden_size,) — weighted sum over memory slots
-        contribution = (gate.unsqueeze(-1) * self.memory).sum(0)
-        # broadcast over (batch, seq_len) dimensions; cast to match backbone dtype
+        # hidden_states: (batch, seq_len, hidden_size)
+        if self.query_proj is not None:
+            # query_scores: (batch, seq_len, memory_size) — per-token slot affinities
+            query_scores = self.query_proj(hidden_states.to(self.query_proj.weight.dtype))
+            # gate: (batch, seq_len, memory_size) — global bias + content signal
+            gate = torch.sigmoid(self.gate_logits + query_scores)
+        else:
+            # Position-independent fallback: global gate broadcast over all tokens
+            gate = torch.sigmoid(self.gate_logits)  # (memory_size,)
+        # contribution: (batch, seq_len, hidden_size)
+        contribution = gate @ self.memory
         return hidden_states + contribution.to(hidden_states.dtype)
 
     def sparsity_loss(self) -> torch.Tensor:
-        """L1 penalty on the soft gate activations (encourages sparsity)."""
+        """L1 penalty on the global gate activations (encourages sparsity)."""
         return torch.sigmoid(self.gate_logits).sum()
 
 
@@ -120,7 +150,7 @@ class SMFModelWrapper(nn.Module):
                     f"smf_update_layers contains index {layer_idx} but the "
                     f"model only has {n_layers} layers."
                 )
-            block = SparseMemoryBlock(cfg.smf_memory_size, hidden_size)  # type: ignore[arg-type]
+            block = SparseMemoryBlock(cfg.smf_memory_size, hidden_size, sparsity_ratio=cfg.smf_sparsity_ratio)  # type: ignore[arg-type]
             key = str(layer_idx)
             self.memory_blocks[key] = block
 

@@ -91,9 +91,18 @@ class CASFTrainer:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
 
+        _lr = (
+            self.config.smf_learning_rate
+            if self.config.method == "smf" and self.config.smf_learning_rate is not None
+            else self.config.learning_rate
+        )
+        # SMF memory params start from random init and should not be penalised
+        # by weight decay — they need to grow freely from near-zero.
+        _weight_decay = 0.0 if self.config.method == "smf" else 0.01
         self.optimizer = torch.optim.AdamW(
             self._select_trainable_parameters(),
-            lr=self.config.learning_rate,
+            lr=_lr,
+            weight_decay=_weight_decay,
         )
         self.scheduler = None
         self._completed_units: list[str] = []

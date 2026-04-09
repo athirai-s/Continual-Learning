@@ -181,6 +181,7 @@ class CASMModelWrapper(nn.Module):
         self.slot_bank[str(idx)] = SparseMemoryBlock(
             memory_size=self._memory_size,
             hidden_size=self._hidden_size,
+            query_dependent=False,
         )
         self._active_slot_ids.append(idx)
         self._next_slot_idx += 1
@@ -359,6 +360,7 @@ class CASMModelWrapper(nn.Module):
                 wrapper.slot_bank[key] = SparseMemoryBlock(
                     memory_size=memory_size,
                     hidden_size=wrapper._hidden_size,
+                    query_dependent=False,
                 )
 
         # Load slot weights.

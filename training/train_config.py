@@ -37,8 +37,9 @@ class TrainConfig:
     smf_memory_size: Optional[int] = None
     smf_sparsity_ratio: Optional[float] = None
     smf_update_layers: Optional[list] = None
-    smf_regularization_weight: float = 0.0
+    smf_regularization_weight: float = 0.01
     smf_freeze_backbone: bool = True
+    smf_learning_rate: Optional[float] = None
 
     # CASM-specific fields
     casm_num_slots: Optional[int] = None

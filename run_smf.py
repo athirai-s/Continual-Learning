@@ -11,7 +11,8 @@ cfg = TrainConfig(
     batch_size=1,
     grad_accum_steps=16,
     learning_rate=2e-4,
-    epochs_per_period=3,
+    epochs_per_period=1,       # reduced from 3 — memory overfits fast with frozen backbone
+    warmup_steps=10,           # reduced from 100 — ~12 optimizer steps per period at these settings
     max_passages_per_period=200,
     log_every_n_steps=10,
     eval_after_each_period=True,
@@ -20,9 +21,10 @@ cfg = TrainConfig(
     # SMF-specific settings
     smf_memory_size=64,
     smf_sparsity_ratio=0.1,
-    smf_update_layers=[0, 4, 8, 12, 16, 20, 24],  # every 4th layer of 3B (26 layers)
+    smf_update_layers=[8, 12, 16, 20, 24],  # mid-to-late layers only; layer 0 encodes syntax not facts
     smf_regularization_weight=0.01,
     smf_freeze_backbone=True,
+    smf_learning_rate=1e-3,    # higher than backbone LR — memory params train from scratch
 )
 
 cfg.validate()
