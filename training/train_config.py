@@ -28,6 +28,7 @@ class TrainConfig:
     run_id: str = "debug_run"
     log_every_n_steps: int = 100
     eval_after_each_period: bool = True
+    capture_activations: bool = False
 
     checkpoint_dir: str = "checkpoints"
     checkpoint_every_n_optimizer_steps: Optional[int] = None
