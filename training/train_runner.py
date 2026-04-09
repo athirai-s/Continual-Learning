@@ -54,13 +54,66 @@ def build_dataset(dataset_name: str, period: str | None = None):
     raise ValueError(f"Unsupported dataset_name: {dataset_name}")
 
 
+def _real_model_load_kwargs(cfg: TrainConfig) -> dict[str, Any]:
+    if cfg.precision == "bfloat16":
+        torch_dtype = torch.bfloat16
+    elif cfg.precision == "float16":
+        torch_dtype = torch.float16
+    else:
+        raise ValueError(
+            "precision='int8' is not supported by the current real-model training path"
+        )
+    return {
+        "low_cpu_mem_usage": True,
+        "torch_dtype": torch_dtype,
+    }
+
+
+def _prepare_real_model_for_training(model: Any, cfg: TrainConfig) -> None:
+    model_config = getattr(model, "config", None)
+    if model_config is not None and hasattr(model_config, "use_cache"):
+        model_config.use_cache = False
+
+    # These two methods materially reduce activation memory on real 3B runs.
+    if cfg.method in {"full_ft", "lora"} and hasattr(model, "gradient_checkpointing_enable"):
+        model.gradient_checkpointing_enable()
+    if cfg.method == "lora" and hasattr(model, "enable_input_require_grads"):
+        model.enable_input_require_grads()
+
+
+def _load_lora_adapter_for_training(base_model: Any, checkpoint_path: str) -> Any:
+    adapter_config_path = Path(checkpoint_path) / "adapter_config.json"
+    if not adapter_config_path.exists():
+        raise FileNotFoundError(
+            f"LoRA resume checkpoint is missing adapter_config.json: {adapter_config_path}"
+        )
+    from peft import PeftModel
+
+    return PeftModel.from_pretrained(
+        base_model,
+        checkpoint_path,
+        is_trainable=True,
+    )
+
+
 def _wrap_model_for_method(model: Any, cfg: TrainConfig) -> Any:
     """Wrap a bare backbone in the method-specific trainable wrapper.
 
     SMF and CASM each freeze the backbone and attach their own trainable
-    parameters; all other methods use the backbone directly.  Memory state
-    is *not* loaded here — that happens inside ``CASFTrainer.resume()``.
+    parameters; LoRA uses peft to attach low-rank adapters; all other
+    methods use the backbone directly.  Memory state is *not* loaded
+    here — that happens inside ``CASFTrainer.resume()``.
     """
+    if cfg.method == "lora":
+        from peft import LoraConfig, get_peft_model, TaskType
+        lora_config = LoraConfig(
+            r=cfg.lora_r,
+            lora_alpha=cfg.lora_alpha,
+            lora_dropout=cfg.lora_dropout,
+            target_modules=cfg.lora_target_modules,
+            task_type=TaskType.CAUSAL_LM,
+        )
+        return get_peft_model(model, lora_config)
     if cfg.method == "smf":
         from .smf_model import SMFModelWrapper
         return SMFModelWrapper(model, cfg)
@@ -73,13 +126,32 @@ def _wrap_model_for_method(model: Any, cfg: TrainConfig) -> Any:
 def build_real_model_and_tokenizer(cfg: TrainConfig) -> tuple[Any, Any]:
     print(f"Loading model: {cfg.model_name}")
     tokenizer = AutoTokenizer.from_pretrained(cfg.model_name)
-    model = AutoModelForCausalLM.from_pretrained(cfg.model_name)
+    model = AutoModelForCausalLM.from_pretrained(
+        cfg.model_name,
+        **_real_model_load_kwargs(cfg),
+    )
+    _prepare_real_model_for_training(model, cfg)
     return _wrap_model_for_method(model, cfg), tokenizer
 
 
 def load_real_model_and_tokenizer(cfg: TrainConfig, checkpoint_path: str) -> tuple[Any, Any]:
+    if cfg.method == "lora":
+        # LoRA checkpoints save only adapter weights, not the full base model.
+        # Load base model from the original path, adapter from checkpoint.
+        tokenizer = AutoTokenizer.from_pretrained(checkpoint_path)
+        base_model = AutoModelForCausalLM.from_pretrained(
+            cfg.model_name,
+            **_real_model_load_kwargs(cfg),
+        )
+        _prepare_real_model_for_training(base_model, cfg)
+        model = _load_lora_adapter_for_training(base_model, checkpoint_path)
+        return model, tokenizer
     tokenizer = AutoTokenizer.from_pretrained(checkpoint_path)
-    model = AutoModelForCausalLM.from_pretrained(checkpoint_path)
+    model = AutoModelForCausalLM.from_pretrained(
+        checkpoint_path,
+        **_real_model_load_kwargs(cfg),
+    )
+    _prepare_real_model_for_training(model, cfg)
     return _wrap_model_for_method(model, cfg), tokenizer
 
 
@@ -96,6 +168,11 @@ def build_synthetic_model_and_tokenizer(cfg: TrainConfig) -> tuple[Any, Any]:
 
 
 def load_synthetic_model_and_tokenizer(cfg: TrainConfig, checkpoint_path: str) -> tuple[Any, Any]:
+    if cfg.method == "lora":
+        tokenizer = SyntheticTokenizer.from_pretrained(checkpoint_path)
+        base_model = build_synthetic_model(vocab_size=tokenizer.vocab_size)
+        model = _load_lora_adapter_for_training(base_model, checkpoint_path)
+        return model, tokenizer
     tokenizer = SyntheticTokenizer.from_pretrained(checkpoint_path)
     model = load_synthetic_model(checkpoint_path)
     return _wrap_model_for_method(model, cfg), tokenizer

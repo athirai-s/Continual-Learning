@@ -34,6 +34,12 @@ class TrainConfig:
     checkpoint_every_n_optimizer_steps: Optional[int] = None
     seed: int = 0
 
+    # LoRA-specific fields
+    lora_r: Optional[int] = None
+    lora_alpha: Optional[int] = None
+    lora_dropout: float = 0.05
+    lora_target_modules: Optional[list] = None
+
     # SMF-specific fields
     smf_memory_size: Optional[int] = None
     smf_sparsity_ratio: Optional[float] = None
@@ -81,10 +87,32 @@ class TrainConfig:
         if self.seed < 0:
             raise ValueError("seed must be >= 0")
 
-        if self.method == "smf":
+        if self.method == "lora":
+            self._validate_lora()
+        elif self.method == "smf":
             self._validate_smf()
         elif self.method == "casm":
             self._validate_casm()
+
+    def _validate_lora(self) -> None:
+        if self.lora_r is None or self.lora_r < 1:
+            raise ValueError("lora_r must be >= 1 for method='lora'")
+        if self.lora_alpha is None or self.lora_alpha < 1:
+            raise ValueError("lora_alpha must be >= 1 for method='lora'")
+        if not (0.0 <= self.lora_dropout < 1.0):
+            raise ValueError("lora_dropout must be in [0, 1) for method='lora'")
+        if self.lora_target_modules is not None:
+            if not self.lora_target_modules:
+                raise ValueError(
+                    "lora_target_modules must be non-empty when provided for method='lora'"
+                )
+            if any(
+                not isinstance(module, str) or not module.strip()
+                for module in self.lora_target_modules
+            ):
+                raise ValueError(
+                    "lora_target_modules must contain non-empty strings for method='lora'"
+                )
 
     def _validate_smf(self) -> None:
         if self.smf_memory_size is None or self.smf_memory_size <= 0:

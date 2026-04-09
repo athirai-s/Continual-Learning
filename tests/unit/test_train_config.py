@@ -55,6 +55,50 @@ def test_validate_rejects_invalid_values(updates, message):
 
 
 # ---------------------------------------------------------------------------
+# LoRA config tests
+# ---------------------------------------------------------------------------
+
+def _valid_lora_cfg(**overrides) -> TrainConfig:
+    defaults = dict(
+        model_name="synthetic-local-model",
+        method="lora",
+        lora_r=8,
+        lora_alpha=16,
+        lora_dropout=0.05,
+        lora_target_modules=["c_attn", "c_proj"],
+    )
+    defaults.update(overrides)
+    return TrainConfig(**defaults)
+
+
+def test_valid_lora_config_passes():
+    cfg = _valid_lora_cfg()
+    cfg.validate()
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        ({"lora_r": None}, "lora_r must be >= 1"),
+        ({"lora_r": 0}, "lora_r must be >= 1"),
+        ({"lora_alpha": None}, "lora_alpha must be >= 1"),
+        ({"lora_alpha": 0}, "lora_alpha must be >= 1"),
+        ({"lora_dropout": -0.1}, "lora_dropout must be in"),
+        ({"lora_dropout": 1.0}, "lora_dropout must be in"),
+        ({"lora_target_modules": []}, "lora_target_modules must be non-empty"),
+        (
+            {"lora_target_modules": ["q_proj", ""]},
+            "lora_target_modules must contain non-empty strings",
+        ),
+    ],
+)
+def test_lora_config_rejects_invalid_values(overrides, message):
+    cfg = _valid_lora_cfg(**overrides)
+    with pytest.raises(ValueError, match=message):
+        cfg.validate()
+
+
+# ---------------------------------------------------------------------------
 # SMF config tests
 # ---------------------------------------------------------------------------
 
@@ -176,6 +220,12 @@ def test_from_dict_round_trips_full_ft():
 
 def test_from_dict_round_trips_smf():
     cfg = _valid_smf_cfg()
+    restored = TrainConfig.from_dict(cfg.to_dict())
+    assert restored == cfg
+
+
+def test_from_dict_round_trips_lora():
+    cfg = _valid_lora_cfg()
     restored = TrainConfig.from_dict(cfg.to_dict())
     assert restored == cfg
 
