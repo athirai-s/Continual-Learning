@@ -1,6 +1,5 @@
-# Step 1: Full fine-tune on TemporalWiki Period 1 (aug_sep) only.
-# This teaches the 1B model the facts so we have a meaningful baseline.
-# After this, run SMF/CASM/Full-FT on periods 2-4 starting from this checkpoint.
+# Step 2a: Full Fine-Tuning on Periods 2-4 (baseline — expect most forgetting)
+# Loads from Period 1 pretrained checkpoint.
 
 from training.train_config import TrainConfig
 from training.train_runner import (
@@ -10,17 +9,19 @@ from training.train_runner import (
     run_training,
 )
 
+PRETRAINED_CHECKPOINT = "/content/drive/MyDrive/checkpoints/pretrain_period1_1b/checkpoints/ckpt-000001"
+
 cfg = TrainConfig(
-    run_id="pretrain_period1_1b",
-    model_name="/content/drive/MyDrive/models/Llama-3.2-1B-Instruct",
+    run_id="step2_fullft_1b",
+    model_name=PRETRAINED_CHECKPOINT,
     method="full_ft",
     dataset_name="temporal_wiki",
     precision="bfloat16",
     batch_size=4,
-    grad_accum_steps=4,
-    learning_rate=3e-4,
+    grad_accum_steps=4,         # effective batch = 16
+    learning_rate=2e-4,         # slightly conservative for full FT — avoids instability across 3 periods
     epochs_per_period=3,
-    warmup_steps=5,
+    warmup_steps=5,             # ~13% of 38 total optimizer steps
     max_passages_per_period=200,
     log_every_n_steps=10,
     eval_after_each_period=True,
@@ -28,17 +29,14 @@ cfg = TrainConfig(
 )
 
 cfg.validate()
-print(f"Method: {cfg.method}")
-print(f"Model: {cfg.model_name}")
-print(f"Training on Period 1 (aug_sep) ONLY — 1B model")
-print(f"Epochs: {cfg.epochs_per_period}")
+print(f"Step 2a: Full FT on P2-P4")
+print(f"Loading from: {PRETRAINED_CHECKPOINT}")
 
-# Only train on aug_sep — the first period
 run_training(
     cfg,
     model_factory=build_real_model_and_tokenizer,
     resume_model_factory=load_real_model_and_tokenizer,
     dataset_factory=build_real_dataset,
     checkpoint_dir="/content/drive/MyDrive/checkpoints",
-    training_units=["aug_sep"],
+    training_units=["sep_oct", "oct_nov", "nov_dec"],
 )
