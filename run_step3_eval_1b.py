@@ -4,7 +4,7 @@ Loads each method's final checkpoint (after P2-P4 training) and tests
 on Period 1 (aug_sep) changed + unchanged probes. Also evaluates the
 Period 1 pretrained checkpoint as the "before forgetting" reference.
 
-Uses Llama 3 instruct chat format for better answer extraction.
+Uses plain cloze completion — model completes the prompt directly.
 """
 
 import os
@@ -54,7 +54,7 @@ class EvalModel:
         with torch.no_grad():
             output = self.model.generate(
                 **batch,
-                max_new_tokens=8,
+                max_new_tokens=12,
                 pad_token_id=self.tokenizer.eos_token_id,
                 eos_token_id=self.tokenizer.eos_token_id,
             )
@@ -134,17 +134,27 @@ def evaluate_on_period1(gen_model, split="changed"):
     n_exact = 0
     n_contains = 0
     total_f1 = 0.0
+    DEBUG_SAMPLES = 3  # print first N probe/output pairs to verify generation
 
-    for probe in probes:
+    for i, probe in enumerate(probes):
         output = gen_model.generate(probe.prompt)
-        gt = probe.ground_truth.lower()
-        out_lower = output.lower()
 
-        if out_lower == gt:
+        if i < DEBUG_SAMPLES:
+            print(f"  [DBG#{i}] prompt={probe.prompt!r}  out={output!r}  gt={probe.ground_truth!r}")
+
+        # Normalize: strip whitespace, lowercase for comparison
+        gt = probe.ground_truth.strip().lower()
+        out_norm = output.strip().lower()
+
+        # Exact match (normalized)
+        if out_norm == gt:
             n_exact += 1
-        if gt in out_lower:
+
+        # Contains match (normalized) — handles leading/trailing spaces and case
+        if gt in out_norm or out_norm in gt:
             n_contains += 1
-        total_f1 += _token_f1(output, probe.ground_truth)
+
+        total_f1 += _token_f1(output.strip(), probe.ground_truth.strip())
 
     n = len(probes)
     return {
