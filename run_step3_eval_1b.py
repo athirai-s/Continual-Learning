@@ -41,9 +41,16 @@ class EvalModel:
         self.device = device
 
     def generate(self, prompt: str) -> str:
-        # Use plain cloze prompt — model completes "The CEO of X is" → "Tim Cook"
+        # Few-shot prefix teaches the model the expected short-answer format.
+        # Facts are neutral/timeless to avoid contaminating any period's probes.
+        FEW_SHOT = (
+            "The capital of France is Paris.\n"
+            "The CEO of Microsoft is Satya Nadella.\n"
+            "The language of Brazil is Portuguese.\n"
+        )
+        full_prompt = FEW_SHOT + prompt
         encoded = self.tokenizer(
-            prompt,
+            full_prompt,
             truncation=True,
             max_length=512,
             padding="do_not_pad",
