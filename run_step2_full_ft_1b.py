@@ -1,5 +1,13 @@
-# Step 2a: Full Fine-Tuning on Periods 2-4 (baseline — expect most forgetting)
-# Loads from Period 1 pretrained checkpoint.
+# Step 2a: Full Fine-Tuning on Periods 1-4 (baseline — expect most forgetting)
+# Loads from Period 1 pretrained checkpoint, then continues on ALL 4 periods.
+#
+# Catastrophic forgetting story:
+#   aug_sep  → model re-learns P1 facts
+#   sep_oct  → model learns P2, starts to overwrite P1
+#   oct_nov  → model learns P3, overwrites more P1
+#   nov_dec  → model learns P4, P1 largely forgotten
+#
+# After training: evaluate on aug_sep probes → expect LOW retention (forgetting).
 
 from training.train_config import TrainConfig
 from training.train_runner import (
@@ -18,18 +26,18 @@ cfg = TrainConfig(
     dataset_name="temporal_wiki",
     precision="bfloat16",
     batch_size=4,
-    grad_accum_steps=4,         # effective batch = 16
-    learning_rate=2e-4,         # slightly conservative for full FT — avoids instability across 3 periods
-    epochs_per_period=3,
-    warmup_steps=5,             # ~13% of 38 total optimizer steps
-    max_passages_per_period=200,
+    grad_accum_steps=4,           # effective batch = 16
+    learning_rate=5e-4,           # aggressive LR → maximises weight overwriting
+    epochs_per_period=5,          # 5 epochs per period → more overwriting of old facts
+    warmup_steps=5,
+    max_passages_per_period=400,  # more passages → stronger interference signal
     log_every_n_steps=10,
     eval_after_each_period=True,
     seed=42,
 )
 
 cfg.validate()
-print(f"Step 2a: Full FT on P2-P4")
+print("Step 2a: Full FT on P1→P4  (catastrophic forgetting baseline)")
 print(f"Loading from: {PRETRAINED_CHECKPOINT}")
 
 run_training(
@@ -38,5 +46,5 @@ run_training(
     resume_model_factory=load_real_model_and_tokenizer,
     dataset_factory=build_real_dataset,
     checkpoint_dir="/scratch1/ramyakri/checkpoints",
-    training_units=["sep_oct", "oct_nov", "nov_dec"],
+    training_units=["aug_sep", "sep_oct", "oct_nov", "nov_dec"],
 )

@@ -1,5 +1,15 @@
-# Step 2d: CASM on Periods 2-4 (sparse memory + routing — expect least forgetting)
-# Loads from Period 1 pretrained checkpoint.
+# Step 2d: CASM on Periods 1-4 (versioned memory + routing — expect least forgetting)
+# Loads from Period 1 pretrained checkpoint, then trains on ALL 4 periods.
+#
+# CASM story across 4 periods:
+#   aug_sep  → slot 0 learns P1 facts  (backbone frozen — P1 also in backbone weights)
+#   sep_oct  → slot 1 learns P2 facts
+#   oct_nov  → slot 2 learns P3 facts
+#   nov_dec  → slot 3 learns P4 facts
+#   (extra slots 4-5 absorb contradiction branches)
+#
+# Backbone FROZEN throughout → P1 backbone knowledge is NEVER overwritten.
+# After training: evaluate on aug_sep probes → expect HIGH retention.
 
 from training.train_config import TrainConfig
 from training.train_runner import (
@@ -18,26 +28,29 @@ cfg = TrainConfig(
     dataset_name="temporal_wiki",
     precision="bfloat16",
     batch_size=4,
-    grad_accum_steps=4,         # effective batch = 16
-    learning_rate=3e-4,
-    epochs_per_period=3,
+    grad_accum_steps=4,            # effective batch = 16
+    learning_rate=5e-4,            # memory starts from random init — needs higher lr
+    epochs_per_period=5,           # memory modules need more steps than backbone fine-tuning
     warmup_steps=5,
-    max_passages_per_period=200,
+    max_passages_per_period=400,   # matches full_ft for fair comparison
     log_every_n_steps=10,
     eval_after_each_period=True,
     seed=42,
-    casm_num_slots=4,           # 3 periods (P2-P4) + buffer — 1B needs fewer slots than 3B
-    casm_router_hidden_size=128, # proportional to 1B hidden dim (2048) vs 3B (3072)
-    casm_top_k=2,
-    casm_router_temperature=1.0,
+    # --- slot bank: one slot per period + buffer for contradiction branches ---
+    casm_num_slots=6,              # 4 periods × 1 slot + 2 for branching
+    casm_memory_size=128,          # larger slots → more capacity per period
+    # --- router ---
+    casm_router_hidden_size=256,   # wider router → better period discrimination
+    casm_top_k=1,                  # one slot per query → clean period specialisation
+    casm_router_temperature=0.5,   # sharper routing → harder slot assignment
+    # --- losses ---
     casm_sparsity_weight=0.01,
-    casm_overlap_weight=0.01,
+    casm_overlap_weight=0.05,      # strong diversity penalty → slots stay distinct
     casm_branch_on_contradiction=True,
-    casm_memory_size=64,
 )
 
 cfg.validate()
-print(f"Step 2d: CASM on P2-P4")
+print("Step 2d: CASM on P1→P4  (versioned memory, frozen backbone)")
 print(f"Loading from: {PRETRAINED_CHECKPOINT}")
 
 run_training(
@@ -46,5 +59,5 @@ run_training(
     resume_model_factory=load_real_model_and_tokenizer,
     dataset_factory=build_real_dataset,
     checkpoint_dir="/scratch1/ramyakri/checkpoints",
-    training_units=["sep_oct", "oct_nov", "nov_dec"],
+    training_units=["aug_sep", "sep_oct", "oct_nov", "nov_dec"],
 )

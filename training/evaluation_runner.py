@@ -117,15 +117,42 @@ def run_period_evaluation(
         json.dump(summary, f, indent=2, sort_keys=True)
 
     metrics_path = eval_metrics_path(run_root)
+    method = getattr(cfg, "method", "full_ft")
+    prefix = f"{method}/" if method in ("smf", "casm") else ""
+
+    # Write per-split raw events (for debugging / archival)
     with open(metrics_path, "a") as f:
         for split, result in split_results.items():
             payload = {
                 "schema_version": EVAL_SCHEMA_VERSION,
-                "event_type": "eval",
+                "event_type": "eval_split",
                 "unit": unit,
                 "split": split,
                 **result,
             }
-            f.write(json.dumps(payload, sort_keys=True) + "\n")
+            f.write(json.dumps(payload, sort_keys=True, default=str) + "\n")
+
+        # Write a single unified "evaluation" event that merge_period_results can join.
+        # plasticity = accuracy on changed probes; stability = accuracy on unchanged probes.
+        changed = split_results.get("changed", {})
+        unchanged = split_results.get("unchanged", {})
+        # For non-temporal datasets with a single "val" split, use it for both.
+        val = split_results.get("val", {})
+        plasticity = changed.get("plasticity") if changed else val.get("plasticity")
+        stability = unchanged.get("stability") if unchanged else val.get("stability")
+        token_f1 = changed.get("token_f1") if changed else val.get("token_f1")
+
+        unified: dict[str, Any] = {
+            "schema_version": EVAL_SCHEMA_VERSION,
+            "event_type": "evaluation",
+            "unit": unit,
+            "method": method,
+            f"{prefix}plasticity": plasticity,
+            f"{prefix}stability": stability,
+            f"{prefix}token_f1": token_f1,
+            "n_changed": changed.get("n_total", 0) if changed else val.get("n_total", 0),
+            "n_unchanged": unchanged.get("n_total", 0),
+        }
+        f.write(json.dumps(unified, sort_keys=True, default=str) + "\n")
 
     return split_results

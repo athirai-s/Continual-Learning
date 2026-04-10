@@ -1,12 +1,10 @@
 #!/bin/bash
-#SBATCH --partition=gpu
-#SBATCH --gres=gpu:a100:1
-#SBATCH --mem=40G
-#SBATCH --time=16:00:00
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
+#SBATCH --partition=main
+#SBATCH --cpus-per-task=2
+#SBATCH --mem=8G
+#SBATCH --time=00:15:00
 #SBATCH --account=jieyuz_1727
-#SBATCH --output=lora_1b_%j.log
+#SBATCH --output=compare_1b_%j.log
 
 set -euo pipefail
 
@@ -16,4 +14,4 @@ module load gcc/12.3.0 cuda/12.4.1
 cd /project2/jieyuz_1727/Continual-Learning
 source /project2/jieyuz_1727/Continual-Learning/venv/bin/activate
 
-python run_step2_lora_1b.py
+python compare_all_1b.py

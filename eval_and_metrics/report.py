@@ -36,7 +36,11 @@ from eval_and_metrics.metric_helpers import (
 
 def load_metrics_jsonl(run_root: Path) -> list[dict[str, Any]]:
     """Load all event dicts from the run's metrics.jsonl file."""
-    candidates = list(run_root.glob("metrics*.jsonl")) + list(run_root.glob("logs/metrics*.jsonl"))
+    candidates = (
+        list(run_root.glob("metrics*.jsonl"))
+        + list(run_root.glob("logs/metrics*.jsonl"))
+        + list(run_root.glob("metrics/*.jsonl"))
+    )
     if not candidates:
         # flat layout used by MetricsLogger
         candidate = run_root / "metrics.jsonl"
@@ -65,18 +69,25 @@ def extract_period_end_events(events: list[dict[str, Any]]) -> list[dict[str, An
 
 
 def extract_eval_events(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [e for e in events if e.get("event_type") == "evaluation"]
+    return [e for e in events if e.get("event_type") in ("evaluation", "eval")]
 
 
 def merge_period_results(
     period_ends: list[dict[str, Any]],
     eval_events: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Join training-end and evaluation events by period unit name."""
+    """Join training-end and evaluation events by period unit name.
+
+    Multiple eval events for the same unit (e.g. old per-split "eval" events)
+    are merged in order so later keys win — but plasticity/stability from
+    different splits are both preserved.
+    """
     eval_by_unit: dict[str, dict[str, Any]] = {}
     for ev in eval_events:
         unit = ev.get("unit", "")
-        eval_by_unit[unit] = ev
+        if unit not in eval_by_unit:
+            eval_by_unit[unit] = {}
+        eval_by_unit[unit].update(ev)
 
     results: list[dict[str, Any]] = []
     for pe in period_ends:
