@@ -12,7 +12,6 @@ import json
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from casf_dataset_api import TemporalWikiDataset
-from casf_dataset_api.evaluator import _token_f1
 
 # All checkpoints to evaluate — 1B model, all trained on P1→P4 (4 periods)
 # pretrain_p1 = upper bound  (trained on P1 only, knows P1 perfectly)
@@ -32,44 +31,49 @@ CHECKPOINTS = {
 
 
 class EvalModel:
-    """Generation wrapper using plain cloze completion (no instruct format).
-    The model was fine-tuned on raw passages, so direct completion works best.
+    """Scoring wrapper using log-probability of the ground-truth answer.
+
+    The model was fine-tuned on raw passages, so generation-based eval fails
+    (model continues in passage style). Instead we score how likely the model
+    thinks the correct answer is given the cloze prompt — this directly
+    measures retention without requiring the model to generate short answers.
+
+    score_probe() returns the mean log-prob per answer token (higher = better).
     """
     def __init__(self, model, tokenizer, device):
         self.model = model
         self.tokenizer = tokenizer
         self.device = device
 
-    def generate(self, prompt: str) -> str:
-        # Few-shot prefix teaches the model the expected short-answer format.
-        # Facts are neutral/timeless to avoid contaminating any period's probes.
-        FEW_SHOT = (
-            "The capital of France is Paris.\n"
-            "The CEO of Microsoft is Satya Nadella.\n"
-            "The language of Brazil is Portuguese.\n"
-        )
-        full_prompt = FEW_SHOT + prompt
-        encoded = self.tokenizer(
-            full_prompt,
-            truncation=True,
-            max_length=512,
-            padding="do_not_pad",
-            return_tensors="pt",
-        )
-        batch = {k: v.to(self.device) for k, v in encoded.items()}
-        prompt_len = batch["input_ids"].shape[1]
+    def score_probe(self, prompt: str, answer: str) -> float:
+        """Return mean log-prob of answer tokens given prompt. Higher = better retention."""
+        # Tokenize prompt alone to find where answer tokens start
+        prompt_ids = self.tokenizer(
+            prompt, return_tensors="pt", add_special_tokens=True
+        )["input_ids"].to(self.device)
+        prompt_len = prompt_ids.shape[1]
+
+        # Tokenize full text (prompt + space + answer)
+        full_text = prompt + " " + answer
+        full_ids = self.tokenizer(
+            full_text, return_tensors="pt", add_special_tokens=True,
+            truncation=True, max_length=256,
+        )["input_ids"].to(self.device)
+
+        if full_ids.shape[1] <= prompt_len:
+            return -999.0  # answer tokenized to nothing
+
         with torch.no_grad():
-            output = self.model.generate(
-                **batch,
-                max_new_tokens=12,
-                pad_token_id=self.tokenizer.eos_token_id,
-                eos_token_id=self.tokenizer.eos_token_id,
-            )
-        generated = output[0][prompt_len:]
-        text = self.tokenizer.decode(generated, skip_special_tokens=True).strip()
-        # Take only the first meaningful chunk (before newline or period)
-        text = text.split("\n")[0].split(".")[0].strip()
-        return text
+            logits = self.model(full_ids).logits  # (1, seq, vocab)
+
+        # Answer token positions: indices [prompt_len .. end]
+        # Logit at position i predicts token i+1, so shift by 1
+        answer_ids = full_ids[0, prompt_len:]          # tokens to predict
+        pred_logits = logits[0, prompt_len - 1 : -1]   # logits that predict them
+
+        log_probs = torch.nn.functional.log_softmax(pred_logits, dim=-1)
+        token_lp = log_probs.gather(1, answer_ids.unsqueeze(1)).squeeze(1)
+        return token_lp.mean().item()
 
 
 def load_model(name, checkpoint_path, device):
@@ -130,45 +134,34 @@ def load_model(name, checkpoint_path, device):
 
 
 def evaluate_on_period1(gen_model, split="changed"):
-    """Evaluate on Period 1 (aug_sep) probes. Returns metrics dict."""
+    """Evaluate on Period 1 (aug_sep) probes using log-prob scoring.
+
+    Returns mean log-prob of the correct answer given the cloze prompt.
+    Higher (less negative) = model retains more P1 knowledge.
+    pretrain_p1 should score highest; full_ft lowest (most forgetting).
+    """
     dataset = TemporalWikiDataset(period="aug_sep")
     dataset.load(split)
     probes = dataset.get_probes(split)
 
     if not probes:
-        return {"n": 0, "exact": 0.0, "contains": 0.0, "f1": 0.0}
+        return {"n": 0, "mean_logprob": 0.0}
 
-    n_exact = 0
-    n_contains = 0
-    total_f1 = 0.0
-    DEBUG_SAMPLES = 3  # print first N probe/output pairs to verify generation
+    total_lp = 0.0
+    DEBUG_SAMPLES = 3
 
     for i, probe in enumerate(probes):
-        output = gen_model.generate(probe.prompt)
+        lp = gen_model.score_probe(probe.prompt, probe.ground_truth)
 
         if i < DEBUG_SAMPLES:
-            print(f"  [DBG#{i}] prompt={probe.prompt!r}  out={output!r}  gt={probe.ground_truth!r}")
+            print(f"  [DBG#{i}] prompt={probe.prompt!r}  gt={probe.ground_truth!r}  logp={lp:.3f}")
 
-        # Normalize: strip whitespace, lowercase for comparison
-        gt = probe.ground_truth.strip().lower()
-        out_norm = output.strip().lower()
-
-        # Exact match (normalized)
-        if out_norm == gt:
-            n_exact += 1
-
-        # Contains match (normalized) — handles leading/trailing spaces and case
-        if gt in out_norm or out_norm in gt:
-            n_contains += 1
-
-        total_f1 += _token_f1(output.strip(), probe.ground_truth.strip())
+        total_lp += lp
 
     n = len(probes)
     return {
         "n": n,
-        "exact": n_exact / n,
-        "contains": n_contains / n,
-        "f1": total_f1 / n,
+        "mean_logprob": total_lp / n,
     }
 
 
@@ -195,8 +188,7 @@ def main():
             print(f"\n  --- {split} probes ---")
             metrics = evaluate_on_period1(gen_model, split)
             results[split] = metrics
-            print(f"  n={metrics['n']:4d}  exact={metrics['exact']:.4f}  "
-                  f"contains={metrics['contains']:.4f}  f1={metrics['f1']:.5f}")
+            print(f"  n={metrics['n']:4d}  mean_logprob={metrics['mean_logprob']:.4f}")
 
         all_results[name] = results
 
@@ -208,16 +200,15 @@ def main():
     print(f"\n\n{'='*80}")
     print("  COMPARISON TABLE — Period 1 Retention After Training on P2-P4")
     print(f"{'='*80}")
-    print(f"\n{'Method':<15} {'Split':<12} {'N':>5} {'Exact':>8} {'Contains':>10} {'F1':>8}")
-    print("-" * 60)
+    print(f"\n{'Method':<15} {'Split':<12} {'N':>5} {'MeanLogProb':>13}")
+    print("-" * 50)
 
     for name in CHECKPOINTS:
         if name not in all_results:
             continue
         for split in ["changed", "unchanged"]:
             m = all_results[name][split]
-            print(f"{name:<15} {split:<12} {m['n']:>5} {m['exact']:>8.4f} "
-                  f"{m['contains']:>10.4f} {m['f1']:>8.5f}")
+            print(f"{name:<15} {split:<12} {m['n']:>5} {m['mean_logprob']:>13.4f}")
         print()
 
     # Save results to JSON
