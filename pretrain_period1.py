@@ -1,43 +1,202 @@
-# Step 1: Full fine-tune on TemporalWiki Period 1 (aug_sep) only.
-# This teaches the 3B model the facts so we have a meaningful baseline.
-# After this, run SMF/CASM/Full-FT on periods 2-4 starting from this checkpoint.
+# Step 1: Full fine-tune on TemporalWiki Period 1 (aug_sep).
+# Trains on BOTH raw passages AND probe-formatted Q&A pairs.
+# This ensures the model learns facts in the exact format it'll be tested on.
 
-from training.train_config import TrainConfig
-from training.train_runner import (
-    build_real_dataset,
-    build_real_model_and_tokenizer,
-    load_real_model_and_tokenizer,
-    run_training,
-)
+import math
+import torch
+from torch.utils.data import Dataset, DataLoader
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from casf_dataset_api import TemporalWikiDataset
 
-cfg = TrainConfig(
-    run_id="pretrain_period1_3b",
-    model_name="/scratch1/ashanmug/models/Llama-3.2-3B-Instruct",
-    method="full_ft",
-    dataset_name="temporal_wiki",
-    batch_size=1,
-    grad_accum_steps=16,
-    learning_rate=2e-4,
-    epochs_per_period=3,
-    warmup_steps=50,
-    max_passages_per_period=200,
-    log_every_n_steps=10,
-    eval_after_each_period=True,
-    seed=42,
-)
+MODEL_PATH = "/scratch1/ashanmug/models/Llama-3.2-3B-Instruct"
+SAVE_PATH = "/scratch1/ashanmug/checkpoints/pretrain_period1_3b/checkpoints/ckpt-000001"
 
-cfg.validate()
-print(f"Method: {cfg.method}")
-print(f"Model: {cfg.model_name}")
-print(f"Training on Period 1 (aug_sep) ONLY")
-print(f"Epochs: {cfg.epochs_per_period}")
+# Training settings
+BATCH_SIZE = 1
+GRAD_ACCUM = 16
+LR = 2e-4
+EPOCHS = 5
+MAX_PASSAGES = 200
+SEED = 42
 
-# Only train on aug_sep — the first period
-run_training(
-    cfg,
-    model_factory=build_real_model_and_tokenizer,
-    resume_model_factory=load_real_model_and_tokenizer,
-    dataset_factory=build_real_dataset,
-    checkpoint_dir="/scratch1/ashanmug/checkpoints",
-    training_units=["aug_sep"],
-)
+
+class TextDataset(Dataset):
+    """Simple dataset that tokenizes text for causal LM training."""
+    def __init__(self, texts, tokenizer, max_length=512):
+        self.texts = texts
+        self.tokenizer = tokenizer
+        self.max_length = max_length
+
+    def __len__(self):
+        return len(self.texts)
+
+    def __getitem__(self, idx):
+        enc = self.tokenizer(
+            self.texts[idx],
+            truncation=True,
+            max_length=self.max_length,
+            padding="do_not_pad",
+            return_tensors="pt",
+        )
+        item = {k: v.squeeze(0) for k, v in enc.items()}
+        item["labels"] = item["input_ids"].clone()
+        return item
+
+
+def build_probe_training_texts(dataset):
+    """Convert probes into training examples in instruct format.
+
+    Creates two formats for each probe:
+    1. Cloze completion: "The composer of X is Paul McCartney"
+    2. Instruct Q&A: system + user prompt + answer
+    """
+    texts = []
+    for split in ["changed", "unchanged"]:
+        dataset.load(split)
+        probes = dataset.get_probes(split)
+        for probe in probes:
+            # Format 1: Simple cloze completion
+            texts.append(f"{probe.prompt} {probe.ground_truth}")
+
+            # Format 2: Instruct format (matches eval prompting)
+            instruct = (
+                "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
+                "You are a factual knowledge assistant. Answer with ONLY the answer — "
+                "a name, place, date, or short phrase. No explanation, no punctuation, "
+                "no repeating the question."
+                "<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n"
+                f"{probe.prompt}"
+                "<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+                f"{probe.ground_truth}<|eot_id|>"
+            )
+            texts.append(instruct)
+    return texts
+
+
+def collate_fn(batch):
+    """Pad batch to same length."""
+    max_len = max(item["input_ids"].shape[0] for item in batch)
+    padded = {}
+    for key in batch[0]:
+        tensors = []
+        for item in batch:
+            t = item[key]
+            pad_len = max_len - t.shape[0]
+            if pad_len > 0:
+                pad_val = -100 if key == "labels" else 0
+                t = torch.cat([t, torch.full((pad_len,), pad_val, dtype=t.dtype)])
+            tensors.append(t)
+        padded[key] = torch.stack(tensors)
+    return padded
+
+
+def main():
+    torch.manual_seed(SEED)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Device: {device}")
+
+    # Load model and tokenizer
+    print(f"Loading model: {MODEL_PATH}")
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
+    model = AutoModelForCausalLM.from_pretrained(MODEL_PATH, torch_dtype=torch.bfloat16)
+
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    # Enable gradient checkpointing to save memory
+    model.config.use_cache = False
+    model.gradient_checkpointing_enable()
+    model.to(device)
+
+    # Build training data: passages + probe Q&A pairs
+    dataset = TemporalWikiDataset(period="aug_sep")
+    dataset.load("changed")
+    dataset.load("unchanged")
+
+    # Get passages
+    passages = dataset.get_train_passages()
+    if MAX_PASSAGES:
+        passages = passages[:MAX_PASSAGES]
+    print(f"Passages: {len(passages)}")
+
+    # Get probe-formatted training texts
+    probe_texts = build_probe_training_texts(dataset)
+    print(f"Probe training examples: {len(probe_texts)}")
+
+    # Combine: passages + probe texts (repeat probes to balance)
+    # Probes are short so we repeat them to give them more weight
+    repeat_probes = max(1, len(passages) // len(probe_texts)) if probe_texts else 1
+    all_texts = passages + probe_texts * repeat_probes
+    print(f"Total training examples: {len(all_texts)} "
+          f"({len(passages)} passages + {len(probe_texts)} probes × {repeat_probes})")
+
+    train_dataset = TextDataset(all_texts, tokenizer)
+    dataloader = DataLoader(
+        train_dataset,
+        batch_size=BATCH_SIZE,
+        shuffle=True,
+        collate_fn=collate_fn,
+    )
+
+    # Optimizer
+    optimizer = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=0.01)
+    total_steps = math.ceil(len(dataloader) / GRAD_ACCUM) * EPOCHS
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=total_steps)
+
+    # Training loop
+    print(f"\nTraining for {EPOCHS} epochs, {total_steps} optimizer steps")
+    print("=" * 60)
+
+    model.train()
+    global_step = 0
+    optimizer.zero_grad()
+
+    for epoch in range(EPOCHS):
+        epoch_loss = 0.0
+        n_batches = 0
+
+        for i, batch in enumerate(dataloader):
+            batch = {k: v.to(device) for k, v in batch.items()}
+            outputs = model(**batch)
+            loss = outputs.loss / GRAD_ACCUM
+            loss.backward()
+
+            epoch_loss += outputs.loss.item()
+            n_batches += 1
+
+            if (i + 1) % GRAD_ACCUM == 0 or (i + 1) == len(dataloader):
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                optimizer.step()
+                scheduler.step()
+                optimizer.zero_grad()
+                global_step += 1
+
+                if global_step % 10 == 0:
+                    avg_loss = epoch_loss / n_batches
+                    print(f"  epoch={epoch+1}/{EPOCHS}  step={global_step}  loss={avg_loss:.4f}")
+
+        avg_loss = epoch_loss / n_batches if n_batches > 0 else 0.0
+        print(f"Epoch {epoch+1}/{EPOCHS} done — avg_loss={avg_loss:.4f}")
+
+    # Save checkpoint
+    print(f"\nSaving to {SAVE_PATH}")
+    import os
+    os.makedirs(SAVE_PATH, exist_ok=True)
+    model.save_pretrained(SAVE_PATH)
+    tokenizer.save_pretrained(SAVE_PATH)
+
+    # Also save a train_config.json for compatibility with eval script
+    import json
+    config = {
+        "method": "full_ft",
+        "model_name": MODEL_PATH,
+        "dataset_name": "temporal_wiki",
+    }
+    with open(os.path.join(SAVE_PATH, "train_config.json"), "w") as f:
+        json.dump(config, f, indent=2)
+
+    print("Done!")
+
+
+if __name__ == "__main__":
+    main()
