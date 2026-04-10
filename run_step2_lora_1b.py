@@ -9,7 +9,7 @@ from training.train_runner import (
     run_training,
 )
 
-PRETRAINED_CHECKPOINT = "/content/drive/MyDrive/checkpoints/pretrain_period1_1b/checkpoints/ckpt-000001"
+PRETRAINED_CHECKPOINT = "/scratch1/ramyakri/checkpoints/pretrain_period1_1b/checkpoints/ckpt-000001"
 
 cfg = TrainConfig(
     run_id="step2_lora_1b",
@@ -41,6 +41,6 @@ run_training(
     model_factory=build_real_model_and_tokenizer,
     resume_model_factory=load_real_model_and_tokenizer,
     dataset_factory=build_real_dataset,
-    checkpoint_dir="/content/drive/MyDrive/checkpoints",
+    checkpoint_dir="/scratch1/ramyakri/checkpoints",
     training_units=["sep_oct", "oct_nov", "nov_dec"],
 )

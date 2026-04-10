@@ -12,7 +12,7 @@ from training.train_runner import (
 
 cfg = TrainConfig(
     run_id="pretrain_period1_1b",
-    model_name="/content/drive/MyDrive/models/Llama-3.2-1B-Instruct",
+    model_name="/scratch1/ramyakri/models/Llama-3.2-1B-Instruct",
     method="full_ft",
     dataset_name="temporal_wiki",
     precision="bfloat16",
@@ -39,6 +39,6 @@ run_training(
     model_factory=build_real_model_and_tokenizer,
     resume_model_factory=load_real_model_and_tokenizer,
     dataset_factory=build_real_dataset,
-    checkpoint_dir="/content/drive/MyDrive/checkpoints",
+    checkpoint_dir="/scratch1/ramyakri/checkpoints",
     training_units=["aug_sep"],
 )

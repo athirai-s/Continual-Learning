@@ -17,7 +17,7 @@ from eval_and_metrics.report import load_metrics_jsonl, extract_period_end_event
 from eval_and_metrics.compare_runs import render_comparison_table, load_run
 from eval_and_metrics.metric_helpers import compute_backward_transfer, compute_average_metric
 
-CHECKPOINT_DIR = Path("/content/drive/MyDrive/checkpoints")
+CHECKPOINT_DIR = Path("/scratch1/ramyakri/checkpoints")
 
 RUNS = {
     "full_ft" : CHECKPOINT_DIR / "step2_fullft_1b",
@@ -146,7 +146,7 @@ try:
     ax.grid(True, alpha=0.3, axis="y")
 
     plt.tight_layout()
-    out_path = "/content/drive/MyDrive/checkpoints/compare_1b.png"
+    out_path = "/scratch1/ramyakri/checkpoints/compare_1b.png"
     plt.savefig(out_path, dpi=150, bbox_inches="tight")
     print(f"\nPlot saved to: {out_path}")
     plt.show()
