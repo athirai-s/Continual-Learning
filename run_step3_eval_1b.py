@@ -31,30 +31,19 @@ CHECKPOINTS = {
 }
 
 
-def make_instruct_prompt(cloze_prompt: str) -> str:
-    """Wrap cloze prompt in Llama 3 instruct chat format for short answers."""
-    return (
-        "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
-        "You are a factual knowledge assistant. Answer with ONLY the answer — "
-        "a name, place, date, or short phrase. No explanation, no punctuation, "
-        "no repeating the question."
-        "<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n"
-        f"{cloze_prompt}"
-        "<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
-    )
-
-
 class EvalModel:
-    """Generation wrapper with instruct prompting and longer output."""
+    """Generation wrapper using plain cloze completion (no instruct format).
+    The model was fine-tuned on raw passages, so direct completion works best.
+    """
     def __init__(self, model, tokenizer, device):
         self.model = model
         self.tokenizer = tokenizer
         self.device = device
 
     def generate(self, prompt: str) -> str:
-        full_prompt = make_instruct_prompt(prompt)
+        # Use plain cloze prompt — model completes "The CEO of X is" → "Tim Cook"
         encoded = self.tokenizer(
-            full_prompt,
+            prompt,
             truncation=True,
             max_length=512,
             padding="do_not_pad",
@@ -65,12 +54,15 @@ class EvalModel:
         with torch.no_grad():
             output = self.model.generate(
                 **batch,
-                max_new_tokens=16,
+                max_new_tokens=8,
                 pad_token_id=self.tokenizer.eos_token_id,
                 eos_token_id=self.tokenizer.eos_token_id,
             )
         generated = output[0][prompt_len:]
-        return self.tokenizer.decode(generated, skip_special_tokens=True).strip()
+        text = self.tokenizer.decode(generated, skip_special_tokens=True).strip()
+        # Take only the first meaningful chunk (before newline or period)
+        text = text.split("\n")[0].split(".")[0].strip()
+        return text
 
 
 def load_model(name, checkpoint_path, device):
