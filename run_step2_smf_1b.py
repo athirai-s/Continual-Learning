@@ -21,10 +21,10 @@ cfg = TrainConfig(
     batch_size=4,
     grad_accum_steps=4,         # effective batch = 16
     learning_rate=3e-4,
-    epochs_per_period=1,        # memory overfits fast with frozen backbone
-    warmup_steps=2,             # ~15% of 13 total optimizer steps (1 epoch)
+    epochs_per_period=3,
+    warmup_steps=5,
     max_passages_per_period=200,
-    log_every_n_steps=5,        # log more frequently — only 13 steps per period
+    log_every_n_steps=10,
     eval_after_each_period=True,
     seed=42,
     smf_memory_size=64,
