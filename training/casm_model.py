@@ -77,7 +77,7 @@ class CASMRouter(nn.Module):
             raise ValueError(
                 f"top_k={top_k} exceeds num_slots={self.num_slots}"
             )
-        logits = self.net(query) / self.temperature  # (..., num_slots)
+        logits = self.net(query.to(self.net[0].weight.dtype)) / self.temperature  # (..., num_slots)
         top_values, slot_ids = torch.topk(logits, k=top_k, dim=-1)
         weights = F.softmax(top_values, dim=-1)
         return slot_ids, weights
@@ -279,7 +279,7 @@ class CASMModelWrapper(nn.Module):
             # Index and weight: (B, top_k, H) → sum over top_k → (B, H)
             batch_size = query.shape[0]
             selected = all_contribs[slot_ids.view(-1)].view(batch_size, top_k, self._hidden_size)
-            self._current_memory_contribution = (weights.unsqueeze(-1) * selected).sum(1)
+            self._current_memory_contribution = (weights.unsqueeze(-1) * selected).sum(1).to(embeds.dtype)
         else:
             self._current_memory_contribution = None
 
