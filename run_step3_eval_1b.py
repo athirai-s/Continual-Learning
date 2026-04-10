@@ -64,7 +64,7 @@ class EvalModel:
             return -999.0  # answer tokenized to nothing
 
         with torch.no_grad():
-            logits = self.model(full_ids).logits  # (1, seq, vocab)
+            logits = self.model(input_ids=full_ids).logits  # (1, seq, vocab)
 
         # Answer token positions: indices [prompt_len .. end]
         # Logit at position i predicts token i+1, so shift by 1
