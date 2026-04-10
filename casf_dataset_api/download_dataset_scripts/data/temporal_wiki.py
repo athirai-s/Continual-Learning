@@ -86,9 +86,6 @@ class TemporalWikiDataset(TemporalDataset):
             with z.open(filename) as f:
                 df = pd.read_csv(io.BytesIO(f.read()))
 
-        print(f"  Columns in {filename}: {list(df.columns)}")
-        print(f"  Sample row:\n{df.iloc[0]}\n")
-
         probes = []
         for _, row in df.iterrows():
             subject  = str(row.get("subject", "") or "")

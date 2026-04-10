@@ -337,7 +337,6 @@ class CASFTrainer:
         resume_state: ResumeState | None = None,
     ) -> dict[str, Any]:
         start = time.time()
-        print(f"Using device: {self.device}")
 
         if dataset is None:
             raise ValueError("dataset is required to provide probes for the training unit")
@@ -366,7 +365,7 @@ class CASFTrainer:
             self._restore_rng_state(self._checkpoint_state["rng_state"])
             self.optimizer.zero_grad()
 
-        print(f"Training on {len(unit_snapshot)} ordered passages")
+        print(f"  Passages:      {len(unit_snapshot)} ({self.config.epochs_per_period} epoch(s))")
 
         _casm_pending_slot_links: list[tuple[int, object]] = []
         contradictions = self.detector.check(probes, self.registry)
@@ -374,6 +373,8 @@ class CASFTrainer:
 
         total_micro_steps = math.ceil(len(unit_snapshot) / self.config.batch_size)
         total_optimizer_steps = math.ceil(total_micro_steps / self.config.grad_accum_steps)
+        print(f"  Optimizer steps: {total_optimizer_steps}  |  eff_batch={self.config.batch_size * self.config.grad_accum_steps}  |  lr={self.optimizer.param_groups[0]['lr']:.2e}")
+        print(f"  Device:          {self.device}")
 
         # Only branch on contradictions at the true start of a period.
         # On a mid-period resume the slots were already created before the
@@ -479,7 +480,19 @@ class CASFTrainer:
                     }
                 )
             if optimizer_steps_total % self.config.log_every_n_steps == 0:
-                print(f"step={optimizer_steps_total}, loss={averaged_window_loss:.4f}")
+                elapsed = time.time() - start
+                pct = optimizer_steps_total / total_optimizer_steps if total_optimizer_steps > 0 else 0
+                eta_sec = (elapsed / optimizer_steps_total) * (total_optimizer_steps - optimizer_steps_total) if optimizer_steps_total > 0 else 0
+                current_lr = scheduler.get_last_lr()[0] if scheduler is not None else self.optimizer.param_groups[0]['lr']
+                step_w = len(str(total_optimizer_steps))
+                print(
+                    f"  step {optimizer_steps_total:>{step_w}}/{total_optimizer_steps} ({pct*100:5.1f}%)"
+                    f"  loss={averaged_window_loss:.4f}"
+                    f"  lr={current_lr:.2e}"
+                    f"  {effective_tokens_per_sec:>5.0f} tok/s"
+                    f"  elapsed={int(elapsed//60):02d}:{int(elapsed%60):02d}"
+                    f"  ETA={int(eta_sec//60):02d}:{int(eta_sec%60):02d}"
+                )
                 loss_curve.append((optimizer_steps_total, averaged_window_loss))
 
             self._update_checkpoint_state(
