@@ -22,30 +22,30 @@ from training.train_runner import (
 PRETRAINED_CHECKPOINT = "/scratch1/ramyakri/checkpoints/pretrain_period1_1b/checkpoints/ckpt-000001"
 
 cfg = TrainConfig(
-    run_id="step2_casm_1b_v3",
+    run_id="step2_casm_1b_v4",
     model_name=PRETRAINED_CHECKPOINT,
     method="casm",
     dataset_name="temporal_wiki",
     precision="bfloat16",
     batch_size=4,
     grad_accum_steps=4,            # effective batch = 16
-    learning_rate=1e-3,            # higher lr — router + slots start from random init
+    learning_rate=2e-3,            # higher lr — more aggressive updates
     epochs_per_period=5,
     warmup_steps=5,
     max_passages_per_period=400,   # matches full_ft for fair comparison
     log_every_n_steps=10,
     eval_after_each_period=True,
     seed=42,
-    # --- slot bank: one slot per period + buffer for contradiction branches ---
-    casm_num_slots=6,              # 4 periods × 1 slot + 2 for branching
-    casm_memory_size=256,          # larger slots → more capacity per period
+    # --- slot bank ---
+    casm_num_slots=6,
+    casm_memory_size=512,          # double capacity — main lever left
     # --- router ---
-    casm_router_hidden_size=256,   # wider router → better period discrimination
-    casm_top_k=1,                  # top-1 routing → clean gradient signal per slot
-    casm_router_temperature=0.5,   # sharper routing → router commits to one slot
+    casm_router_hidden_size=512,   # wider router matches larger memory size
+    casm_top_k=1,                  # keep top-1 — proven to work
+    casm_router_temperature=0.3,   # even sharper routing
     # --- losses ---
-    casm_sparsity_weight=0.005,    # lighter — let slots grow freely
-    casm_overlap_weight=0.005,     # lighter — fewer active slots, less collision risk
+    casm_sparsity_weight=0.001,    # very light — let slots use full capacity
+    casm_overlap_weight=0.001,
     casm_branch_on_contradiction=True,
 )
 
