@@ -168,17 +168,10 @@ class CASMModelWrapper(nn.Module):
         # consumed by the post-hook on the last transformer layer.
         self._current_memory_contribution: Optional[torch.Tensor] = None
 
-        # Capture hidden states from the middle layer for a richer routing query.
-        # Middle layer gives contextualized representations without being polluted
-        # by the injection itself.
-        self._routing_query: Optional[torch.Tensor] = None
-        mid_layer_idx = len(transformer_layers) // 2
-        handle = transformer_layers[mid_layer_idx].register_forward_hook(self._capture_routing_query)
-        self._hook_handles: list[Any] = [handle]
-
         # Hook on the last N transformer layers (default: last layer only)
         num_injection = cfg.casm_num_injection_layers or 1
         self._num_injection_layers: int = min(num_injection, len(transformer_layers))
+        self._hook_handles: list[Any] = []
         for layer in transformer_layers[-self._num_injection_layers:]:
             handle = layer.register_forward_hook(self._memory_hook)
             self._hook_handles.append(handle)
@@ -241,11 +234,6 @@ class CASMModelWrapper(nn.Module):
     # ------------------------------------------------------------------
     # Forward hooks
 
-    def _capture_routing_query(self, module: nn.Module, inputs: tuple, output: Any) -> None:
-        """Capture mean of middle-layer hidden states as the routing query."""
-        hidden = output[0] if isinstance(output, tuple) else output  # (B, T, H)
-        self._routing_query = hidden.mean(dim=1).detach()  # (B, H) — detach: no grad through routing
-
     def _memory_hook(self, module: nn.Module, inputs: tuple, output: Any) -> Any:
         if self._current_memory_contribution is None:
             return output
@@ -267,14 +255,8 @@ class CASMModelWrapper(nn.Module):
         the combined contribution into the last transformer layer via a hook.
         """
         if input_ids is not None and len(self._active_slot_ids) > 0:
-            # _routing_query is populated by _capture_routing_query hook during backbone forward.
-            # On the first forward call it is None, so we fall back to raw embeddings.
-            # After the first pass it holds middle-layer hidden states (richer signal).
-            if self._routing_query is not None:
-                query = self._routing_query  # (B, H) — contextualized mid-layer representation
-            else:
-                embeds = _get_input_embeddings(self.backbone, input_ids)  # (B, T, H)
-                query = embeds.mean(dim=1)  # (B, H) — fallback: raw embeddings
+            embeds = _get_input_embeddings(self.backbone, input_ids)  # (B, T, H)
+            query = embeds.mean(dim=1)  # (B, H)
 
             top_k = min(self._casm_cfg.casm_top_k, len(self._active_slot_ids))  # type: ignore[arg-type]
             slot_ids, weights = self.router(query, top_k=top_k)  # (B, top_k)
@@ -300,13 +282,12 @@ class CASMModelWrapper(nn.Module):
             # Index and weight: (B, top_k, H) → sum over top_k → (B, H)
             batch_size = query.shape[0]
             selected = all_contribs[slot_ids.view(-1)].view(batch_size, top_k, self._hidden_size)
-            self._current_memory_contribution = (weights.unsqueeze(-1) * selected).sum(1).to(embeds.dtype)
+            self._current_memory_contribution = (weights.unsqueeze(-1) * selected).sum(1).to(query.dtype)
         else:
             self._current_memory_contribution = None
 
         result = self.backbone(input_ids=input_ids, **kwargs)
         self._current_memory_contribution = None
-        self._routing_query = None
         return result
 
     # ------------------------------------------------------------------
