@@ -22,16 +22,16 @@ from training.train_runner import (
 PRETRAINED_CHECKPOINT = "/scratch1/ramyakri/checkpoints/pretrain_period1_1b/checkpoints/ckpt-000001"
 
 cfg = TrainConfig(
-    run_id="step2_casm_1b_v4",
+    run_id="step2_casm_1b_v5",
     model_name=PRETRAINED_CHECKPOINT,
     method="casm",
     dataset_name="temporal_wiki",
     precision="bfloat16",
     batch_size=4,
     grad_accum_steps=4,            # effective batch = 16
-    learning_rate=2e-3,            # higher lr — more aggressive updates
+    learning_rate=1e-3,            # back to v3 lr — v4 lr was too aggressive
     epochs_per_period=5,
-    warmup_steps=5,
+    warmup_steps=20,               # longer warmup — router needs time before slots get clean signal
     max_passages_per_period=400,   # matches full_ft for fair comparison
     log_every_n_steps=10,
     eval_after_each_period=True,
@@ -42,11 +42,12 @@ cfg = TrainConfig(
     # --- router ---
     casm_router_hidden_size=512,   # wider router matches larger memory size
     casm_top_k=1,                  # keep top-1 — proven to work
-    casm_router_temperature=0.3,   # even sharper routing
+    casm_router_temperature=0.2,   # even sharper routing
     # --- losses ---
     casm_sparsity_weight=0.001,    # very light — let slots use full capacity
     casm_overlap_weight=0.001,
     casm_branch_on_contradiction=True,
+    casm_num_injection_layers=4,   # inject at last 4 layers — richer signal than last layer only
 )
 
 cfg.validate()

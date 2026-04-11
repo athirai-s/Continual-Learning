@@ -165,13 +165,16 @@ class CASMModelWrapper(nn.Module):
         )
 
         # Holds the routing-weighted memory contribution computed in forward(),
-        # consumed by the post-hook on the last transformer layer.
+        # consumed by the post-hook on the injected transformer layers.
         self._current_memory_contribution: Optional[torch.Tensor] = None
 
-        # Hook on the last transformer layer
+        # Hook on the last N transformer layers (default: last layer only)
+        num_injection = cfg.casm_num_injection_layers or 1
+        self._num_injection_layers: int = min(num_injection, len(transformer_layers))
         self._hook_handles: list[Any] = []
-        handle = transformer_layers[-1].register_forward_hook(self._memory_hook)
-        self._hook_handles.append(handle)
+        for layer in transformer_layers[-self._num_injection_layers:]:
+            handle = layer.register_forward_hook(self._memory_hook)
+            self._hook_handles.append(handle)
 
     # ------------------------------------------------------------------
     # Slot management
@@ -234,7 +237,7 @@ class CASMModelWrapper(nn.Module):
     def _memory_hook(self, module: nn.Module, inputs: tuple, output: Any) -> Any:
         if self._current_memory_contribution is None:
             return output
-        contrib = self._current_memory_contribution  # (batch, hidden_size)
+        contrib = self._current_memory_contribution / self._num_injection_layers  # (batch, hidden_size)
         if isinstance(output, tuple):
             hidden = output[0]  # (batch, seq_len, hidden_size)
             new_hidden = hidden + contrib.unsqueeze(1)
