@@ -249,7 +249,7 @@ class CASMModelWrapper(nn.Module):
     def _memory_hook(self, module: nn.Module, inputs: tuple, output: Any) -> Any:
         if self._current_memory_contribution is None:
             return output
-        contrib = self._current_memory_contribution  # (batch, hidden_size)
+        contrib = self._current_memory_contribution / self._num_injection_layers  # (batch, hidden_size)
         if isinstance(output, tuple):
             hidden = output[0]  # (batch, seq_len, hidden_size)
             new_hidden = hidden + contrib.unsqueeze(1)
