@@ -57,7 +57,6 @@ class TrainConfig:
     casm_overlap_weight: float = 0.0
     casm_branch_on_contradiction: bool = True
     casm_memory_size: Optional[int] = None
-    casm_num_injection_layers: Optional[int] = None
 
     def validate(self) -> None:
         if self.method not in {"full_ft", "lora", "smf", "casm"}:
