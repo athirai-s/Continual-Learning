@@ -22,7 +22,7 @@ from training.train_runner import (
 PRETRAINED_CHECKPOINT = "/scratch1/ramyakri/checkpoints/pretrain_period1_1b/checkpoints/ckpt-000001"
 
 cfg = TrainConfig(
-    run_id="step2_casm_1b",
+    run_id="step2_casm_1b_v2",
     model_name=PRETRAINED_CHECKPOINT,
     method="casm",
     dataset_name="temporal_wiki",
@@ -41,11 +41,11 @@ cfg = TrainConfig(
     casm_memory_size=128,          # larger slots → more capacity per period
     # --- router ---
     casm_router_hidden_size=256,   # wider router → better period discrimination
-    casm_top_k=1,                  # one slot per query → clean period specialisation
-    casm_router_temperature=0.5,   # sharper routing → harder slot assignment
+    casm_top_k=2,                  # top-2 routing → robust to router errors
+    casm_router_temperature=1.0,   # softer routing → less damage from imperfect router
     # --- losses ---
     casm_sparsity_weight=0.01,
-    casm_overlap_weight=0.05,      # strong diversity penalty → slots stay distinct
+    casm_overlap_weight=0.01,      # reduced — was competing with task loss too strongly
     casm_branch_on_contradiction=True,
 )
 
