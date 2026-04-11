@@ -114,67 +114,62 @@ def load_model(name, checkpoint_path, device):
 
 
 def evaluate_versioned(eval_model):
-    """Compare model's preference for P1 (old) vs P4 (new) answers on changed probes."""
-    # Load P1 probes to get old values
+    """Compare model's preference for old vs new answer on changed probes.
+
+    P1 changed probes already contain both:
+      ground_truth   = current value (what changed TO in aug_sep)
+      previous_value = old value (what it was BEFORE aug_sep)
+
+    We score both and see which the model prefers.
+    A model with good retention should score the current value higher.
+    A model that forgot will score neither well.
+    """
     p1_dataset = TemporalWikiDataset(period="aug_sep")
     p1_dataset.load("changed")
     p1_probes = p1_dataset.get_probes("changed")
 
-    # Load P4 probes to get new values for the same facts
-    p4_dataset = TemporalWikiDataset(period="nov_dec")
-    p4_dataset.load("changed")
-    p4_probes = p4_dataset.get_probes("changed")
+    # Filter to probes that have a previous_value (actual contradictions)
+    contradiction_probes = [p for p in p1_probes if p.previous_value is not None]
 
-    # Build lookup: (subject, relation) -> P4 probe
-    p4_lookup = {}
-    for p in p4_probes:
-        p4_lookup[(p.subject, p.relation)] = p
-
-    p1_scores = []
-    p4_scores = []
-    prefers_p1 = 0
+    p1_scores = []   # score for current (new) value
+    prev_scores = [] # score for previous (old) value
+    prefers_current = 0
     n_compared = 0
     DEBUG_SAMPLES = 3
 
-    for i, p1_probe in enumerate(p1_probes):
-        key = (p1_probe.subject, p1_probe.relation)
-        p4_probe = p4_lookup.get(key)
-        if p4_probe is None:
+    for i, probe in enumerate(contradiction_probes):
+        current_ans = probe.ground_truth      # new value (changed to)
+        previous_ans = probe.previous_value   # old value (changed from)
+
+        if current_ans == previous_ans:
             continue
 
-        # P1 answer = old value, P4 answer = new value
-        p1_ans = p1_probe.ground_truth
-        p4_ans = p4_probe.ground_truth
+        score_current = eval_model.score_probe(probe.prompt, current_ans)
+        score_prev = eval_model.score_probe(probe.prompt, previous_ans)
 
-        if p1_ans == p4_ans:
-            continue  # fact didn't actually change — skip
-
-        score_p1 = eval_model.score_probe(p1_probe.prompt, p1_ans)
-        score_p4 = eval_model.score_probe(p1_probe.prompt, p4_ans)
-
-        p1_scores.append(score_p1)
-        p4_scores.append(score_p4)
-        if score_p1 > score_p4:
-            prefers_p1 += 1
+        p1_scores.append(score_current)
+        prev_scores.append(score_prev)
+        if score_current > score_prev:
+            prefers_current += 1
         n_compared += 1
 
         if i < DEBUG_SAMPLES:
-            print(f"  [DBG#{i}] subject={p1_probe.subject!r}")
-            print(f"           P1 answer={p1_ans!r}  logp={score_p1:.3f}")
-            print(f"           P4 answer={p4_ans!r}  logp={score_p4:.3f}")
-            print(f"           prefers={'P1 (OLD)' if score_p1 > score_p4 else 'P4 (NEW)'}")
+            print(f"  [DBG#{i}] subject={probe.subject!r}")
+            print(f"           current={current_ans!r}  logp={score_current:.3f}")
+            print(f"           previous={previous_ans!r}  logp={score_prev:.3f}")
+            print(f"           prefers={'CURRENT (new)' if score_current > score_prev else 'PREVIOUS (old)'}")
 
     if n_compared == 0:
-        return {"n": 0, "p1_score": 0.0, "p4_score": 0.0, "retention_gap": 0.0, "version_pref_p1": 0.0}
+        return {"n": 0, "current_score": 0.0, "previous_score": 0.0, "retention_gap": 0.0, "pref_current": 0.0}
 
-    mean_p1 = sum(p1_scores) / n_compared
-    mean_p4 = sum(p4_scores) / n_compared
+    mean_current = sum(p1_scores) / n_compared
+    mean_prev = sum(prev_scores) / n_compared
     return {
         "n": n_compared,
-        "p1_score": mean_p1,
-        "p4_score": mean_p4,
-        "retention_gap": mean_p1 - mean_p4,  # positive = prefers old fact
-        "version_pref_p1": prefers_p1 / n_compared,  # fraction preferring P1
+        "current_score": mean_current,
+        "previous_score": mean_prev,
+        "retention_gap": mean_current - mean_prev,  # positive = prefers new/current fact
+        "pref_current": prefers_current / n_compared,  # fraction preferring current value
     }
 
 
@@ -197,8 +192,8 @@ def main():
         results = evaluate_versioned(eval_model)
         all_results[name] = results
 
-        print(f"  n={results['n']}  p1_score={results['p1_score']:.4f}  p4_score={results['p4_score']:.4f}")
-        print(f"  retention_gap={results['retention_gap']:.4f}  version_pref_p1={results['version_pref_p1']:.2%}")
+        print(f"  n={results['n']}  current_score={results['current_score']:.4f}  previous_score={results['previous_score']:.4f}")
+        print(f"  retention_gap={results['retention_gap']:.4f}  pref_current={results['pref_current']:.2%}")
 
         del eval_model
         torch.cuda.empty_cache()
@@ -209,14 +204,14 @@ def main():
     print("  retention_gap > 0 = model prefers old P1 answer (good retention)")
     print("  version_pref_p1   = fraction of probes where model prefers P1 answer")
     print(f"{'='*80}")
-    print(f"\n{'Method':<15} {'N':>5} {'P1_score':>10} {'P4_score':>10} {'Gap':>8} {'PrefP1%':>10}")
+    print(f"\n{'Method':<15} {'N':>5} {'Current':>10} {'Previous':>10} {'Gap':>8} {'PrefCurr%':>10}")
     print("-" * 65)
 
     for name in CHECKPOINTS:
         if name not in all_results:
             continue
         r = all_results[name]
-        print(f"{name:<15} {r['n']:>5} {r['p1_score']:>10.4f} {r['p4_score']:>10.4f} {r['retention_gap']:>8.4f} {r['version_pref_p1']:>9.1%}")
+        print(f"{name:<15} {r['n']:>5} {r['current_score']:>10.4f} {r['previous_score']:>10.4f} {r['retention_gap']:>8.4f} {r['pref_current']:>9.1%}")
 
     output_path = "step4_versioned_eval_results.json"
     with open(output_path, "w") as f:
