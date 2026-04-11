@@ -15,4 +15,4 @@ module load gcc/12.3.0 cuda/12.4.1
 cd /project2/jieyuz_1727/Continual-Learning
 source /project2/jieyuz_1727/Continual-Learning/venv/bin/activate
 
-python pretrain_period1_1b.py
+python -u pretrain_period1_1b.py
