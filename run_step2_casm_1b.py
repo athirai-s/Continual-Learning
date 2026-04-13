@@ -37,15 +37,15 @@ cfg = TrainConfig(
     eval_after_each_period=True,
     seed=42,
     # --- slot bank ---
-    casm_num_slots=6,
+    casm_num_slots=8,              # more slots to separate periods/branches
     casm_memory_size=512,          # double capacity — main lever left
     # --- router ---
     casm_router_hidden_size=512,   # wider router matches larger memory size
-    casm_top_k=1,                  # keep top-1 — proven to work
-    casm_router_temperature=0.3,   # even sharper routing
+    casm_top_k=2,                  # allow two slots per query
+    casm_router_temperature=1.0,   # softer routing for more stable gradients
     # --- losses ---
-    casm_sparsity_weight=0.001,    # very light — let slots use full capacity
-    casm_overlap_weight=0.001,
+    casm_sparsity_weight=0.0,      # focus on fitting facts; sparsity emerges from router
+    casm_overlap_weight=0.0005,    # light decorrelation between slots
     casm_branch_on_contradiction=True,
     casm_num_injection_layers=4,   # inject at last 4 layers — richer signal than last layer only
 )

@@ -93,8 +93,22 @@ if os.path.exists(STEP3_RESULTS_PATH):
         step3 = json.load(f)
 
     METHOD_ORDER = ["pretrain_p1", "full_ft", "lora", "smf", "casm"]
-    col_w = [15, 12, 8, 10, 10, 8]
-    header = ["Method", "Split", "N", "Exact", "Contains", "F1"]
+    # 1B step3 eval currently writes mean_logprob per split, not exact/contains/F1.
+    # Detect schema and render an appropriate table so we don't silently print zeros.
+    has_mean_logprob = any(
+        name in step3
+        and "changed" in step3[name]
+        and isinstance(step3[name]["changed"], dict)
+        and "mean_logprob" in step3[name]["changed"]
+        for name in METHOD_ORDER
+    )
+
+    if has_mean_logprob:
+        col_w = [15, 12, 8, 15]
+        header = ["Method", "Split", "N", "MeanLogProb"]
+    else:
+        col_w = [15, 12, 8, 10, 10, 8]
+        header = ["Method", "Split", "N", "Exact", "Contains", "F1"]
 
     def row(cells):
         return "  ".join(str(c).ljust(w) for c, w in zip(cells, col_w))
@@ -109,31 +123,64 @@ if os.path.exists(STEP3_RESULTS_PATH):
             m = step3[name].get(split, {})
             if not m:
                 continue
-            print(row([
-                name if split == "changed" else "",
-                split,
-                m.get("n", "—"),
-                f"{m.get('exact', 0):.4f}",
-                f"{m.get('contains', 0):.4f}",
-                f"{m.get('f1', 0):.5f}",
-            ]))
+            if has_mean_logprob:
+                print(
+                    row(
+                        [
+                            name if split == "changed" else "",
+                            split,
+                            m.get("n", "—"),
+                            f"{m.get('mean_logprob', 0.0):.4f}",
+                        ]
+                    )
+                )
+            else:
+                print(
+                    row(
+                        [
+                            name if split == "changed" else "",
+                            split,
+                            m.get("n", "—"),
+                            f"{m.get('exact', 0):.4f}",
+                            f"{m.get('contains', 0):.4f}",
+                            f"{m.get('f1', 0):.5f}",
+                        ]
+                    )
+                )
         print()
 
-    # Forgetting delta: full_ft vs casm on changed probes
+    # Forgetting delta summary: compare full_ft vs casm on P1 changed probes.
     if "full_ft" in step3 and "casm" in step3:
-        ft_f1  = step3["full_ft"].get("changed", {}).get("f1", None)
-        casm_f1 = step3["casm"].get("changed", {}).get("f1", None)
-        p1_f1  = step3.get("pretrain_p1", {}).get("changed", {}).get("f1", None)
-        print(f"  Forgetting delta (full_ft vs casm, changed F1):")
-        if ft_f1 is not None and casm_f1 is not None:
-            delta = casm_f1 - ft_f1
-            print(f"    CASM retains {delta:+.4f} more F1 on P1 changed facts than full_ft")
-        if p1_f1 is not None and ft_f1 is not None:
-            forgetting = p1_f1 - ft_f1
-            print(f"    full_ft forgot {forgetting:.4f} F1 relative to pretrain baseline")
-        if p1_f1 is not None and casm_f1 is not None:
-            forgetting_casm = p1_f1 - casm_f1
-            print(f"    casm    forgot {forgetting_casm:.4f} F1 relative to pretrain baseline")
+        if has_mean_logprob:
+            ft_lp = step3["full_ft"].get("changed", {}).get("mean_logprob", None)
+            casm_lp = step3["casm"].get("changed", {}).get("mean_logprob", None)
+            print("  Forgetting delta (full_ft vs casm, changed mean log-prob):")
+            if ft_lp is not None and casm_lp is not None:
+                delta = casm_lp - ft_lp
+                print(
+                    f"    CASM is {delta:+.4f} higher (less negative) mean log-prob "
+                    "on P1 changed facts than full_ft"
+                )
+        else:
+            ft_f1 = step3["full_ft"].get("changed", {}).get("f1", None)
+            casm_f1 = step3["casm"].get("changed", {}).get("f1", None)
+            p1_f1 = step3.get("pretrain_p1", {}).get("changed", {}).get("f1", None)
+            print("  Forgetting delta (full_ft vs casm, changed F1):")
+            if ft_f1 is not None and casm_f1 is not None:
+                delta = casm_f1 - ft_f1
+                print(
+                    f"    CASM retains {delta:+.4f} more F1 on P1 changed facts than full_ft"
+                )
+            if p1_f1 is not None and ft_f1 is not None:
+                forgetting = p1_f1 - ft_f1
+                print(
+                    f"    full_ft forgot {forgetting:.4f} F1 relative to pretrain baseline"
+                )
+            if p1_f1 is not None and casm_f1 is not None:
+                forgetting_casm = p1_f1 - casm_f1
+                print(
+                    f"    casm    forgot {forgetting_casm:.4f} F1 relative to pretrain baseline"
+                )
 else:
     print(f"  (step3_eval_results.json not found at {STEP3_RESULTS_PATH})")
     print("  Run:  sbatch run_step3_eval_job.sh   then re-run this script.")
@@ -198,17 +245,48 @@ try:
     if os.path.exists(STEP3_RESULTS_PATH):
         with open(STEP3_RESULTS_PATH) as f:
             step3_data = json.load(f)
-        bar_methods = [m for m in ["pretrain_p1", "full_ft", "lora", "smf", "casm"]
-                       if m in step3_data]
-        bar_vals = [step3_data[m].get("changed", {}).get("f1", 0.0) for m in bar_methods]
+        bar_methods = [
+            m for m in ["pretrain_p1", "full_ft", "lora", "smf", "casm"] if m in step3_data
+        ]
+        # Detect whether step3 results are F1-based or mean_logprob-based.
+        has_mean_logprob = any(
+            "changed" in step3_data.get(m, {})
+            and isinstance(step3_data[m]["changed"], dict)
+            and "mean_logprob" in step3_data[m]["changed"]
+            for m in bar_methods
+        )
+        if has_mean_logprob:
+            bar_vals = [
+                step3_data[m].get("changed", {}).get("mean_logprob", 0.0) for m in bar_methods
+            ]
+        else:
+            bar_vals = [
+                step3_data[m].get("changed", {}).get("f1", 0.0) for m in bar_methods
+            ]
         bar_colors = [COLORS.get(m, "#95a5a6") for m in bar_methods]
-        bars = ax.bar(bar_methods, [v * 100 for v in bar_vals], color=bar_colors)
-        ax.set_title("Period 1 Retention After P2-P4 Training\n(changed probes F1 — higher = less forgetting)")
-        ax.set_ylabel("F1 %")
-        ax.set_ylim(0, 100)
-        for bar, val in zip(bars, bar_vals):
-            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5,
-                    f"{val*100:.1f}%", ha="center", va="bottom", fontsize=9)
+        bars = ax.bar(bar_methods, bar_vals, color=bar_colors)
+        if has_mean_logprob:
+            ax.set_title(
+                "Period 1 Retention After P2-P4 Training\n"
+                "(changed probes mean log-prob — higher = better)"
+            )
+            ax.set_ylabel("Mean log-prob")
+        else:
+            ax.set_title(
+                "Period 1 Retention After P2-P4 Training\n"
+                "(changed probes F1 — higher = less forgetting)"
+            )
+            ax.set_ylabel("F1")
+            bar_vals = [v * 100 for v in bar_vals]
+            for bar, val in zip(bars, bar_vals):
+                ax.text(
+                    bar.get_x() + bar.get_width() / 2,
+                    bar.get_height() + 0.5,
+                    f"{val:.1f}%",
+                    ha="center",
+                    va="bottom",
+                    fontsize=9,
+                )
         ax.grid(True, alpha=0.3, axis="y")
     else:
         ax.text(0.5, 0.5, "Run step3 eval first\n(sbatch run_step3_eval_job.sh)",
