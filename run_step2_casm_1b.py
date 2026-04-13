@@ -22,32 +22,32 @@ from training.train_runner import (
 PRETRAINED_CHECKPOINT = "/scratch1/ramyakri/checkpoints/pretrain_period1_1b/checkpoints/ckpt-000001"
 
 cfg = TrainConfig(
-    run_id="step2_casm_1b_v6",
+    run_id="step2_casm_1b_v7",
     model_name=PRETRAINED_CHECKPOINT,
     method="casm",
     dataset_name="temporal_wiki",
     precision="bfloat16",
     batch_size=4,
     grad_accum_steps=4,            # effective batch = 16
-    learning_rate=2e-3,            # v4 lr — needed for multi-layer injection to converge
+    learning_rate=2e-3,            # v4 proven lr
     epochs_per_period=5,
-    warmup_steps=20,               # longer warmup — router + slots both start from random init
+    warmup_steps=5,                # v4 proven warmup
     max_passages_per_period=400,   # matches full_ft for fair comparison
     log_every_n_steps=10,
     eval_after_each_period=True,
     seed=42,
-    # --- slot bank ---
-    casm_num_slots=8,              # more slots to separate periods/branches
-    casm_memory_size=512,          # double capacity — main lever left
+    # --- slot bank (now query_dependent=True — per-token gating) ---
+    casm_num_slots=6,              # 4 periods + 2 branch buffer
+    casm_memory_size=512,          # large capacity for per-token gating
     # --- router ---
-    casm_router_hidden_size=512,   # wider router matches larger memory size
-    casm_top_k=2,                  # allow two slots per query
-    casm_router_temperature=1.0,   # softer routing for more stable gradients
+    casm_router_hidden_size=512,   # matches memory size
+    casm_top_k=1,                  # clean gradient signal — one slot per query
+    casm_router_temperature=0.3,   # sharp routing for specialization
     # --- losses ---
-    casm_sparsity_weight=0.0,      # focus on fitting facts; sparsity emerges from router
-    casm_overlap_weight=0.0005,    # light decorrelation between slots
+    casm_sparsity_weight=0.001,    # v4 proven
+    casm_overlap_weight=0.001,     # v4 proven
     casm_branch_on_contradiction=True,
-    casm_num_injection_layers=4,   # inject at last 4 layers — richer signal than last layer only
+    # Single layer injection (v4 proven — multi-layer hurt performance)
 )
 
 cfg.validate()
