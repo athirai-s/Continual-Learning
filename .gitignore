@@ -23,3 +23,5 @@ explore/WikiFactDiffDataset/data/
 registry.json
 checkpoints/
 .claude/
+.env
+dataset_utils/prompts/
