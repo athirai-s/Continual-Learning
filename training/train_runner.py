@@ -164,18 +164,30 @@ def build_real_dataset(unit: str, cfg: TrainConfig):
 def build_augmented_dataset(unit: str, cfg: TrainConfig):
     """Like build_real_dataset but reads training passages from augmented CSVs.
 
-    Probes (eval) still come from TWiki_Probes.zip via TemporalWikiDataset.
     Training passages come from data/augmented/TWiki_Diffsets/<period>.csv,
     skipping any rows that were written as ERROR by the generation script.
+    Probes (eval) come from TWiki_Probes.zip bundled in the repo under
+    casf_dataset_api/download_dataset_scripts/data/.
     """
     import csv
+    import casf_dataset_api.download_dataset_scripts.data.temporal_wiki as _tw
     from pathlib import Path as _Path
 
     if cfg.dataset_name == "temporal_wiki":
+        # Patch probes ZIP to use the copy committed in the repo
+        _repo_root = _Path(__file__).resolve().parent.parent
+        _bundled_probes = (
+            _repo_root
+            / "casf_dataset_api" / "download_dataset_scripts" / "data"
+            / "TWiki_Probes.zip"
+        )
+        if _bundled_probes.exists():
+            _tw.PROBES_ZIP = _bundled_probes
+
         dataset = build_dataset(cfg.dataset_name, period=unit)
+
         augmented_csv = (
-            _Path(__file__).resolve().parent.parent
-            / "data" / "augmented" / "TWiki_Diffsets" / f"{unit}.csv"
+            _repo_root / "data" / "augmented" / "TWiki_Diffsets" / f"{unit}.csv"
         )
         if not augmented_csv.exists():
             raise FileNotFoundError(
