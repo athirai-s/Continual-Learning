@@ -88,9 +88,32 @@ class CASMRouter(nn.Module):
 
 
 def _slot_contribution(block: SparseMemoryBlock) -> torch.Tensor:
-    """Return the (hidden_size,) additive contribution of a slot block."""
+    """Return the (hidden_size,) position-independent contribution of a slot.
+
+    Uses only the global gate (ignores query_proj).  Used for overlap_loss
+    where we need a fixed per-slot summary independent of input tokens.
+    """
     gate = torch.sigmoid(block.gate_logits)
     return (gate.unsqueeze(-1) * block.memory).sum(0)
+
+
+def _slot_contribution_tokens(
+    block: SparseMemoryBlock, hidden_states: torch.Tensor,
+) -> torch.Tensor:
+    """Return per-token contribution (batch, seq_len, hidden_size) from a slot.
+
+    If the block has a query_proj (query_dependent=True), the gate is
+    content-dependent: each token gets its own gating pattern.  Otherwise
+    falls back to the global position-independent gate.
+    """
+    if block.query_proj is not None:
+        query_scores = block.query_proj(
+            hidden_states.to(block.query_proj.weight.dtype)
+        )
+        gate = torch.sigmoid(block.gate_logits + query_scores)  # (B, T, mem)
+    else:
+        gate = torch.sigmoid(block.gate_logits)  # (mem,)
+    return (gate @ block.memory).to(hidden_states.dtype)
 
 
 def _get_input_embeddings(backbone: Any, input_ids: torch.Tensor) -> torch.Tensor:
@@ -164,9 +187,9 @@ class CASMModelWrapper(nn.Module):
             temperature=cfg.casm_router_temperature,
         )
 
-        # Holds the routing-weighted memory contribution computed in forward(),
-        # consumed by the post-hook on the last transformer layer.
-        self._current_memory_contribution: Optional[torch.Tensor] = None
+        # Routing decisions computed in forward(), consumed by layer hooks.
+        self._routing_slot_ids: Optional[torch.Tensor] = None   # (B, top_k)
+        self._routing_weights: Optional[torch.Tensor] = None    # (B, top_k)
 
         # Hook on the last N transformer layers (default: last layer only)
         num_injection = cfg.casm_num_injection_layers or 1
@@ -184,7 +207,7 @@ class CASMModelWrapper(nn.Module):
         self.slot_bank[str(idx)] = SparseMemoryBlock(
             memory_size=self._memory_size,
             hidden_size=self._hidden_size,
-            query_dependent=False,
+            query_dependent=True,
         )
         self._active_slot_ids.append(idx)
         self._next_slot_idx += 1
@@ -235,24 +258,56 @@ class CASMModelWrapper(nn.Module):
     # Forward hooks
 
     def _memory_hook(self, module: nn.Module, inputs: tuple, output: Any) -> Any:
-        if self._current_memory_contribution is None:
+        if self._routing_slot_ids is None:
             return output
-        contrib = self._current_memory_contribution / self._num_injection_layers  # (batch, hidden_size)
+
         if isinstance(output, tuple):
             hidden = output[0]  # (batch, seq_len, hidden_size)
-            new_hidden = hidden + contrib.unsqueeze(1)
-            return (new_hidden,) + output[1:]
-        return output + contrib.unsqueeze(1)
+        else:
+            hidden = output
+
+        batch_size = hidden.shape[0]
+        top_k = self._routing_slot_ids.shape[1]
+
+        total_contrib = torch.zeros_like(hidden)  # (B, T, H)
+
+        for k in range(top_k):
+            slot_ids_k = self._routing_slot_ids[:, k]  # (B,)
+            weights_k = self._routing_weights[:, k]    # (B,)
+
+            for sid in slot_ids_k.unique().tolist():
+                key = str(int(sid))
+                if key not in self.slot_bank or int(sid) in self._closed_slot_ids:
+                    continue
+                mask = (slot_ids_k == sid)  # (B,) bool
+                if not mask.any():
+                    continue
+                # Per-token contribution for batch items routed to this slot
+                slot_hidden = hidden[mask]  # (n, T, H)
+                contrib = _slot_contribution_tokens(
+                    self.slot_bank[key], slot_hidden,
+                )  # (n, T, H)
+                slot_weights = weights_k[mask]  # (n,)
+                total_contrib[mask] += (
+                    slot_weights.unsqueeze(-1).unsqueeze(-1) * contrib
+                )
+
+        total_contrib = total_contrib / self._num_injection_layers
+
+        if isinstance(output, tuple):
+            return (hidden + total_contrib,) + output[1:]
+        return output + total_contrib
 
     # ------------------------------------------------------------------
     # nn.Module interface
 
     def forward(self, input_ids: Optional[torch.Tensor] = None, **kwargs: Any) -> Any:
-        """Forward pass with routing-weighted memory injection.
+        """Forward pass with per-token routing-weighted memory injection.
 
         Computes the routing query from input token embeddings, selects the
-        top-k slots, accumulates their weighted contributions, then injects
-        the combined contribution into the last transformer layer via a hook.
+        top-k slots, then stores the routing decision for the layer hooks.
+        Each hook computes per-token contributions using the actual hidden
+        states at that layer (content-dependent gating via query_proj).
         """
         if input_ids is not None and len(self._active_slot_ids) > 0:
             embeds = _get_input_embeddings(self.backbone, input_ids)  # (B, T, H)
@@ -265,29 +320,16 @@ class CASMModelWrapper(nn.Module):
                 if idx in self._slot_usage_counts:
                     self._slot_usage_counts[idx] += 1
 
-            # Build contribution matrix for all router-reachable slots.
-            # torch.stack preserves the autograd graph; in-place index
-            # assignment on a zeros tensor does not reliably track gradients.
-            device = query.device
-            n = self.router.num_slots
-            zero = torch.zeros(self._hidden_size, device=device)
-            contrib_list = [
-                _slot_contribution(self.slot_bank[str(i)])
-                if str(i) in self.slot_bank and i not in self._closed_slot_ids
-                else zero
-                for i in range(n)
-            ]
-            all_contribs = torch.stack(contrib_list, dim=0)  # (n, H)
-
-            # Index and weight: (B, top_k, H) → sum over top_k → (B, H)
-            batch_size = query.shape[0]
-            selected = all_contribs[slot_ids.view(-1)].view(batch_size, top_k, self._hidden_size)
-            self._current_memory_contribution = (weights.unsqueeze(-1) * selected).sum(1).to(query.dtype)
+            # Store routing decisions; hooks compute per-token contributions.
+            self._routing_slot_ids = slot_ids
+            self._routing_weights = weights
         else:
-            self._current_memory_contribution = None
+            self._routing_slot_ids = None
+            self._routing_weights = None
 
         result = self.backbone(input_ids=input_ids, **kwargs)
-        self._current_memory_contribution = None
+        self._routing_slot_ids = None
+        self._routing_weights = None
         return result
 
     # ------------------------------------------------------------------
@@ -368,13 +410,14 @@ class CASMModelWrapper(nn.Module):
                 wrapper.slot_bank[key] = SparseMemoryBlock(
                     memory_size=memory_size,
                     hidden_size=wrapper._hidden_size,
-                    query_dependent=False,
+                    query_dependent=True,
                 )
 
-        # Load slot weights.
+        # Load slot weights (strict=False for backward compat with old
+        # checkpoints that used query_dependent=False and lack query_proj).
         for key, sd in state["slot_bank"].items():
             if key in wrapper.slot_bank:
-                wrapper.slot_bank[key].load_state_dict(sd)
+                wrapper.slot_bank[key].load_state_dict(sd, strict=False)
 
         # Resize the router output layer to match the checkpoint before loading
         # its state dict (router may have grown via _expand_router during the run).
