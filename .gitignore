@@ -17,7 +17,7 @@ casf_dataset_api/download_dataset_scripts/data/
 explore/TemporalWikiDataset/data/
 explore/WikiFactDiffDataset/data/
 *.zip
-*.csv
+
 
 # ── Other ─────────────────────────────────────────────────────────
 registry.json
