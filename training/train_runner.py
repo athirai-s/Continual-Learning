@@ -161,6 +161,44 @@ def build_real_dataset(unit: str, cfg: TrainConfig):
     return build_dataset(cfg.dataset_name)
 
 
+def build_augmented_dataset(unit: str, cfg: TrainConfig):
+    """Like build_real_dataset but reads training passages from augmented CSVs.
+
+    Probes (eval) still come from TWiki_Probes.zip via TemporalWikiDataset.
+    Training passages come from data/augmented/TWiki_Diffsets/<period>.csv,
+    skipping any rows that were written as ERROR by the generation script.
+    """
+    import csv
+    from pathlib import Path as _Path
+
+    if cfg.dataset_name == "temporal_wiki":
+        dataset = build_dataset(cfg.dataset_name, period=unit)
+        augmented_csv = (
+            _Path(__file__).resolve().parent.parent
+            / "data" / "augmented" / "TWiki_Diffsets" / f"{unit}.csv"
+        )
+        if not augmented_csv.exists():
+            raise FileNotFoundError(
+                f"Augmented CSV not found: {augmented_csv}. "
+                "Make sure data/augmented/TWiki_Diffsets/<period>.csv files are present."
+            )
+
+        def _get_augmented_passages():
+            passages = []
+            with augmented_csv.open(encoding="utf-8", newline="") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    text = row.get("text", "").strip()
+                    if text and text != "ERROR":
+                        passages.append(text)
+            return passages
+
+        dataset.get_train_passages = _get_augmented_passages
+        return dataset
+
+    return build_dataset(cfg.dataset_name)
+
+
 def build_synthetic_model_and_tokenizer(cfg: TrainConfig) -> tuple[Any, Any]:
     tokenizer = SyntheticTokenizer()
     model = build_synthetic_model(vocab_size=tokenizer.vocab_size)
