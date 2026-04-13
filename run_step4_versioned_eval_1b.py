@@ -27,7 +27,8 @@ CHECKPOINTS = {
     "full_ft":     "/scratch1/ramyakri/checkpoints/step2_fullft_1b/checkpoints/ckpt-000004",
     "lora":        "/scratch1/ramyakri/checkpoints/step2_lora_1b/checkpoints/ckpt-000004",
     "smf":         "/scratch1/ramyakri/checkpoints/step2_smf_1b/checkpoints/ckpt-000004",
-    "casm":        "/scratch1/ramyakri/checkpoints/step2_casm_1b_v4/checkpoints/ckpt-000004",
+    # Use the latest CASM 1B run (v6) to match step3 eval.
+    "casm":        "/scratch1/ramyakri/checkpoints/step2_casm_1b_v6/checkpoints/ckpt-000004",
 }
 
 
@@ -128,8 +129,12 @@ def evaluate_versioned(eval_model):
     p1_dataset.load("changed")
     p1_probes = p1_dataset.get_probes("changed")
 
+    print(f"  Total changed probes: {len(p1_probes)}")
+    print(f"  Sample probe fields: prompt={p1_probes[0].prompt!r}, gt={p1_probes[0].ground_truth!r}, prev={p1_probes[0].previous_value!r}" if p1_probes else "  No probes loaded!")
+
     # Filter to probes that have a previous_value (actual contradictions)
     contradiction_probes = [p for p in p1_probes if p.previous_value is not None]
+    print(f"  Probes with previous_value: {len(contradiction_probes)}")
 
     p1_scores = []   # score for current (new) value
     prev_scores = [] # score for previous (old) value
