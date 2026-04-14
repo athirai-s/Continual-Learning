@@ -167,9 +167,19 @@ def build_augmented_dataset(unit: str, cfg: TrainConfig):
     Training passages come from data/augmented/TWiki_Diffsets/<period>.csv,
     skipping any rows that were written as ERROR by the generation script.
     Probes (eval) come from TWiki_Probes.zip bundled in the repo under
-    casf_dataset_api/download_dataset_scripts/data/.
+    casf_dataset_api/download_dataset_scripts/data/.  `build_augmented_dataset`
+    patches the dataset loader to use that bundled copy automatically.
+
+    If cfg.dataset_fraction is set, the fraction is applied proportionally and
+    independently to the changed and unchanged probe splits so both splits are
+    always represented.  Only the CSV rows that correspond to the selected probes
+    are used for training, ensuring training and evaluation cover the same set.
+
+    The CSV rows are ordered to match the probe export order from
+    export_eval_prompts.py: all changed probes first, then all unchanged probes.
     """
     import csv
+    import math
     import casf_dataset_api.download_dataset_scripts.data.temporal_wiki as _tw
     from pathlib import Path as _Path
 
@@ -201,29 +211,71 @@ def build_augmented_dataset(unit: str, cfg: TrainConfig):
                 "Make sure data/augmented/TWiki_Diffsets/<period>.csv files are present."
             )
 
-        def _read_augmented_csv():
-            passages = []
+        # Read every row upfront — order must be preserved for index alignment
+        # with the probe splits (changed rows first, then unchanged rows).
+        def _read_all_csv_rows():
+            rows = []
             with augmented_csv.open(encoding="utf-8", newline="") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    text = row.get("text", "").strip()
-                    if text and text != "ERROR":
-                        passages.append(text)
-            return passages
+                    rows.append(row.get("text", "").strip())
+            return rows
+
+        all_rows = _read_all_csv_rows()
+
+        if cfg.dataset_fraction is not None and cfg.dataset_fraction < 1.0:
+            frac = cfg.dataset_fraction
+
+            # Load both splits now so we know the split boundary in the CSV.
+            dataset._load_probes("changed")
+            dataset._load_probes("unchanged")
+            n_changed = len(dataset._probes["changed"])
+            n_unchanged = len(dataset._probes["unchanged"])
+
+            # Apply the fraction proportionally and independently to each split.
+            k_changed = math.ceil(n_changed * frac)
+            k_unchanged = math.ceil(n_unchanged * frac)
+
+            # Select the CSV rows that correspond to the chosen probe indices:
+            #   rows 0 .. k_changed-1                     → changed probes
+            #   rows n_changed .. n_changed+k_unchanged-1  → unchanged probes
+            selected_passages = (
+                [t for t in all_rows[:k_changed] if t and t != "ERROR"]
+                + [t for t in all_rows[n_changed:n_changed + k_unchanged] if t and t != "ERROR"]
+            )
+
+            # Truncate the already-loaded probe lists in-place and patch
+            # _load_probes so subsequent dataset.load() calls don't overwrite
+            # the subsets by re-reading from the zip.
+            dataset._probes["changed"] = dataset._probes["changed"][:k_changed]
+            dataset._probes["unchanged"] = dataset._probes["unchanged"][:k_unchanged]
+
+            def _noop_load_probes(split: str) -> None:
+                pass  # subsets already stored in dataset._probes
+
+            dataset._load_probes = _noop_load_probes
+
+            print(
+                f"  dataset_fraction={frac:.3f}: "
+                f"{k_changed}/{n_changed} changed probes, "
+                f"{k_unchanged}/{n_unchanged} unchanged probes, "
+                f"{len(selected_passages)} training passages"
+            )
+        else:
+            selected_passages = [t for t in all_rows if t and t != "ERROR"]
 
         # Patch every path that could touch TWiki_Diffsets.zip:
         #   1. get_train_passages() — the normal trainer call
         #   2. _load_passages()     — called by load("train") and the lazy-load
         #                             guard inside the original get_train_passages
-        # Also pre-populate _passages so the lazy-load guard
-        # (if not self._passages: self._load_passages()) is satisfied even if
-        # the instance patches are somehow bypassed.
+        # Also pre-populate _passages so the lazy-load guard is satisfied even
+        # if the instance patches are somehow bypassed.
         def _load_passages_from_csv():
-            dataset._passages = _read_augmented_csv()
+            dataset._passages = selected_passages
 
         dataset._load_passages = _load_passages_from_csv
-        dataset.get_train_passages = _read_augmented_csv
-        dataset._passages = _read_augmented_csv()  # pre-populate
+        dataset.get_train_passages = lambda: selected_passages
+        dataset._passages = selected_passages  # pre-populate
         return dataset
 
     return build_dataset(cfg.dataset_name)
@@ -272,6 +324,7 @@ def build_resume_compatibility(cfg: TrainConfig) -> dict[str, Any]:
         "warmup_steps": cfg.warmup_steps,
         "min_passage_length": cfg.min_passage_length,
         "max_passages_per_period": cfg.max_passages_per_period,
+        "dataset_fraction": cfg.dataset_fraction,
         "log_every_n_steps": cfg.log_every_n_steps,
         "checkpoint_every_n_optimizer_steps": cfg.checkpoint_every_n_optimizer_steps,
     }

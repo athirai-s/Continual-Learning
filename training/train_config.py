@@ -21,6 +21,7 @@ class TrainConfig:
     deduplicate: bool = True
     weighted_sampling: bool = False
     max_passages_per_period: Optional[int] = None
+    dataset_fraction: Optional[float] = None  # fraction of data to use (0, 1]; None = all
 
     shuffle_by_relation: bool = True
     contradiction_batch_frac: float = 0.25
@@ -87,6 +88,8 @@ class TrainConfig:
             raise ValueError("checkpoint_every_n_optimizer_steps must be > 0")
         if self.seed < 0:
             raise ValueError("seed must be >= 0")
+        if self.dataset_fraction is not None and not (0.0 < self.dataset_fraction <= 1.0):
+            raise ValueError("dataset_fraction must be in (0, 1]")
 
         if self.method == "lora":
             self._validate_lora()
