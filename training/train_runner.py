@@ -195,7 +195,7 @@ def build_augmented_dataset(unit: str, cfg: TrainConfig):
                 "Make sure data/augmented/TWiki_Diffsets/<period>.csv files are present."
             )
 
-        def _get_augmented_passages():
+        def _read_augmented_csv():
             passages = []
             with augmented_csv.open(encoding="utf-8", newline="") as f:
                 reader = csv.DictReader(f)
@@ -205,7 +205,14 @@ def build_augmented_dataset(unit: str, cfg: TrainConfig):
                         passages.append(text)
             return passages
 
-        dataset.get_train_passages = _get_augmented_passages
+        # Patch both the public accessor and the internal loader so that
+        # TWiki_Diffsets.zip is never touched regardless of which call path
+        # reaches the dataset (get_train_passages() vs. load("train")).
+        def _load_passages_from_csv():
+            dataset._passages = _read_augmented_csv()
+
+        dataset._load_passages = _load_passages_from_csv
+        dataset.get_train_passages = _read_augmented_csv
         return dataset
 
     return build_dataset(cfg.dataset_name)
@@ -290,17 +297,25 @@ def build_dataset_identity(dataset: Any, cfg: TrainConfig, unit: str) -> dict[st
             ),
         }
     if isinstance(dataset, TemporalWikiDataset):
-        from casf_dataset_api.download_dataset_scripts.data.temporal_wiki import (
-            DIFFSETS_ZIP,
-            PROBES_ZIP,
-        )
+        import casf_dataset_api.download_dataset_scripts.data.temporal_wiki as _tw
 
-        return {
-            "kind": "temporal_wiki",
-            "unit": unit,
-            "probes_zip_sha256": _sha256_file(PROBES_ZIP),
-            "diffsets_zip_sha256": _sha256_file(DIFFSETS_ZIP),
-        }
+        identity: dict[str, Any] = {"kind": "temporal_wiki", "unit": unit}
+
+        probes_zip = Path(_tw.PROBES_ZIP)
+        if probes_zip.exists():
+            identity["probes_zip_sha256"] = _sha256_file(probes_zip)
+
+        diffsets_zip = Path(_tw.DIFFSETS_ZIP)
+        if diffsets_zip.exists():
+            identity["diffsets_zip_sha256"] = _sha256_file(diffsets_zip)
+        else:
+            # Augmented CSVs replace the diffsets zip — fingerprint those instead
+            augmented_dir = Path(__file__).resolve().parent.parent / "data" / "augmented" / "TWiki_Diffsets"
+            augmented_csv = augmented_dir / f"{unit}.csv"
+            if augmented_csv.exists():
+                identity["augmented_csv_sha256"] = _sha256_file(augmented_csv)
+
+        return identity
     if isinstance(dataset, TSQADataset):
         split_name = "validation" if dataset._loaded_split == "val" else dataset._loaded_split
         split_ds = dataset._ds[split_name]
