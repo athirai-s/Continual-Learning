@@ -184,6 +184,12 @@ def build_augmented_dataset(unit: str, cfg: TrainConfig):
         if _bundled_probes.exists():
             _tw.PROBES_ZIP = _bundled_probes
 
+        # Point DIFFSETS_ZIP at the canonical default location so that
+        # build_dataset_identity's `.exists()` check works correctly.
+        # This undoes any previous incorrect patching (e.g. pointing it at
+        # the bundled-data directory where only TWiki_Probes.zip lives).
+        _tw.DIFFSETS_ZIP = _repo_root / "data" / "TWiki_Diffsets.zip"
+
         dataset = build_dataset(cfg.dataset_name, period=unit)
 
         augmented_csv = (
@@ -205,14 +211,19 @@ def build_augmented_dataset(unit: str, cfg: TrainConfig):
                         passages.append(text)
             return passages
 
-        # Patch both the public accessor and the internal loader so that
-        # TWiki_Diffsets.zip is never touched regardless of which call path
-        # reaches the dataset (get_train_passages() vs. load("train")).
+        # Patch every path that could touch TWiki_Diffsets.zip:
+        #   1. get_train_passages() — the normal trainer call
+        #   2. _load_passages()     — called by load("train") and the lazy-load
+        #                             guard inside the original get_train_passages
+        # Also pre-populate _passages so the lazy-load guard
+        # (if not self._passages: self._load_passages()) is satisfied even if
+        # the instance patches are somehow bypassed.
         def _load_passages_from_csv():
             dataset._passages = _read_augmented_csv()
 
         dataset._load_passages = _load_passages_from_csv
         dataset.get_train_passages = _read_augmented_csv
+        dataset._passages = _read_augmented_csv()  # pre-populate
         return dataset
 
     return build_dataset(cfg.dataset_name)

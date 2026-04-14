@@ -62,6 +62,12 @@ class TemporalWikiDataset(TemporalDataset):
 
     def _load_passages(self) -> None:
         """Load raw training passages from local diffsets zip."""
+        if not Path(DIFFSETS_ZIP).exists():
+            raise FileNotFoundError(
+                f"TWiki_Diffsets.zip not found at {DIFFSETS_ZIP}. "
+                "Use build_augmented_dataset() to train from the committed augmented CSVs "
+                "in data/augmented/TWiki_Diffsets/ instead."
+            )
         filename = PERIOD_TO_DIFFSET[self.period]
         with zipfile.ZipFile(DIFFSETS_ZIP, "r") as z:
             with z.open(f"TWiki_Diffsets/{filename}") as f:
