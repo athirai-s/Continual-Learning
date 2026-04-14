@@ -316,15 +316,16 @@ def build_dataset_identity(dataset: Any, cfg: TrainConfig, unit: str) -> dict[st
         if probes_zip.exists():
             identity["probes_zip_sha256"] = _sha256_file(probes_zip)
 
-        diffsets_zip = Path(_tw.DIFFSETS_ZIP)
-        if diffsets_zip.exists():
-            identity["diffsets_zip_sha256"] = _sha256_file(diffsets_zip)
+        # Augmented CSV takes priority — if it exists we never touch DIFFSETS_ZIP
+        # (which may not be present when training from augmented data).
+        augmented_dir = Path(__file__).resolve().parent.parent / "data" / "augmented" / "TWiki_Diffsets"
+        augmented_csv = augmented_dir / f"{unit}.csv"
+        if augmented_csv.exists():
+            identity["augmented_csv_sha256"] = _sha256_file(augmented_csv)
         else:
-            # Augmented CSVs replace the diffsets zip — fingerprint those instead
-            augmented_dir = Path(__file__).resolve().parent.parent / "data" / "augmented" / "TWiki_Diffsets"
-            augmented_csv = augmented_dir / f"{unit}.csv"
-            if augmented_csv.exists():
-                identity["augmented_csv_sha256"] = _sha256_file(augmented_csv)
+            diffsets_zip = Path(_tw.DIFFSETS_ZIP)
+            if diffsets_zip.exists():
+                identity["diffsets_zip_sha256"] = _sha256_file(diffsets_zip)
 
         return identity
     if isinstance(dataset, TSQADataset):
