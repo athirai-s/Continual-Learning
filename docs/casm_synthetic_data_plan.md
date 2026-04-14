@@ -32,8 +32,8 @@ A probe is the atomic unit of evaluation. Lock this down now:
   "value_a":       str,   # answer at time A
   "value_b":       str,   # answer at time B (may equal value_a)
   "changed":       bool,  # true if value_a != value_b
-  "period_a":      str,   # e.g. "aug_sep"
-  "period_b":      str,   # e.g. "sep_oct"
+  "period_a":      str,   # e.g. "2018"
+  "period_b":      str,   # e.g. "2020"
   "prompt":        str,   # natural language question
   "ground_truth":  str    # correct answer for current period
 }
@@ -48,7 +48,7 @@ A passage is what the model trains on. It wraps the probe in a short natural lan
   "entity":   str,
   "relation": str,
   "period":   str,
-  "text":     str,   # "As of [period], the chief engineer of Veldris Corp is Maren Holt."
+  "text":     str,   # "In 2018, the chief engineer of Veldris Corp is Maren Holt."
   "value":    str    # the answer embedded in the text
 }
 ```
@@ -57,12 +57,12 @@ A passage is what the model trains on. It wraps the probe in a short natural lan
 
 Match your existing training plan exactly:
 
-| Index | Name      | Role                              |
-|-------|-----------|-----------------------------------|
-| 0     | aug_sep   | Period A — initial facts          |
-| 1     | sep_oct   | Period B — first round of changes |
-| 2     | oct_nov   | Period C — second round          |
-| 3     | nov_dec   | Period D — third round           |
+| Index | Name | Role                              |
+|-------|------|-----------------------------------|
+| 0     | 2018 | Period A — initial facts          |
+| 1     | 2020 | Period B — first round of changes |
+| 2     | 2022 | Period C — second round           |
+| 3     | 2024 | Period D — third round            |
 
 ---
 
@@ -78,7 +78,7 @@ Start small. You can always scale up. Recommended starting point:
 - Each fact produces one passage per period = 3,200 passages total
 - Each fact produces one probe per period boundary = 2,400 probes total
 
-Generated in **16 batches of 50** using the Claude API. Batches of 50 work well with Claude specifically because of its strong instruction following — it stays coherent at that size. Set `max_tokens=10000` to avoid truncation on large JSON responses.
+Generated in **16 batches of 50** using the Gemini API. Set `max_output_tokens=10000` to avoid truncation on large JSON responses.
 
 ### 1.2 Design the relation types
 
@@ -140,7 +140,7 @@ Use relation types that fit naturally within this domain. Do not use
 standard relations like CEO, director, capital, or composer.
 
 Each fact represents a single (entity, relation) pair with values across
-four time periods: aug_sep, sep_oct, oct_nov, nov_dec.
+four time periods: 2018, 2020, 2022, 2024.
 
 Rules:
 1. All names must be invented and clearly fictional — not resembling any
@@ -160,7 +160,7 @@ Rules:
    facts in the same period.
 8. Do not repeat the same (entity, relation) pair across facts.
 9. For changed facts, values may change at any period boundary —
-   not all changes need to happen at aug_sep→sep_oct. Vary when
+   not all changes need to happen at 2018→2020. Vary when
    changes occur across the four periods.
 
 Respond ONLY with a JSON array. No preamble, no explanation, no markdown
@@ -171,10 +171,10 @@ Schema:
   {
     "entity": "...",
     "relation": "...",
-    "value_aug_sep": "...",
-    "value_sep_oct": "...",
-    "value_oct_nov": "...",
-    "value_nov_dec": "...",
+    "value_2018": "...",
+    "value_2020": "...",
+    "value_2022": "...",
+    "value_2024": "...",
     "changed": true
   }
 ]
@@ -184,7 +184,7 @@ Generate {N} facts now.
 
 ### 1.5 The validation prompt
 
-After generating each batch, run this second Claude call to catch errors before they corrupt the dataset. Validation uses a separate call so generation and validation don't interfere with each other.
+After generating each batch, run this second Gemini call to catch errors before they corrupt the dataset. Validation uses a separate call so generation and validation don't interfere with each other.
 
 ```
 You are a data quality validator for a synthetic continual learning dataset.
@@ -228,14 +228,16 @@ File: `data/generate_synthetic.py`
 ```python
 import json
 import time
-import anthropic
 from pathlib import Path
+from google import genai
+from google.genai import types
 
-client = anthropic.Anthropic()
+client = genai.Client()
 
-PERIODS = ["aug_sep", "sep_oct", "oct_nov", "nov_dec"]
+PERIODS = ["2018", "2020", "2022", "2024"]
 BATCH_SIZE = 50
 OUTPUT_PATH = Path("data/synthetic_facts_raw.json")
+MODEL = "PLACEHOLDER_MODEL"  # e.g. "gemini-2.0-flash"
 
 DOMAINS = [
     ("maritime",        "harbour operations, coastal infrastructure, tidal surveying"),
@@ -248,7 +250,7 @@ DOMAINS = [
     ("infrastructure",  "architectural design, bridge engineering, conduit inspection"),
 ]
 
-# 2 batches per domain = 16 batches, 800 facts total
+# 2 batches per domain = 16 batches total
 BATCH_DOMAINS = [domain for domain in DOMAINS for _ in range(2)]
 
 GENERATION_PROMPT = """You are generating a synthetic dataset for continual learning research on
@@ -265,7 +267,7 @@ Use relation types that fit naturally within this domain. Do not use
 standard relations like CEO, director, capital, or composer.
 
 Each fact represents a single (entity, relation) pair with values across
-four time periods: aug_sep, sep_oct, oct_nov, nov_dec.
+four time periods: 2018, 2020, 2022, 2024.
 
 Rules:
 1. All names must be invented and clearly fictional
@@ -276,7 +278,7 @@ Rules:
 6. Values must be short: a single name, number, or place — never a sentence
 7. Each entity must be internally consistent within each time period
 8. Do not repeat the same (entity, relation) pair
-9. Vary which period boundary changes occur at — not all at aug_sep->sep_oct
+9. Vary which period boundary changes occur at — not all at 2018->2020
 
 Respond ONLY with a JSON array. No preamble, no markdown fences.
 Start with [ and end with ].
@@ -286,10 +288,10 @@ Schema:
   {{
     "entity": "...",
     "relation": "...",
-    "value_aug_sep": "...",
-    "value_sep_oct": "...",
-    "value_oct_nov": "...",
-    "value_nov_dec": "...",
+    "value_2018": "...",
+    "value_2020": "...",
+    "value_2022": "...",
+    "value_2024": "...",
     "changed": true
   }}
 ]
@@ -311,7 +313,7 @@ Return ONLY a JSON array. If no violations, return []. No preamble, no markdown 
 [ {{ "index": 0, "rule": "REAL_NAME", "explanation": "..." }} ]
 
 Dataset:
-{BATCH_JSON}"""
+{batch_json}"""
 
 
 def generate_batch(domain_name: str, domain_desc: str) -> list[dict]:
@@ -320,23 +322,27 @@ def generate_batch(domain_name: str, domain_desc: str) -> list[dict]:
         domain_name=domain_name,
         domain_desc=domain_desc
     )
-    response = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=10000,
-        messages=[{"role": "user", "content": prompt}]
+    response = client.models.generate_content(
+        model=MODEL,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            max_output_tokens=10000,
+        )
     )
-    text = response.content[0].text.strip()
+    text = response.text.strip()
     return json.loads(text)
 
 
 def validate_batch(batch: list[dict]) -> list[int]:
     prompt = VALIDATION_PROMPT.format(batch_json=json.dumps(batch, indent=2))
-    response = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=2000,
-        messages=[{"role": "user", "content": prompt}]
+    response = client.models.generate_content(
+        model=MODEL,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            max_output_tokens=2000,
+        )
     )
-    text = response.content[0].text.strip()
+    text = response.text.strip()
     violations = json.loads(text)
     return [v["index"] for v in violations]
 
@@ -413,7 +419,7 @@ if __name__ == "__main__":
 
 ### 2.1 Probe construction
 
-For each fact and each consecutive period pair, generate a probe. There are three period boundaries: aug_sep→sep_oct, sep_oct→oct_nov, oct_nov→nov_dec.
+For each fact and each consecutive period pair, generate a probe. There are three period boundaries: 2018→2020, 2020→2022, 2022→2024.
 
 File: `data/build_probes.py`
 
@@ -421,7 +427,7 @@ File: `data/build_probes.py`
 import json
 from pathlib import Path
 
-PERIODS = ["aug_sep", "sep_oct", "oct_nov", "nov_dec"]
+PERIODS = ["2018", "2020", "2022", "2024"]
 
 PROMPT_TEMPLATES = {
     "chief_architect":         "Who is the chief architect of {entity}?",
@@ -484,24 +490,24 @@ File: `data/build_passages.py`
 import json
 from pathlib import Path
 
-PERIODS = ["aug_sep", "sep_oct", "oct_nov", "nov_dec"]
+PERIODS = ["2018", "2020", "2022", "2024"]
 
 PASSAGE_TEMPLATES = {
-    "chief_architect":         "As of {period}, the chief architect of {entity} is {value}.",
-    "vault_custodian":         "The vault custodian at {entity} as of {period} is {value}.",
-    "harbour_master":          "As of {period}, {value} serves as the harbour master of {entity}.",
-    "bridge_engineer":         "The bridge engineer for {entity} during {period} is {value}.",
-    "treaty_signatory":        "As of {period}, {value} is the treaty signatory representing {entity}.",
-    "frequency_director":      "During {period}, the frequency director at {entity} is {value}.",
-    "census_commissioner":     "As of {period}, the census commissioner of {entity} is {value}.",
-    "lens_calibrator":         "The lens calibrator at {entity} as of {period} is {value}.",
-    "signal_interpreter":      "As of {period}, {value} is the signal interpreter for {entity}.",
-    "archive_keeper":          "The archive keeper at {entity} during {period} is {value}.",
-    "fuel_inspector":          "As of {period}, the fuel inspector at {entity} is {value}.",
-    "thermal_regulator_chief": "During {period}, {value} holds the role of thermal regulator chief at {entity}.",
-    "municipal_liaison":       "As of {period}, the municipal liaison for {entity} is {value}.",
-    "boundary_surveyor":       "The boundary surveyor at {entity} as of {period} is {value}.",
-    "territorial_adjudicator": "As of {period}, {value} is the territorial adjudicator for {entity}.",
+    "chief_architect":         "In {period}, the chief architect of {entity} is {value}.",
+    "vault_custodian":         "The vault custodian at {entity} in {period} is {value}.",
+    "harbour_master":          "In {period}, {value} serves as the harbour master of {entity}.",
+    "bridge_engineer":         "The bridge engineer for {entity} in {period} is {value}.",
+    "treaty_signatory":        "In {period}, {value} is the treaty signatory representing {entity}.",
+    "frequency_director":      "In {period}, the frequency director at {entity} is {value}.",
+    "census_commissioner":     "In {period}, the census commissioner of {entity} is {value}.",
+    "lens_calibrator":         "The lens calibrator at {entity} in {period} is {value}.",
+    "signal_interpreter":      "In {period}, {value} is the signal interpreter for {entity}.",
+    "archive_keeper":          "The archive keeper at {entity} in {period} is {value}.",
+    "fuel_inspector":          "In {period}, the fuel inspector at {entity} is {value}.",
+    "thermal_regulator_chief": "In {period}, {value} holds the role of thermal regulator chief at {entity}.",
+    "municipal_liaison":       "In {period}, the municipal liaison for {entity} is {value}.",
+    "boundary_surveyor":       "The boundary surveyor at {entity} in {period} is {value}.",
+    "territorial_adjudicator": "In {period}, {value} is the territorial adjudicator for {entity}.",
 }
 
 def build_passages(facts: list[dict]) -> list[dict]:
@@ -511,7 +517,7 @@ def build_passages(facts: list[dict]) -> list[dict]:
             value = fact[f"value_{period}"]
             template = PASSAGE_TEMPLATES.get(
                 fact["relation"],
-                "As of {period}, the {relation} of {entity} is {value}."
+                "In {period}, the {relation} of {entity} is {value}."
                 .replace("{relation}", fact["relation"])
             )
             passages.append({
@@ -520,8 +526,7 @@ def build_passages(facts: list[dict]) -> list[dict]:
                 "period":   period,
                 "value":    value,
                 "text":     template.format(
-                    entity=fact["entity"], value=value,
-                    period=period.replace("_", "/")
+                    entity=fact["entity"], value=value, period=period
                 )
             })
     return passages
@@ -601,12 +606,12 @@ probes = json.loads(Path("data/probes.json").read_text())
 registry = MemoryRegistry()
 
 # Seed registry with period A values
-period_a_probes = [p for p in probes if p["period_a"] == "aug_sep"]
+period_a_probes = [p for p in probes if p["period_a"] == "2018"]
 for probe in period_a_probes:
-    registry.write(probe, "aug_sep")
+    registry.write(probe, "2018")
 
 # Check period B for contradictions
-period_b_probes = [p for p in probes if p["period_b"] == "sep_oct"]
+period_b_probes = [p for p in probes if p["period_b"] == "2020"]
 detector = ContradictionDetector()
 conflicts = detector.check(period_b_probes, registry)
 
@@ -714,7 +719,7 @@ import json
 from pathlib import Path
 from training.router import MLPRouter
 
-PERIOD_MAP = {"aug_sep": 0, "sep_oct": 1, "oct_nov": 2, "nov_dec": 3}
+PERIOD_MAP = {"2018": 0, "2020": 1, "2022": 2, "2024": 3}
 
 class RouterDataset(Dataset):
     def __init__(self, probes, slot_map):
@@ -822,7 +827,7 @@ checkpoint = {
 | stability            | Accuracy on unchanged probes from earlier periods                 |
 | routing_acc          | % of queries routed to the correct slot                           |
 | contradiction_recall | % of true contradictions flagged by the detector                  |
-| forgetting           | Drop in stability score from period 1 to period 4                 |
+| forgetting           | Drop in stability score from period 2018 to period 2024           |
 
 ### 6.2 Evaluation script outline
 
@@ -889,7 +894,7 @@ Run all four methods on the same synthetic dataset and report:
 ### Milestone 6 — Results
 - [ ] All four methods evaluated on same dataset
 - [ ] Comparison table complete
-- [ ] Checkpointing tested: resume from period 2 produces same results
+- [ ] Checkpointing tested: resume from 2020 produces same results
 
 ---
 
