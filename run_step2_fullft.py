@@ -3,7 +3,7 @@
 
 from training.train_config import TrainConfig
 from training.train_runner import (
-    build_real_dataset,
+    build_augmented_dataset,
     build_real_model_and_tokenizer,
     load_real_model_and_tokenizer,
     run_training,
@@ -35,7 +35,7 @@ run_training(
     cfg,
     model_factory=build_real_model_and_tokenizer,
     resume_model_factory=load_real_model_and_tokenizer,
-    dataset_factory=build_real_dataset,
+    dataset_factory=build_augmented_dataset,
     checkpoint_dir="/scratch1/ashanmug/checkpoints",
     training_units=["sep_oct", "oct_nov", "nov_dec"],
 )

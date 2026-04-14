@@ -1,8 +1,9 @@
 # Step 1: Full fine-tune on TemporalWiki Period 1 (aug_sep).
-# Trains on BOTH raw passages AND probe-formatted Q&A pairs.
-# This ensures the model learns facts in the exact format it'll be tested on.
-
+import csv
 import math
+import os
+from pathlib import Path
+
 import torch
 from torch.utils.data import Dataset, DataLoader
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -11,12 +12,14 @@ from casf_dataset_api import TemporalWikiDataset
 MODEL_PATH = "/scratch1/ashanmug/models/Llama-3.2-3B-Instruct"
 SAVE_PATH = "/scratch1/ashanmug/checkpoints/pretrain_period1_3b/checkpoints/ckpt-000001"
 
+REPO_ROOT = Path(__file__).resolve().parent
+AUGMENTED_CSV = REPO_ROOT / "data" / "augmented" / "TWiki_Diffsets" / "aug_sep.csv"
+
 # Training settings
 BATCH_SIZE = 1
 GRAD_ACCUM = 16
 LR = 2e-4
 EPOCHS = 5
-MAX_PASSAGES = 200
 SEED = 42
 
 
@@ -108,16 +111,28 @@ def main():
     model.gradient_checkpointing_enable()
     model.to(device)
 
-    # Build training data: passages + probe Q&A pairs
+    # Build training data: augmented passages + probe Q&A pairs
     dataset = TemporalWikiDataset(period="aug_sep")
     dataset.load("changed")
     dataset.load("unchanged")
 
-    # Get passages
-    passages = dataset.get_train_passages()
-    if MAX_PASSAGES:
-        passages = passages[:MAX_PASSAGES]
-    print(f"Passages: {len(passages)}")
+    # Read Gemini-augmented passages from CSV (one short focused passage per probe)
+    if not AUGMENTED_CSV.exists():
+        raise FileNotFoundError(f"Augmented CSV missing: {AUGMENTED_CSV}")
+    passages = []
+    with AUGMENTED_CSV.open(encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            text = (row.get("text") or "").strip()
+            if text and text != "ERROR":
+                passages.append(text)
+    print(f"Augmented passages: {len(passages)}")
+
+    # Sanity check: show first few augmented passages so we can verify in the log
+    print("\nSample augmented passages:")
+    for i, p in enumerate(passages[:3]):
+        print(f"  [{i}] {p[:200]}")
+    print()
 
     # Get probe-formatted training texts
     probe_texts = build_probe_training_texts(dataset)
@@ -180,7 +195,6 @@ def main():
 
     # Save checkpoint
     print(f"\nSaving to {SAVE_PATH}")
-    import os
     os.makedirs(SAVE_PATH, exist_ok=True)
     model.save_pretrained(SAVE_PATH)
     tokenizer.save_pretrained(SAVE_PATH)
