@@ -392,9 +392,10 @@ class CASMModelWrapper(nn.Module):
     def save_pretrained(self, path: str) -> None:
         """Save backbone weights and all CASM state to *path*."""
         self.backbone.save_pretrained(path)
+        router_state = self.router.state_dict() if hasattr(self.router, "state_dict") else None
         state = {
             "slot_bank": {k: v.state_dict() for k, v in self.slot_bank.items()},
-            "router": self.router.state_dict(),
+            "router": router_state,
             "active_slot_ids": list(self._active_slot_ids),
             "closed_slot_ids": list(self._closed_slot_ids),
             "next_slot_idx": self._next_slot_idx,
@@ -434,18 +435,20 @@ class CASMModelWrapper(nn.Module):
 
         # Resize the router output layer to match the checkpoint before loading
         # its state dict (router may have grown via _expand_router during the run).
-        checkpoint_num_slots = state["router"]["net.2.weight"].shape[0]
-        if checkpoint_num_slots != wrapper.router.num_slots:
-            old_layer = wrapper.router.net[2]
-            new_layer = nn.Linear(
-                old_layer.in_features,
-                checkpoint_num_slots,
-                bias=(old_layer.bias is not None),
-            )
-            wrapper.router.net[2] = new_layer
-            wrapper.router.num_slots = checkpoint_num_slots
-
-        wrapper.router.load_state_dict(state["router"])
+        # SimilarityRouter has no state dict — skip router restore entirely.
+        router_state = state.get("router")
+        if router_state is not None and hasattr(wrapper.router, "net"):
+            checkpoint_num_slots = router_state["net.2.weight"].shape[0]
+            if checkpoint_num_slots != wrapper.router.num_slots:
+                old_layer = wrapper.router.net[2]
+                new_layer = nn.Linear(
+                    old_layer.in_features,
+                    checkpoint_num_slots,
+                    bias=(old_layer.bias is not None),
+                )
+                wrapper.router.net[2] = new_layer
+                wrapper.router.num_slots = checkpoint_num_slots
+            wrapper.router.load_state_dict(router_state)
         wrapper._active_slot_ids = list(state["active_slot_ids"])
         wrapper._closed_slot_ids = set(state["closed_slot_ids"])
         wrapper._next_slot_idx = state["next_slot_idx"]
