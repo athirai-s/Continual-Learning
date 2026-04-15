@@ -340,9 +340,14 @@ class CASMModelWrapper(nn.Module):
     # CASM-specific helpers
 
     def casm_parameters(self):
-        """Yield only the trainable CASM parameters (slot bank + router)."""
+        """Yield only the trainable CASM parameters (slot bank + router).
+
+        SimilarityRouter has no trainable parameters, so router.parameters()
+        is only called when the router is a torch.nn.Module.
+        """
         yield from self.slot_bank.parameters()
-        yield from self.router.parameters()
+        if hasattr(self.router, "parameters"):
+            yield from self.router.parameters()
 
     def compute_sparsity_loss(self) -> torch.Tensor:
         """Sum of sparsity losses from all active slot blocks."""
