@@ -233,7 +233,11 @@ class CASMModelWrapper(nn.Module):
 
         Preserves existing weights; zero-initialises the new neuron.
         After this call router.num_slots == len(_active_slot_ids).
+
+        No-ops for SimilarityRouter (no trainable weights to expand).
         """
+        if not hasattr(self.router, "net"):
+            return
         old_layer = self.router.net[2]  # nn.Linear(router_hidden_size, old_num_slots)
         old_n = old_layer.out_features
         new_n = old_n + 1

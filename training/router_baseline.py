@@ -130,6 +130,59 @@ class SimilarityRouter:
         return [sid for _, sid in scores[:k]]
 
     # ------------------------------------------------------------------
+    # Tensor interface — matches CASMRouter.forward so SimilarityRouter can
+    # be used as a drop-in inside CASMModelWrapper.
+
+    def __call__(
+        self,
+        query: "torch.Tensor",
+        top_k: int = 1,
+        **kwargs,
+    ) -> "tuple[torch.Tensor, torch.Tensor]":
+        """Tensor routing interface matching CASMRouter.forward.
+
+        Zero-training baseline: cosine similarity between the query hidden
+        state and fixed randomly-initialised slot prototype vectors.
+
+        Args:
+            query:  (B, H) float tensor — mean input token embeddings.
+            top_k:  number of slots to select.
+
+        Returns:
+            slot_ids: (B, top_k) long tensor — slot indices.
+            weights:  (B, top_k) float tensor — softmax-normalised scores.
+        """
+        import torch
+        import torch.nn.functional as F
+
+        device = query.device
+        B, H = query.shape
+
+        slot_ids_list = sorted(self._slot_embeddings.keys())
+        n_slots = len(slot_ids_list)
+        k = min(top_k, max(n_slots, 1))
+
+        if n_slots == 0:
+            ids = torch.zeros(B, k, dtype=torch.long, device=device)
+            wts = torch.full((B, k), 1.0 / k, device=device)
+            return ids, wts
+
+        # Lazily initialise fixed random unit-vector prototypes in hidden-state
+        # space. Seeded for reproducibility; never updated during training.
+        if not hasattr(self, "_proto_tensors") or self._proto_tensors.shape != (n_slots, H):
+            gen = torch.Generator().manual_seed(42)
+            protos = torch.randn(n_slots, H, generator=gen)
+            self._proto_tensors = F.normalize(protos, dim=-1)
+
+        protos = self._proto_tensors.to(device=device, dtype=query.float().dtype)
+        sims = F.normalize(query.float(), dim=-1) @ protos.T  # (B, S)
+
+        top_vals, top_local = torch.topk(sims, k=k, dim=-1)  # (B, k)
+        weights = F.softmax(top_vals, dim=-1)
+        id_map = torch.tensor(slot_ids_list, dtype=torch.long, device=device)
+        return id_map[top_local], weights
+
+    # ------------------------------------------------------------------
     # Inspection helpers
 
     def registered_slots(self) -> list[int]:
