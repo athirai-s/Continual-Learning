@@ -180,12 +180,16 @@ class CASMModelWrapper(nn.Module):
         self._slot_usage_counts: dict[int, int] = {sid: 0 for sid in self._active_slot_ids}
 
         # --- Router ---
-        self.router = CASMRouter(
-            hidden_size=self._hidden_size,
-            num_slots=len(self._active_slot_ids),
-            router_hidden_size=cfg.casm_router_hidden_size,  # type: ignore[arg-type]
-            temperature=cfg.casm_router_temperature,
-        )
+        if cfg.casm_router_type == "similarity":
+            from training.router_baseline import SimilarityRouter
+            self.router = SimilarityRouter()
+        else:
+            self.router = CASMRouter(
+                hidden_size=self._hidden_size,
+                num_slots=len(self._active_slot_ids),
+                router_hidden_size=cfg.casm_router_hidden_size,  # type: ignore[arg-type]
+                temperature=cfg.casm_router_temperature,
+            )
 
         # Routing decisions computed in forward(), consumed by layer hooks.
         self._routing_slot_ids: Optional[torch.Tensor] = None   # (B, top_k)

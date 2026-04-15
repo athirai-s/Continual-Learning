@@ -59,6 +59,7 @@ class TrainConfig:
     casm_branch_on_contradiction: bool = True
     casm_memory_size: Optional[int] = None
     casm_num_injection_layers: Optional[int] = None
+    casm_router_type: str = "mlp"  # 'mlp' = CASMRouter (learned), 'similarity' = SimilarityRouter (cosine, no training)
 
     def validate(self) -> None:
         if self.method not in {"full_ft", "lora", "smf", "casm"}:
