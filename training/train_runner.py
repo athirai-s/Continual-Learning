@@ -158,7 +158,7 @@ def load_real_model_and_tokenizer(cfg: TrainConfig, checkpoint_path: str) -> tup
 
 
 def build_real_dataset(unit: str, cfg: TrainConfig):
-    if cfg.dataset_name in {"temporal_wiki", "synthetic"}:
+    if cfg.dataset_name == "temporal_wiki":
         return build_dataset(cfg.dataset_name, period=unit)
     return build_dataset(cfg.dataset_name)
 
@@ -281,6 +281,57 @@ def build_augmented_dataset(unit: str, cfg: TrainConfig):
         return dataset
 
     return build_dataset(cfg.dataset_name)
+
+
+def build_synthetic_dataset(unit: str, cfg: TrainConfig):
+    """Like build_augmented_dataset but for the synthetic dataset.
+
+    Training passages come from data/augmented/synthetic/<period>.csv,
+    skipping any rows that were written as ERROR by the generation script.
+    Probes come from data/probes.json.
+
+    If cfg.dataset_fraction is set, the fraction is applied proportionally and
+    independently to the changed and unchanged probe splits so both splits are
+    always represented.  Passages are fractioned proportionally by count.
+    """
+    import math
+
+    dataset = SyntheticDataset(period=unit, use_augmented=True)
+
+    if cfg.dataset_fraction is not None and cfg.dataset_fraction < 1.0:
+        frac = cfg.dataset_fraction
+
+        # Force-load both probe splits (SyntheticDataset loads both at once).
+        dataset._ensure_probes_loaded("changed")
+        n_changed = len(dataset._probes["changed"])
+        n_unchanged = len(dataset._probes["unchanged"])
+
+        k_changed = math.ceil(n_changed * frac)
+        k_unchanged = math.ceil(n_unchanged * frac)
+
+        dataset._probes["changed"] = dataset._probes["changed"][:k_changed]
+        dataset._probes["unchanged"] = dataset._probes["unchanged"][:k_unchanged]
+
+        # Patch _ensure_probes_loaded so subsequent load() calls don't overwrite.
+        dataset._ensure_probes_loaded = lambda split: None  # type: ignore[method-assign]
+
+        # Force-load passages, then slice and patch.
+        dataset._ensure_passages_loaded()
+        n_passages = len(dataset._passages)
+        k_passages = math.ceil(n_passages * frac)
+        selected_passages = dataset._passages[:k_passages]
+        dataset._passages = selected_passages
+        dataset._ensure_passages_loaded = lambda: None  # type: ignore[method-assign]
+        dataset.get_train_passages = lambda: selected_passages  # type: ignore[method-assign]
+
+        print(
+            f"  dataset_fraction={frac:.3f}: "
+            f"{k_changed}/{n_changed} changed probes, "
+            f"{k_unchanged}/{n_unchanged} unchanged probes, "
+            f"{k_passages}/{n_passages} training passages"
+        )
+
+    return dataset
 
 
 def build_synthetic_model_and_tokenizer(cfg: TrainConfig) -> tuple[Any, Any]:
