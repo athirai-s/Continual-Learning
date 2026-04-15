@@ -1,0 +1,48 @@
+{
+  "dataset_name": "temporal_wiki",
+  "results": {
+    "changed": {
+      "n_correct": 1,
+      "n_total": 15,
+      "per_relation": {
+        "composer": 0.0,
+        "country": 0.25,
+        "occupation": 0.0,
+        "participant": 0.0,
+        "platform": 0.0,
+        "producer": 0.0,
+        "publisher": 0.0
+      },
+      "plasticity": 0.06666666666666667,
+      "routing_acc": null,
+      "stability": 0.0,
+      "token_f1": 0.0
+    },
+    "unchanged": {
+      "n_correct": 1,
+      "n_total": 92,
+      "per_relation": {
+        "author": 0.0,
+        "conflict": 0.0,
+        "country": 0.0,
+        "developer": 0.0,
+        "employer": 0.0,
+        "follows": 0.0,
+        "genre": 0.0,
+        "league": 0.0,
+        "occupation": 0.0,
+        "performer": 0.0,
+        "producer": 0.0,
+        "screenwriter": 0.0,
+        "sport": 0.09090909090909091,
+        "spouse": 0.0
+      },
+      "plasticity": 0.0,
+      "routing_acc": null,
+      "stability": 0.010869565217391304,
+      "token_f1": 0.0
+    }
+  },
+  "schema_version": 1,
+  "unit": "sep_oct"
+}
