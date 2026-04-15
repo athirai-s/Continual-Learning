@@ -7,7 +7,7 @@ preparation scripts:
 
     data/build_probes.py   -> data/probes.json          (probe objects)
     data/build_passages.py -> data/passages.json         (thin template passages)
-    dataset_utils/generate_dataset.py -> data/augmented/synthetic/<name>.csv
+    dataset_utils/generate_dataset.py -> data/augmented/synthetic/<period>.csv
                                                          (augmented passages)
 
 Period names: "2018", "2020", "2022", "2024"
@@ -21,8 +21,7 @@ writes them to the MemoryRegistry as new slots.  "unchanged" is empty.
 Augmented passages
 ------------------
 When use_augmented=True, the dataset reads from data/augmented/synthetic/
-using YEAR_TO_AUGMENTED_NAME for the filename mapping (the augmentation
-script uses aug_sep-style names because generate_dataset.py is fixed).
+using the period name directly as the filename (e.g. 2018.csv, 2020.csv).
 
 Thin passages (default)
 -----------------------
@@ -42,14 +41,6 @@ from .dataset import TemporalDataset
 VALID_PERIODS = ["2018", "2020", "2022", "2024"]
 VALID_SPLITS = {"train", "changed", "unchanged"}
 
-# Maps synthetic year names -> aug_sep-style names used by generate_dataset.py
-# and written as CSV filenames by that script.
-YEAR_TO_AUGMENTED_NAME: dict[str, str] = {
-    "2018": "aug_sep",
-    "2020": "sep_oct",
-    "2022": "oct_nov",
-    "2024": "nov_dec",
-}
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _DEFAULT_PROBES_PATH = _PROJECT_ROOT / "data" / "probes.json"
@@ -206,8 +197,7 @@ class SyntheticDataset(TemporalDataset):
         return [str(p) for p in passages]
 
     def _load_augmented_passages(self) -> list[str]:
-        aug_name = YEAR_TO_AUGMENTED_NAME[self.period]
-        csv_path = self._augmented_dir / f"{aug_name}.csv"
+        csv_path = self._augmented_dir / f"{self.period}.csv"
         if not csv_path.exists():
             raise FileNotFoundError(
                 f"Augmented CSV not found at {csv_path}. "

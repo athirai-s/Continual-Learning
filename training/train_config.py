@@ -66,7 +66,7 @@ class TrainConfig:
             raise ValueError(f"Unsupported method: {self.method}")
         if self.precision not in {"bfloat16", "float16", "int8"}:
             raise ValueError(f"Unsupported precision: {self.precision}")
-        if self.dataset_name not in {"temporal_wiki", "tsqa", "tgqa"}:
+        if self.dataset_name not in {"temporal_wiki", "tsqa", "tgqa", "synthetic"}:
             raise ValueError(f"Unsupported dataset_name: {self.dataset_name}")
         if self.learning_rate <= 0:
             raise ValueError("learning_rate must be > 0")

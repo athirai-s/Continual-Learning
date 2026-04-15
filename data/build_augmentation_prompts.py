@@ -21,11 +21,15 @@ After running this script, generate augmented passages with:
         --prompts-dir dataset_utils/prompts/synthetic \\
         --outdir data/augmented/synthetic
 
-The generated CSVs will be named aug_sep.csv, sep_oct.csv, oct_nov.csv,
-nov_dec.csv inside data/augmented/synthetic/.
+generate_dataset.py writes CSVs named aug_sep.csv, sep_oct.csv, etc.
+Rename them to year names immediately after generation:
 
-SyntheticDataset uses YEAR_TO_AUGMENTED_NAME (defined below) to resolve the
-correct CSV when loading augmented passages.
+    mv data/augmented/synthetic/aug_sep.csv data/augmented/synthetic/2018.csv
+    mv data/augmented/synthetic/sep_oct.csv data/augmented/synthetic/2020.csv
+    mv data/augmented/synthetic/oct_nov.csv data/augmented/synthetic/2022.csv
+    mv data/augmented/synthetic/nov_dec.csv data/augmented/synthetic/2024.csv
+
+SyntheticDataset expects year-named files (2018.csv, 2020.csv, etc.).
 
 Input format per line (tab-separated):
     The harbour master of Veldris Corp is\tMaren Holt

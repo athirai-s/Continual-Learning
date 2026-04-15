@@ -305,7 +305,7 @@ def build_synthetic_dataset(unit: str, cfg: TrainConfig):
 
 
 def prepare_dataset(dataset: Any, cfg: TrainConfig, unit: str) -> str:
-    if cfg.dataset_name == "temporal_wiki":
+    if cfg.dataset_name in {"temporal_wiki", "synthetic"}:
         dataset.load("changed")
         dataset.load("unchanged")
         return unit
@@ -349,6 +349,16 @@ def _stable_json_hash(obj: Any) -> str:
 
 
 def build_dataset_identity(dataset: Any, cfg: TrainConfig, unit: str) -> dict[str, Any]:
+    if isinstance(dataset, SyntheticDataset):
+        return {
+            "kind": "synthetic",
+            "unit": unit,
+            "content_sha256": _stable_json_hash({
+                "train": dataset.get_train_passages(),
+                "changed": [probe.prompt for probe in dataset.get_probes("changed")],
+                "unchanged": [probe.prompt for probe in dataset.get_probes("unchanged")],
+            }),
+        }
     if isinstance(dataset, SyntheticTemporalDataset):
         return {
             "kind": "synthetic",
