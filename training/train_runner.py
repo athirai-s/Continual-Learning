@@ -351,7 +351,7 @@ def load_synthetic_model_and_tokenizer(cfg: TrainConfig, checkpoint_path: str) -
     return _wrap_model_for_method(model, cfg), tokenizer
 
 
-def build_synthetic_dataset(unit: str, cfg: TrainConfig):
+def _build_fake_synthetic_dataset(unit: str, cfg: TrainConfig):
     return SyntheticTemporalDataset()
 
 
@@ -697,7 +697,7 @@ def run_mode(
             cfg,
             model_factory=build_synthetic_model_and_tokenizer,
             resume_model_factory=load_synthetic_model_and_tokenizer,
-            dataset_factory=build_synthetic_dataset,
+            dataset_factory=_build_fake_synthetic_dataset,
             checkpoint_dir=checkpoint_dir,
             resume_from=resume_from,
         )
