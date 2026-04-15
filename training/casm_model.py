@@ -208,11 +208,16 @@ class CASMModelWrapper(nn.Module):
 
     def _create_slot(self) -> int:
         idx = self._next_slot_idx
-        self.slot_bank[str(idx)] = SparseMemoryBlock(
+        block = SparseMemoryBlock(
             memory_size=self._memory_size,
             hidden_size=self._hidden_size,
             query_dependent=True,
         )
+        # Keep new slots on the same device as existing ones (e.g. CUDA).
+        if self.slot_bank:
+            existing_device = next(iter(self.slot_bank.values())).gate_logits.device
+            block = block.to(existing_device)
+        self.slot_bank[str(idx)] = block
         self._active_slot_ids.append(idx)
         self._next_slot_idx += 1
         return idx
@@ -360,7 +365,7 @@ class CASMModelWrapper(nn.Module):
         for sid in self._active_slot_ids:
             key = str(sid)
             if key in self.slot_bank:
-                total = total + self.slot_bank[key].sparsity_loss()
+                total = total + self.slot_bank[key].sparsity_loss().to(device)
         return total.squeeze()
 
     def compute_overlap_loss(self) -> torch.Tensor:
@@ -375,7 +380,7 @@ class CASMModelWrapper(nn.Module):
         for sid in self._active_slot_ids:
             key = str(sid)
             if key in self.slot_bank:
-                contribs.append(_slot_contribution(self.slot_bank[key]))  # (H,)
+                contribs.append(_slot_contribution(self.slot_bank[key]).to(device))  # (H,)
         if len(contribs) < 2:
             return total.squeeze()
         C = torch.stack(contribs, dim=0)                          # (n, H)
@@ -416,6 +421,9 @@ class CASMModelWrapper(nn.Module):
             return
         state = torch.load(memory_path, map_location="cpu", weights_only=True)
 
+        # Determine target device from the wrapper's existing slot bank.
+        target_device = next(wrapper.slot_bank.parameters()).device
+
         # Create any slots present in the checkpoint but missing from the wrapper
         # (slots added via add_memory_slot() during the saved run).
         memory_size = state.get("memory_size", wrapper._memory_size)
@@ -425,13 +433,14 @@ class CASMModelWrapper(nn.Module):
                     memory_size=memory_size,
                     hidden_size=wrapper._hidden_size,
                     query_dependent=True,
-                )
+                ).to(target_device)
 
-        # Load slot weights (strict=False for backward compat with old
-        # checkpoints that used query_dependent=False and lack query_proj).
+        # Load slot weights then move to target device (checkpoint was loaded
+        # map_location="cpu", so tensors start on CPU).
         for key, sd in state["slot_bank"].items():
             if key in wrapper.slot_bank:
                 wrapper.slot_bank[key].load_state_dict(sd, strict=False)
+                wrapper.slot_bank[key] = wrapper.slot_bank[key].to(target_device)
 
         # Resize the router output layer to match the checkpoint before loading
         # its state dict (router may have grown via _expand_router during the run).
