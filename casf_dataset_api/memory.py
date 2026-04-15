@@ -2,7 +2,7 @@ import json
 from typing import Optional
 from .casf_types import MemorySlot, Probe
 
-PERIOD_ORDER = ["aug_sep", "sep_oct", "oct_nov", "nov_dec"]
+PERIOD_ORDER = ["aug_sep", "sep_oct", "oct_nov", "nov_dec", "2018", "2020", "2022", "2024"]
 
 
 class MemoryRegistry:
