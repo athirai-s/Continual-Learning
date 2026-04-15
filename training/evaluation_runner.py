@@ -17,7 +17,7 @@ EVAL_SCHEMA_VERSION = 1
 
 
 def determine_eval_splits(cfg: TrainConfig) -> list[str]:
-    if cfg.dataset_name == "temporal_wiki":
+    if cfg.dataset_name in {"temporal_wiki", "synthetic"}:
         return ["changed", "unchanged"]
     if cfg.dataset_name in {"tsqa", "tgqa"}:
         return ["val"]
