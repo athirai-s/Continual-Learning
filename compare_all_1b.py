@@ -27,7 +27,7 @@ RUNS = {
     "lora"    : CHECKPOINT_DIR / "step2_lora_1b",
     "smf"     : CHECKPOINT_DIR / "step2_smf_1b",
     # Point CASM to the v6 1B run used by eval scripts.
-    "casm"    : CHECKPOINT_DIR / "step2_casm_1b_v6",
+    "casm"    : CHECKPOINT_DIR / "step2_casm_1b",
 }
 
 PERIODS = ["aug_sep", "sep_oct", "oct_nov", "nov_dec"]

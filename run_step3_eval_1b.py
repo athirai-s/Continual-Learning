@@ -26,7 +26,7 @@ CHECKPOINTS = {
     "full_ft":     "/scratch1/ramyakri/checkpoints/step2_fullft_1b/checkpoints/ckpt-000004",
     "lora":        "/scratch1/ramyakri/checkpoints/step2_lora_1b/checkpoints/ckpt-000004",
     "smf":         "/scratch1/ramyakri/checkpoints/step2_smf_1b/checkpoints/ckpt-000004",
-    "casm":        "/scratch1/ramyakri/checkpoints/step2_casm_1b_v7/checkpoints/ckpt-000004",
+    "casm":        "/scratch1/ramyakri/checkpoints/step2_casm_1b/checkpoints/ckpt-000004",
 }
 
 

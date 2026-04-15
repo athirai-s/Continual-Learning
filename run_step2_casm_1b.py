@@ -22,7 +22,7 @@ from training.train_runner import (
 PRETRAINED_CHECKPOINT = "/scratch1/ramyakri/checkpoints/pretrain_period1_1b/checkpoints/ckpt-000001"
 
 cfg = TrainConfig(
-    run_id="step2_casm_1b_v7",
+    run_id="step2_casm_1b",
     model_name=PRETRAINED_CHECKPOINT,
     method="casm",
     dataset_name="temporal_wiki",

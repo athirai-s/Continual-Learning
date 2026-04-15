@@ -31,7 +31,7 @@ parser.add_argument(
     choices=["full_ft", "lora", "smf", "casm"],
     help="Training method",
 )
-parser.add_argument("--model", default="/scratch1/ashanmug/models/Llama-3.2-3B-Instruct", help="HuggingFace model name or local path")
+parser.add_argument("--model", default="meta-llama/Llama-3.2-3B-Instruct", help="HuggingFace model name or checkpoint path")
 parser.add_argument("--run-id", default=None, help="Experiment name (default: auto-generated from method + model)")
 parser.add_argument("--checkpoint-dir", default="/scratch1/ramyakri/checkpoints", help="Root checkpoint directory")
 parser.add_argument("--periods", nargs="+", default=["aug_sep", "sep_oct", "oct_nov", "nov_dec"], help="Periods to train")

@@ -28,7 +28,7 @@ CHECKPOINTS = {
     "lora":        "/scratch1/ramyakri/checkpoints/step2_lora_1b/checkpoints/ckpt-000004",
     "smf":         "/scratch1/ramyakri/checkpoints/step2_smf_1b/checkpoints/ckpt-000004",
     # Use the latest CASM 1B run (v7) to match step3 eval.
-    "casm":        "/scratch1/ramyakri/checkpoints/step2_casm_1b_v7/checkpoints/ckpt-000004",
+    "casm":        "/scratch1/ramyakri/checkpoints/step2_casm_1b/checkpoints/ckpt-000004",
 }
 
 
