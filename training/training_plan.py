@@ -10,6 +10,13 @@ DEFAULT_TEMPORAL_WIKI_PLAN = [
     "nov_dec",
 ]
 
+DEFAULT_SYNTHETIC_PLAN = [
+    "2018",
+    "2020",
+    "2022",
+    "2024",
+]
+
 
 @dataclass(frozen=True)
 class TrainingPlan:
@@ -27,6 +34,12 @@ def build_training_plan(cfg: TrainConfig, units: list[str] | None = None) -> Tra
         return TrainingPlan(
             dataset_name=cfg.dataset_name,
             units=list(DEFAULT_TEMPORAL_WIKI_PLAN),
+        )
+
+    if cfg.dataset_name == "synthetic":
+        return TrainingPlan(
+            dataset_name=cfg.dataset_name,
+            units=list(DEFAULT_SYNTHETIC_PLAN),
         )
 
     return TrainingPlan(

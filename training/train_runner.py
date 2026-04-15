@@ -10,7 +10,7 @@ from typing import Any, Callable
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from casf_dataset_api import MemoryRegistry, TemporalWikiDataset, TGQADataset, TSQADataset
+from casf_dataset_api import MemoryRegistry, SyntheticDataset, TemporalWikiDataset, TGQADataset, TSQADataset
 
 from artifacts.checkpoint_manifest import CheckpointManifestError
 from artifacts.checkpointing import RunRootLock, prepare_run_root, resolve_checkpoint_path
@@ -51,6 +51,8 @@ def build_dataset(dataset_name: str, period: str | None = None):
         return TSQADataset()
     if dataset_name == "tgqa":
         return TGQADataset()
+    if dataset_name == "synthetic":
+        return SyntheticDataset(period=period, use_augmented=True)
     raise ValueError(f"Unsupported dataset_name: {dataset_name}")
 
 
@@ -156,7 +158,7 @@ def load_real_model_and_tokenizer(cfg: TrainConfig, checkpoint_path: str) -> tup
 
 
 def build_real_dataset(unit: str, cfg: TrainConfig):
-    if cfg.dataset_name == "temporal_wiki":
+    if cfg.dataset_name in {"temporal_wiki", "synthetic"}:
         return build_dataset(cfg.dataset_name, period=unit)
     return build_dataset(cfg.dataset_name)
 

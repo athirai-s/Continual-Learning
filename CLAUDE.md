@@ -1,60 +1,184 @@
-# Continual-Learning: SMF + CASM
+# CASM Project — Claude Code Context
 
-## Current status
-[UPDATE THIS at the end of every session]
-Current phase: Phase 5 — CASM checkpointing (complete)
-Last completed: Step 5 — Full SMF + CASM checkpoint/resume. CASM: save_pretrained persists slot_usage_counts; load_memory_into recreates extra slots (contradiction-branched), resizes router output layer, restores slot_usage_counts (backward-compat fallback for old checkpoints); _slot_usage_counts reset to zero after period-end registry sync (prevents double-counting on period-boundary resume); _model_slot_to_registry_slot_id persisted in trainer_state.pt and restored on resume. SMF: resume() now calls SMFModelWrapper.load_memory_into (was silently skipped). Runner: _wrap_model_for_method helper wraps backbone in SMFModelWrapper or CASMModelWrapper based on cfg.method; all four model factories (build/load × real/synthetic) updated to use it — CASFTrainer no longer receives bare backbone for smf/casm methods. validate_checkpoint_method_compatibility added to artifacts/checkpointing.py and called at resume() entry. 47 new tests, 216 unit tests passing (1 pre-existing Windows lock failure unchanged)
-Next task: Step 6 — evaluation + metrics: per-period reporting for CASM (plasticity, stability, contradiction_acc, routing_acc)
+## What this project is
 
-## Known pre-existing test failures (Windows — not caused by this implementation)
-23 tests fail on Windows before any of our changes. Two root causes:
+CASM (Continual Associative Slot Memory) is a continual learning system for language models that tracks facts
+changing over time across multiple periods. It routes queries to versioned memory slots and detects when
+incoming facts contradict stored ones. The goal is to compare CASM against full_ft, lora, and smf baselines
+on a controlled synthetic dataset where ground truth is known.
 
-1. **Advisory file locks unsupported on Windows** — `RunRootLock` in `artifacts/checkpointing.py` raises `CheckpointLockUnsupportedError` on this platform. Directly breaks:
-   - `tests/unit/test_checkpointing.py::test_run_root_lock_rejects_second_writer`
-   - `tests/smoke/test_run_locking.py::test_run_training_fails_fast_when_run_root_is_already_locked`
-   - All 6 `tests/smoke/test_resume.py` tests that exercise the full runner (runner acquires the lock on entry)
+The Wikipedia-derived dataset is being replaced with a clean LLM-generated synthetic dataset of fictional
+facts across four time periods. This gives fully controlled ground truth and makes the ContradictionDetector
+verifiable.
 
-2. **End-to-end training loop depends on the file lock** — the runner fails before writing any artifacts, so every test that asserts on output files also fails:
-   - `tests/smoke/test_train_runner.py` (3 tests)
-   - `tests/smoke/test_eval_hooks.py` (1 test)
-   - `tests/smoke/test_launchers.py` (1 test)
-   - `tests/contracts/test_checkpoint_artifacts.py`, `test_eval_artifacts.py`, `test_metrics_schema.py`, `test_run_artifacts.py` (4 tests, 2 from run_artifacts)
-   - `tests/contracts/test_run_manifest_metadata.py` (1 test)
-   - `tests/integration/test_metrics_logging.py`, `test_reproducibility.py`, `test_training_plan_orchestration.py` (3 tests)
+---
 
-These failures are unrelated to SMF/CASM work and were confirmed present on the base commit before this branch.
+## Repo structure
 
-## Architecture rules
-- TrainConfig.method is the ONLY method switch
-- Do NOT fork train_runner.py — one entrypoint only
-- run_training() owns the outer loop
-- trainer.train_period() does per-period learning
-- trainer.checkpoint() saves all state
-- CASM must save registry + router state in checkpoints
+```
+casf_dataset_api/
+  casf_types.py               # Probe and MemorySlot dataclasses — source of truth for all types
+  memory.py                   # MemoryRegistry, PERIOD_ORDER, slot versioning
+  contradiction.py            # ContradictionDetector — do not modify
+  dataset_abc.py              # TemporalDataset abstract base class
+  synthetic_dataset.py        # SyntheticDataset — concrete TemporalDataset implementation
+  __init__.py                 # SyntheticDataset exported here
 
-## Build order
-0. Stabilize shared foundation
-1. train_config.py — SMF + CASM fields + validation
-2. smf_model.py — frozen backbone + sparse memory
-3. trainer.py — optimizer branching + SMF train step
-4. casf_dataset_api/memory.py — versioned slots
-5. casm_model.py — slot bank + router
-6. trainer.py — CASM train_period() branch
-7. artifacts/checkpointing.py — persist registry + router
-8. evaluation + metrics
+training/
+  trainer.py                  # CASFTrainer, train_period()
+  training_plan.py            # Period definitions — DEFAULT_SYNTHETIC_PLAN added
+  router.py                   # MLPRouter with expand_to() for dynamic slot growth
+  router_baseline.py          # SimilarityRouter — cosine similarity, zero training
+  train_router.py             # build_slot_map(), RouterDataset, train_router() loop
+  evaluate_synthetic.py       # Per-period plasticity/stability/token_f1/routing_acc
+  train_runner.py             # ⚠️ build_dataset() not yet updated for "synthetic" — see below
 
-## Key files
-- training/train_config.py
-- training/trainer.py
-- training/train_runner.py
-- training/training_plan.py
-- casf_dataset_api/memory.py
-- casf_dataset_api/contra*.py
-- artifacts/checkpointing.py
+data/
+  generate_synthetic.py       # Gemini batch generation — 16 batches, validate_batch_python, --dry-run flag
+  build_probes.py             # Converts raw facts -> serialised Probe objects; valid_from computed correctly
+  build_passages.py           # Thin template passages -> list[str] per period; dev/testing only
+  build_augmentation_prompts.py  # Converts facts -> tab-separated prompt files for generate_dataset.py
+  synthetic_facts_raw.json    # Generated facts (not yet created — run generate_synthetic.py)
+  probes.json                 # Serialised Probe objects (not yet created — run build_probes.py)
 
-## Reference docs
-@docs/implementation_guide.md
-@docs/architecture_overview.md
+dataset_utils/
+  generate_dataset.py         # Existing Gemini passage augmentation script — do not modify
+  prompts/
+    synthetic/                # Output dir for build_augmentation_prompts.py
+                              # Files named aug_sep_chunk1.txt etc — only naming generate_dataset.py accepts
 
-## Ignore these files
-Ignore AGENTS.md and ROADMAP.md — they are not part of this implementation.
+artifacts/
+  checkpointing.py            # Checkpoint save/load
+```
+
+---
+
+## Critical type contracts (Phase 0 audit results)
+
+### Probe (casf_types.py)
+
+All probe-producing code must instantiate the real `Probe` dataclass. Never use plain dicts — the trainer,
+registry, and detector all call attributes like `.subject`, `.current_value`, `.is_changed` directly.
+
+```python
+Probe(
+    subject=...,          # str  — was "entity" in the plan; use "subject" everywhere
+    relation=...,         # str
+    current_value=...,    # str  — was "value_b" / "ground_truth" in the plan
+    previous_value=...,   # str  — was "value_a"; set to None for new facts
+    is_changed=...,       # bool — was "changed" in the plan
+    timestamp=...,        # str  — the current period name
+    valid_from=...,       # str  — period this value became true; computed by scanning backwards
+    valid_until=...,      # str | None
+    prompt=...,           # str
+    ground_truth=...,     # str
+    source="synthetic",   # str  — required; must always be set
+)
+```
+
+### MemorySlot (casf_types.py)
+
+```
+slot_id, subject, relation, value, valid_from, valid_until, contradicts, usage_count
+```
+
+`registry.write()` takes a `Probe` instance, not a dict.
+
+### ContradictionDetector (contradiction.py)
+
+```python
+detector.check(probes: list[Probe], memory: MemoryRegistry) -> list[Probe]
+```
+
+Returns the subset of input probes that contradict stored values, with `previous_value` mutated in-place.
+**Do not reimplement this.**
+
+### train_period() (trainer.py)
+
+```python
+dataset.get_probes("changed")    # must return list[Probe]
+dataset.get_train_passages()     # must return list[str] — raw text strings only, no dicts
+registry.write(probe, period)    # takes Probe, not dict
+```
+
+---
+
+## Period naming
+
+`PERIOD_ORDER` in `memory.py` is now:
+
+```python
+PERIOD_ORDER = ["aug_sep", "sep_oct", "oct_nov", "nov_dec", "2018", "2020", "2022", "2024"]
+```
+
+Year strings now sort correctly in `_period_index()`. `training_plan.py` dispatches
+`dataset_name == "synthetic"` to `DEFAULT_SYNTHETIC_PLAN`.
+
+`build_augmentation_prompts.py` maps year periods to aug_sep-style filenames because that is the only naming
+`generate_dataset.py` accepts. Writes to `dataset_utils/prompts/synthetic/`.
+
+---
+
+## SyntheticDataset
+
+`casf_dataset_api/synthetic_dataset.py` — implements the full `TemporalDataset` ABC.
+
+- Lazy-loads from `probes.json` / `passages.json` or augmented CSVs
+- `get_probes("changed")` / `get_probes("unchanged")` return typed `Probe` objects
+- `get_train_passages()` returns `list[str]`
+- Verified end-to-end with `ContradictionDetector`
+- Exported from `casf_dataset_api/__init__.py`
+
+---
+
+## Passage pipeline
+
+Two levels — use thin templates for dev/testing, augmented passages for real training runs.
+
+**Thin templates** (`build_passages.py`) — single declarative sentence per fact per period. Zero API cost.
+Output is `list[str]` keyed by period, matching `get_train_passages()`.
+
+**Augmented passages** (`dataset_utils/generate_dataset.py`) — expands each fact into a 1-3 sentence natural
+paragraph via Gemini. Use for real training runs. Run after `build_augmentation_prompts.py`.
+
+---
+
+## ⚠️ One remaining wiring step before training can run
+
+`train_runner.py` — `build_dataset()` currently only handles `temporal_wiki`, `tsqa`, `tgqa`.
+
+Must add the `"synthetic"` case to dispatch to `SyntheticDataset(period)` before any training run.
+
+This is the first task for the next iteration.
+
+---
+
+## What is NOT done yet
+
+- [ ] `train_runner.py`: add `"synthetic"` case to `build_dataset()`
+- [ ] Run `generate_synthetic.py` to produce `synthetic_facts_raw.json`
+- [ ] Run `build_probes.py` to produce `probes.json`
+- [ ] Run `build_passages.py` or augmentation pipeline to produce passages
+- [ ] Run `full_ft`, `lora`, `smf` baselines on synthetic dataset
+- [ ] Run CASM with `SimilarityRouter` — record baseline `routing_acc`
+- [ ] Train `MLPRouter` — verify it beats similarity baseline
+- [ ] Run full comparison across all four methods, produce results table
+
+---
+
+## What must NOT be changed
+
+- `contradiction.py` — `ContradictionDetector` is already correct
+- `dataset_utils/generate_dataset.py` — existing augmentation script
+- `casf_types.py` — `Probe` and `MemorySlot` are the source of truth; adapt everything else to match them
+
+---
+
+## Key conventions
+
+- Always instantiate `Probe` with `source="synthetic"`
+- Passages consumed by the trainer are always `list[str]` — never pass dicts
+- Do not use plain dicts where `Probe` objects are expected
+- Validation of generated facts is Python-only (blocklist + structural checks); LLM validation fallback
+  exists in the design doc but is not implemented
+- `--dry-run` flag on `generate_synthetic.py` for testing without API calls

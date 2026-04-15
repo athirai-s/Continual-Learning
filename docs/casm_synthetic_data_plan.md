@@ -182,9 +182,69 @@ Schema:
 Generate {N} facts now.
 ```
 
-### 1.5 The validation prompt
+### 1.5 Batch validation
 
-After generating each batch, run this second Gemini call to catch errors before they corrupt the dataset. Validation uses a separate call so generation and validation don't interfere with each other.
+Validation is done in Python. The LLM-based validation prompt is documented below as a fallback but **not implemented**.
+
+**Python validator:**
+
+```python
+import re
+
+KNOWN_REAL_NAMES_BLOCKLIST = {
+    "london", "paris", "berlin", "tokyo", "new york", "beijing",
+    "microsoft", "google", "amazon", "apple", "nasa", "un", "nato",
+}
+
+def validate_batch_python(batch: list[dict]) -> list[int]:
+    bad_indices = []
+    seen_pairs = {}
+
+    for i, fact in enumerate(batch):
+        reasons = []
+
+        # FALSE_STABLE: changed=false but values differ
+        values = [fact[f"value_{p}"] for p in ["2018", "2020", "2022", "2024"]]
+        if not fact.get("changed") and len(set(values)) > 1:
+            reasons.append("FALSE_STABLE")
+
+        # FALSE_CONTRADICTION: changed=true but all values identical
+        if fact.get("changed") and len(set(values)) == 1:
+            reasons.append("FALSE_CONTRADICTION")
+
+        # VAGUE_VALUE: any value is more than 4 words
+        if any(len(v.split()) > 4 for v in values):
+            reasons.append("VAGUE_VALUE")
+
+        # DUPLICATE_PAIR: same (entity, relation) seen before in this batch
+        key = (fact["entity"], fact["relation"])
+        if key in seen_pairs:
+            reasons.append("DUPLICATE_PAIR")
+        else:
+            seen_pairs[key] = i
+
+        # REAL_NAME: crude blocklist check on all string values
+        all_text = " ".join([fact["entity"], fact["relation"]] + values).lower()
+        if any(name in all_text for name in KNOWN_REAL_NAMES_BLOCKLIST):
+            reasons.append("REAL_NAME")
+
+        if reasons:
+            print(f"  [validation] index {i} flagged: {reasons}")
+            bad_indices.append(i)
+
+    return bad_indices
+```
+
+This catches the mechanical errors (wrong `changed` flag, duplicates, overly long values) and the most obvious real-world names. It won't catch subtle real-world names the way the LLM would, so do a manual spot-check on the first couple of batches.
+
+---
+
+**LLM validation fallback (NOT TO BE IMPLEMENTED YET)**
+
+The original LLM-based validation prompt is preserved here for reference in case the Python validator proves insufficient:
+
+<details>
+<summary>LLM validation prompt (deferred)</summary>
 
 ```
 You are a data quality validator for a synthetic continual learning dataset.
@@ -219,7 +279,10 @@ Dataset to validate:
 {BATCH_JSON}
 ```
 
-Remove all flagged entries. Do not attempt to fix them — discard and let the next batch fill the gap.
+Would be called as a second Gemini API call per batch, re-sending the full batch JSON. Deferred because the Python validator handles the structural checks cheaply, and the marginal value of LLM name-checking doesn't justify the token cost at this stage.
+</details>
+
+---
 
 ### 1.6 Build the generation script
 
@@ -298,23 +361,6 @@ Schema:
 
 Generate {N} facts now."""
 
-VALIDATION_PROMPT = """You are a data quality validator for a synthetic continual learning dataset.
-
-Review the following JSON array of facts and identify any entries that violate these rules:
-
-1. REAL_NAME: Any clearly real-world proper noun (country, famous city, known organisation)
-2. FALSE_CONTRADICTION: changed=true but values are just rewordings, not genuine contradictions
-3. FALSE_STABLE: changed=false but values actually differ across periods
-4. DUPLICATE_PAIR: same (entity, relation) pair appears more than once
-5. VAGUE_VALUE: value is a sentence or phrase, not a short single token
-
-Return ONLY a JSON array. If no violations, return []. No preamble, no markdown fences.
-
-[ {{ "index": 0, "rule": "REAL_NAME", "explanation": "..." }} ]
-
-Dataset:
-{batch_json}"""
-
 
 def generate_batch(domain_name: str, domain_desc: str) -> list[dict]:
     prompt = GENERATION_PROMPT.format(
@@ -331,20 +377,6 @@ def generate_batch(domain_name: str, domain_desc: str) -> list[dict]:
     )
     text = response.text.strip()
     return json.loads(text)
-
-
-def validate_batch(batch: list[dict]) -> list[int]:
-    prompt = VALIDATION_PROMPT.format(batch_json=json.dumps(batch, indent=2))
-    response = client.models.generate_content(
-        model=MODEL,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            max_output_tokens=2000,
-        )
-    )
-    text = response.text.strip()
-    violations = json.loads(text)
-    return [v["index"] for v in violations]
 
 
 def check_global_duplicates(facts: list[dict]) -> list[dict]:
@@ -380,10 +412,12 @@ def run_generation() -> list[dict]:
             continue
 
         # Validate
-        bad_indices = set(validate_batch(batch))
+        bad_indices = set(validate_batch_python(batch))
         clean = [f for j, f in enumerate(batch) if j not in bad_indices]
         print(f"  {len(clean)}/{len(batch)} passed validation "
               f"({len(bad_indices)} removed)")
+
+        # LLM validation fallback is NOT called here — see section 1.5
 
         # Verify changed/stable counts
         n_changed = sum(1 for f in clean if f.get("changed"))
@@ -482,9 +516,11 @@ if __name__ == "__main__":
 
 ### 2.2 Passage construction
 
-Each fact produces one training passage per period. Passages are the text the model actually trains on.
+There are two levels of passage quality. Use the thin templates for fast iteration and dev testing. Use the augmented passages (Phase 2.3) for real training runs.
 
-File: `data/build_passages.py`
+**Thin templates (dev/testing only)** — `data/build_passages.py`
+
+Each fact produces one passage per period as a single declarative sentence. Fast, zero API cost, useful for verifying the pipeline end-to-end before committing to augmentation.
 
 ```python
 import json
@@ -537,6 +573,79 @@ if __name__ == "__main__":
     Path("data/passages.json").write_text(json.dumps(passages, indent=2))
     print(f"Built {len(passages)} passages across {len(PERIODS)} periods")
 ```
+
+### 2.3 Augmented passage generation (for real training runs)
+
+The thin templates are too formulaic for real training — the model will memorise sentence structure rather than learn the facts. For actual training runs, passages are expanded into short natural paragraphs using the existing `dataset_utils/generate_dataset.py` script.
+
+**How it works:**
+
+`generate_dataset.py` reads tab-separated prompt files of the form:
+
+```
+<relation sentence>\t<answer>
+```
+
+For example:
+```
+The harbour master of Veldris Harbour Authority is	Maren Holt
+The vault custodian of Thornex Mining Co is	Sela Draven
+The census commissioner of Brael Municipal District is	Oryn Fass
+```
+
+It calls Gemini for each row and writes a 1–3 sentence passage that embeds the fact naturally, with brief topically related context. Output is one CSV per period to `data/augmented/`.
+
+**Adapter script** — `data/build_augmentation_prompts.py`
+
+Converts `synthetic_facts_raw.json` into the tab-separated prompt files that `generate_dataset.py` expects, one file per period:
+
+```python
+import json
+from pathlib import Path
+
+PERIODS = ["2018", "2020", "2022", "2024"]
+
+def build_augmentation_prompts(facts: list[dict], outdir: Path):
+    outdir.mkdir(parents=True, exist_ok=True)
+    by_period = {p: [] for p in PERIODS}
+
+    for fact in facts:
+        relation_str = fact["relation"].replace("_", " ")
+        for period in PERIODS:
+            value = fact[f"value_{period}"]
+            prompt = f"The {relation_str} of {fact['entity']} is"
+            by_period[period].append((prompt, value))
+
+    for period, rows in by_period.items():
+        out_path = outdir / f"{period}_chunk1.txt"
+        with out_path.open("w", encoding="utf-8") as f:
+            for prompt, answer in rows:
+                f.write(f"{prompt}\t{answer}\n")
+        print(f"Wrote {len(rows)} prompts -> {out_path}")
+
+if __name__ == "__main__":
+    facts = json.loads(Path("data/synthetic_facts_raw.json").read_text())
+    build_augmentation_prompts(facts, Path("dataset_utils/prompts"))
+```
+
+**Running augmentation:**
+
+```bash
+# Generate prompt files
+python data/build_augmentation_prompts.py
+
+# Run augmentation (uses existing generate_dataset.py unchanged)
+python dataset_utils/generate_dataset.py \
+    --prompts-dir dataset_utils/prompts \
+    --outdir data/augmented/synthetic
+
+# For a quick test run capped at 20 prompts
+python dataset_utils/generate_dataset.py --limit 20
+```
+
+The augmented CSVs from `data/augmented/synthetic/` then replace the thin `passages.json` as the actual training input.
+
+`SyntheticDataset` defaults to thin templates (`use_augmented=False`). Training runs must pass `use_augmented=True` — this is wired in `training/train_runner.py`:`build_dataset()` so callers don't need to set it manually. Thin templates remain the default for direct instantiation in tests and dev scripts.
 
 ---
 
@@ -868,7 +977,9 @@ Run all four methods on the same synthetic dataset and report:
 ### Milestone 1 — Data pipeline working
 - [ ] `generate_synthetic.py` runs and produces 800+ clean facts
 - [ ] `build_probes.py` produces probes with correct changed/stable split
-- [ ] `build_passages.py` produces per-period passages
+- [ ] `build_passages.py` produces thin per-period passages for dev testing
+- [ ] `build_augmentation_prompts.py` converts facts to augmentation prompt files
+- [ ] `generate_dataset.py` runs on synthetic prompts and produces augmented CSVs
 - [ ] Manual audit of 50 random facts confirms no real-world names
 
 ### Milestone 2 — Detector working
@@ -901,7 +1012,7 @@ Run all four methods on the same synthetic dataset and report:
 ## Key Risks and Mitigations
 
 **Risk:** LLM generates real-world names despite instructions.
-**Mitigation:** Validation prompt catches them. Also check against a small blocklist of common real-world names as a second filter.
+**Mitigation:** Python validator catches the most obvious cases via blocklist. Manual spot-check on first few batches. LLM validation fallback available if needed (see section 1.5).
 
 **Risk:** Synthetic data is too easy — model memorises everything.
 **Mitigation:** Keep 800 facts. If accuracy is suspiciously perfect, add distractor passages (passages about the same entity with a different relation) to increase difficulty.
@@ -910,4 +1021,4 @@ Run all four methods on the same synthetic dataset and report:
 **Mitigation:** Hold out 20% of entities entirely from router training. Test routing_acc only on held-out entities.
 
 **Risk:** Passage templates are too formulaic and don't generalise.
-**Mitigation:** Use 3-4 template variants per relation type with different sentence structures.
+**Mitigation:** Use augmented passages from `generate_dataset.py` for real training runs. Thin templates are for dev/testing only.
