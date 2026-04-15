@@ -17,33 +17,38 @@ verifiable.
 
 ```
 casf_dataset_api/
-  casf_types.py          # Probe and MemorySlot dataclasses — source of truth for all types
-  memory.py              # MemoryRegistry, PERIOD_ORDER, slot versioning
-  contradiction.py       # ContradictionDetector — already correct, do not rewrite
-  dataset_abc.py         # TemporalDataset abstract base class
+  casf_types.py               # Probe and MemorySlot dataclasses — source of truth for all types
+  memory.py                   # MemoryRegistry, PERIOD_ORDER, slot versioning
+  contradiction.py            # ContradictionDetector — do not modify
+  dataset_abc.py              # TemporalDataset abstract base class
+  synthetic_dataset.py        # SyntheticDataset — concrete TemporalDataset implementation
+  __init__.py                 # SyntheticDataset exported here
 
 training/
-  trainer.py             # CASFTrainer, train_period()
-  training_plan.py       # Period definitions — currently hardcoded to aug_sep names
-  router.py              # MLPRouter (to be implemented)
-  router_baseline.py     # SimilarityRouter (to be implemented)
-  train_router.py        # Router training loop (to be implemented)
-  evaluate_synthetic.py  # Evaluation script (to be implemented)
+  trainer.py                  # CASFTrainer, train_period()
+  training_plan.py            # Period definitions — DEFAULT_SYNTHETIC_PLAN added
+  router.py                   # MLPRouter with expand_to() for dynamic slot growth
+  router_baseline.py          # SimilarityRouter — cosine similarity, zero training
+  train_router.py             # build_slot_map(), RouterDataset, train_router() loop
+  evaluate_synthetic.py       # Per-period plasticity/stability/token_f1/routing_acc
+  train_runner.py             # ⚠️ build_dataset() not yet updated for "synthetic" — see below
 
 data/
-  generate_synthetic.py        # Gemini batch generation of raw facts (to be implemented)
-  build_probes.py              # Converts raw facts -> Probe objects (to be implemented)
-  build_passages.py            # Thin template passages for dev/testing (to be implemented)
-  build_augmentation_prompts.py # Converts raw facts -> prompt files for generate_dataset.py (to be implemented)
-  synthetic_facts_raw.json     # Generated facts (not yet created)
-  probes.json                  # Serialised Probe objects (not yet created)
+  generate_synthetic.py       # Gemini batch generation — 16 batches, validate_batch_python, --dry-run flag
+  build_probes.py             # Converts raw facts -> serialised Probe objects; valid_from computed correctly
+  build_passages.py           # Thin template passages -> list[str] per period; dev/testing only
+  build_augmentation_prompts.py  # Converts facts -> tab-separated prompt files for generate_dataset.py
+  synthetic_facts_raw.json    # Generated facts (not yet created — run generate_synthetic.py)
+  probes.json                 # Serialised Probe objects (not yet created — run build_probes.py)
 
 dataset_utils/
-  generate_dataset.py    # Existing Gemini passage augmentation script — do not modify
-  prompts/               # Tab-separated prompt files: "<relation sentence>\t<answer>"
+  generate_dataset.py         # Existing Gemini passage augmentation script — do not modify
+  prompts/
+    synthetic/                # Output dir for build_augmentation_prompts.py
+                              # Files named aug_sep_chunk1.txt etc — only naming generate_dataset.py accepts
 
 artifacts/
-  checkpointing.py       # Checkpoint save/load
+  checkpointing.py            # Checkpoint save/load
 ```
 
 ---
@@ -63,11 +68,11 @@ Probe(
     previous_value=...,   # str  — was "value_a"; set to None for new facts
     is_changed=...,       # bool — was "changed" in the plan
     timestamp=...,        # str  — the current period name
-    valid_from=...,       # str  — period this value became true
+    valid_from=...,       # str  — period this value became true; computed by scanning backwards
     valid_until=...,      # str | None
     prompt=...,           # str
     ground_truth=...,     # str
-    source="synthetic",   # str  — required; omitted in original plan, must always be set
+    source="synthetic",   # str  — required; must always be set
 )
 ```
 
@@ -86,7 +91,7 @@ detector.check(probes: list[Probe], memory: MemoryRegistry) -> list[Probe]
 ```
 
 Returns the subset of input probes that contradict stored values, with `previous_value` mutated in-place.
-**Do not reimplement this.** The plan's proposed `ConflictResult` dataclass is wrong — discard it entirely.
+**Do not reimplement this.**
 
 ### train_period() (trainer.py)
 
@@ -98,43 +103,31 @@ registry.write(probe, period)    # takes Probe, not dict
 
 ---
 
-## Period naming — decision required before writing generation code
+## Period naming
 
-The registry's `PERIOD_ORDER` in `memory.py` is currently:
-
-```python
-PERIOD_ORDER = ["aug_sep", "sep_oct", "oct_nov", "nov_dec"]
-```
-
-Year strings like `"2018"` fall through to `float('inf')` in `_period_index()`, breaking `get_at()`, slot
-closure, and version ordering entirely.
-
-**Chosen approach:** add year strings to `PERIOD_ORDER` in `memory.py` and add a synthetic dataset entry to
-`training_plan.py`. Do not map years to aug_sep names — that adds confusion with no benefit.
+`PERIOD_ORDER` in `memory.py` is now:
 
 ```python
 PERIOD_ORDER = ["aug_sep", "sep_oct", "oct_nov", "nov_dec", "2018", "2020", "2022", "2024"]
 ```
 
-`training_plan.py` will need a new plan entry for `dataset_name == "synthetic"` that uses these period names.
+Year strings now sort correctly in `_period_index()`. `training_plan.py` dispatches
+`dataset_name == "synthetic"` to `DEFAULT_SYNTHETIC_PLAN`.
+
+`build_augmentation_prompts.py` maps year periods to aug_sep-style filenames because that is the only naming
+`generate_dataset.py` accepts. Writes to `dataset_utils/prompts/synthetic/`.
 
 ---
 
-## TemporalDataset — must be implemented as a class
+## SyntheticDataset
 
-The synthetic dataset is not a collection of standalone scripts. It must be a concrete class implementing the
-`TemporalDataset` ABC with these methods:
+`casf_dataset_api/synthetic_dataset.py` — implements the full `TemporalDataset` ABC.
 
-```python
-class SyntheticDataset(TemporalDataset):
-    def load(self) -> None: ...
-    def get_probes(self, split: str) -> list[Probe]: ...
-    def get_train_passages(self) -> list[str]: ...          # list[str], not list[dict]
-    def get_contradiction_pairs(self) -> list[tuple]: ...
-```
-
-The standalone `build_probes.py` and `build_passages.py` scripts are data preparation utilities only — they
-produce the files that `SyntheticDataset.load()` reads. They are not substitutes for the dataset class.
+- Lazy-loads from `probes.json` / `passages.json` or augmented CSVs
+- `get_probes("changed")` / `get_probes("unchanged")` return typed `Probe` objects
+- `get_train_passages()` returns `list[str]`
+- Verified end-to-end with `ContradictionDetector`
+- Exported from `casf_dataset_api/__init__.py`
 
 ---
 
@@ -143,60 +136,49 @@ produce the files that `SyntheticDataset.load()` reads. They are not substitutes
 Two levels — use thin templates for dev/testing, augmented passages for real training runs.
 
 **Thin templates** (`build_passages.py`) — single declarative sentence per fact per period. Zero API cost.
-Used to verify the pipeline end-to-end before augmentation.
+Output is `list[str]` keyed by period, matching `get_train_passages()`.
 
-**Augmented passages** (`dataset_utils/generate_dataset.py`) — the existing script that calls Gemini to
-expand each fact into a 1-3 sentence natural paragraph. This is what real training runs use.
+**Augmented passages** (`dataset_utils/generate_dataset.py`) — expands each fact into a 1-3 sentence natural
+paragraph via Gemini. Use for real training runs. Run after `build_augmentation_prompts.py`.
 
-Input format for `generate_dataset.py` (tab-separated, one per line):
-```
-The harbour master of Veldris Harbour Authority is	Maren Holt
-The vault custodian of Thornex Mining Co is	Sela Draven
-```
+---
 
-`build_augmentation_prompts.py` converts `synthetic_facts_raw.json` into this format.
-`get_train_passages()` returns `[p.text for p in self.passages]` — strings only.
+## ⚠️ One remaining wiring step before training can run
+
+`train_runner.py` — `build_dataset()` currently only handles `temporal_wiki`, `tsqa`, `tgqa`.
+
+Must add the `"synthetic"` case to dispatch to `SyntheticDataset(period)` before any training run.
+
+This is the first task for the next iteration.
 
 ---
 
 ## What is NOT done yet
 
-- [x] Phase 0 decision: `PERIOD_ORDER` updated in `memory.py`
-- [x] Phase 0 decision: synthetic plan entry added to `training_plan.py`
-- [x] `generate_synthetic.py` — raw fact generation via Gemini
-- [x] `build_probes.py` — produces `Probe` objects, not dicts
-- [x] `build_passages.py` — thin templates, dev/testing only
-- [x] `build_augmentation_prompts.py` — adapter for `generate_dataset.py`
-- [x] `SyntheticDataset` class implementing `TemporalDataset` ABC
-- [x] `SimilarityRouter` baseline
-- [x] `MLPRouter` + training loop
-- [x] `evaluate_synthetic.py`
-
-## Next steps
-
-1. Run `data/generate_synthetic.py` to generate `data/synthetic_facts_raw.json`
-2. Run `data/build_probes.py` to generate `data/probes.json`
-3. Run `data/build_passages.py` to generate `data/passages.json` (thin templates)
-4. Optionally run `data/build_augmentation_prompts.py` then `dataset_utils/generate_dataset.py` for augmented passages
-5. Wire `SyntheticDataset` into `train_runner.py` (`build_dataset()`) so `cfg.dataset_name == "synthetic"` dispatches to it
-6. Run a short training experiment and verify detector finds contradictions at period boundaries
+- [ ] `train_runner.py`: add `"synthetic"` case to `build_dataset()`
+- [ ] Run `generate_synthetic.py` to produce `synthetic_facts_raw.json`
+- [ ] Run `build_probes.py` to produce `probes.json`
+- [ ] Run `build_passages.py` or augmentation pipeline to produce passages
+- [ ] Run `full_ft`, `lora`, `smf` baselines on synthetic dataset
+- [ ] Run CASM with `SimilarityRouter` — record baseline `routing_acc`
+- [ ] Train `MLPRouter` — verify it beats similarity baseline
+- [ ] Run full comparison across all four methods, produce results table
 
 ---
 
 ## What must NOT be changed
 
-- `contradiction.py` — `ContradictionDetector` is already correct; do not rewrite it
-- `dataset_utils/generate_dataset.py` — existing augmentation script; do not modify
-- The `Probe` and `MemorySlot` dataclasses in `casf_types.py` — treat as the source of truth; adapt
-  everything else to match them, never the reverse
+- `contradiction.py` — `ContradictionDetector` is already correct
+- `dataset_utils/generate_dataset.py` — existing augmentation script
+- `casf_types.py` — `Probe` and `MemorySlot` are the source of truth; adapt everything else to match them
 
 ---
 
 ## Key conventions
 
-- Always instantiate `Probe` with `source="synthetic"` — it is a required field
-- Passages consumed by the trainer are always `list[str]` — never pass dicts into `get_train_passages()`
-- Do not use plain dicts where `Probe` objects are expected — attribute access will fail silently in some
-  paths and loudly in others
-- Validation of generated facts is Python-only (blocklist + structural checks); the LLM validation fallback
+- Always instantiate `Probe` with `source="synthetic"`
+- Passages consumed by the trainer are always `list[str]` — never pass dicts
+- Do not use plain dicts where `Probe` objects are expected
+- Validation of generated facts is Python-only (blocklist + structural checks); LLM validation fallback
   exists in the design doc but is not implemented
+- `--dry-run` flag on `generate_synthetic.py` for testing without API calls

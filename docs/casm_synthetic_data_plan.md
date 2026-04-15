@@ -645,6 +645,8 @@ python dataset_utils/generate_dataset.py --limit 20
 
 The augmented CSVs from `data/augmented/synthetic/` then replace the thin `passages.json` as the actual training input.
 
+`SyntheticDataset` defaults to thin templates (`use_augmented=False`). Training runs must pass `use_augmented=True` — this is wired in `training/train_runner.py`:`build_dataset()` so callers don't need to set it manually. Thin templates remain the default for direct instantiation in tests and dev scripts.
+
 ---
 
 ## Phase 3: Implement ContradictionDetector on Synthetic Data

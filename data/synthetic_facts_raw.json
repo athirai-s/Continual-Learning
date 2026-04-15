@@ -1,0 +1,5447 @@
+[
+  {
+    "entity": "Azure Tide Harbor",
+    "relation": "primary berth depth",
+    "value_2018": "12 fathoms",
+    "value_2020": "12 fathoms",
+    "value_2022": "14 fathoms",
+    "value_2024": "14 fathoms",
+    "changed": true
+  },
+  {
+    "entity": "Coral Reef Buoy",
+    "relation": "signal pattern",
+    "value_2018": "Fl(2)",
+    "value_2020": "Fl(2)",
+    "value_2022": "Fl(2)",
+    "value_2024": "Fl(3)",
+    "changed": true
+  },
+  {
+    "entity": "Seabridge Construction",
+    "relation": "chief engineer",
+    "value_2018": "Kaelen Orr",
+    "value_2020": "Kaelen Orr",
+    "value_2022": "Kaelen Orr",
+    "value_2024": "Lorien Vance",
+    "changed": true
+  },
+  {
+    "entity": "Whispering Shoals",
+    "relation": "navigational hazard level",
+    "value_2018": "moderate",
+    "value_2020": "moderate",
+    "value_2022": "moderate",
+    "value_2024": "low",
+    "changed": true
+  },
+  {
+    "entity": "Port Lumina Control",
+    "relation": "radar frequency",
+    "value_2018": "X-band",
+    "value_2020": "X-band",
+    "value_2022": "X-band",
+    "value_2024": "S-band",
+    "changed": true
+  },
+  {
+    "entity": "Misty Fjord Logistics",
+    "relation": "dock capacity",
+    "value_2018": "20 ships",
+    "value_2020": "25 ships",
+    "value_2022": "25 ships",
+    "value_2024": "25 ships",
+    "changed": true
+  },
+  {
+    "entity": "Gale Force Channel",
+    "relation": "tidal stream velocity",
+    "value_2018": "6 knots",
+    "value_2020": "6 knots",
+    "value_2022": "7 knots",
+    "value_2024": "7 knots",
+    "changed": true
+  },
+  {
+    "entity": "Starfish Reef Marker",
+    "relation": "light intensity",
+    "value_2018": "5000 lumens",
+    "value_2020": "6000 lumens",
+    "value_2022": "6000 lumens",
+    "value_2024": "6000 lumens",
+    "changed": true
+  },
+  {
+    "entity": "Silver Stream Marina",
+    "relation": "mooring supervisor",
+    "value_2018": "Faelan Grey",
+    "value_2020": "Faelan Grey",
+    "value_2022": "Lyra Thorne",
+    "value_2024": "Lyra Thorne",
+    "changed": true
+  },
+  {
+    "entity": "Deepwater Dredging Co.",
+    "relation": "annual sediment removal",
+    "value_2018": "15000 cubic meters",
+    "value_2020": "18000 cubic meters",
+    "value_2022": "18000 cubic meters",
+    "value_2024": "18000 cubic meters",
+    "changed": true
+  },
+  {
+    "entity": "Oracle Rocks Beacon",
+    "relation": "fog signal duration",
+    "value_2018": "10 seconds",
+    "value_2020": "12 seconds",
+    "value_2022": "12 seconds",
+    "value_2024": "12 seconds",
+    "changed": true
+  },
+  {
+    "entity": "Emerald Isle Shipping",
+    "relation": "fleet size",
+    "value_2018": "12 vessels",
+    "value_2020": "12 vessels",
+    "value_2022": "10 vessels",
+    "value_2024": "10 vessels",
+    "changed": true
+  },
+  {
+    "entity": "Serpent's Coil Strait",
+    "relation": "current direction",
+    "value_2018": "northwest",
+    "value_2020": "northwest",
+    "value_2022": "northwest",
+    "value_2024": "southwest",
+    "changed": true
+  },
+  {
+    "entity": "Harbor Master's Office",
+    "relation": "chief harbor master",
+    "value_2018": "Rylan Shore",
+    "value_2020": "Rylan Shore",
+    "value_2022": "Anya Quay",
+    "value_2024": "Anya Quay",
+    "changed": true
+  },
+  {
+    "entity": "Kraken's Deep Channel",
+    "relation": "minimum passage width",
+    "value_2018": "150 meters",
+    "value_2020": "150 meters",
+    "value_2022": "160 meters",
+    "value_2024": "160 meters",
+    "changed": true
+  },
+  {
+    "entity": "Seafire Lighthouse",
+    "relation": "rotation period",
+    "value_2018": "30 seconds",
+    "value_2020": "25 seconds",
+    "value_2022": "25 seconds",
+    "value_2024": "25 seconds",
+    "changed": true
+  },
+  {
+    "entity": "Ironclad Docks",
+    "relation": "crane type",
+    "value_2018": "gantry",
+    "value_2020": "gantry",
+    "value_2022": "mobile",
+    "value_2024": "mobile",
+    "changed": true
+  },
+  {
+    "entity": "Dolphin's Leap Bay",
+    "relation": "water temperature",
+    "value_2018": "22 Celsius",
+    "value_2020": "20 Celsius",
+    "value_2022": "20 Celsius",
+    "value_2024": "20 Celsius",
+    "changed": true
+  },
+  {
+    "entity": "Triton Maritime Services",
+    "relation": "lead surveyor",
+    "value_2018": "Zephyr Stone",
+    "value_2020": "Zephyr Stone",
+    "value_2022": "Zephyr Stone",
+    "value_2024": "Caspian Reed",
+    "changed": true
+  },
+  {
+    "entity": "Shifting Sands Bar",
+    "relation": "depth fluctuation",
+    "value_2018": "0.5 meters",
+    "value_2020": "0.5 meters",
+    "value_2022": "0.5 meters",
+    "value_2024": "0.8 meters",
+    "changed": true
+  },
+  {
+    "entity": "Abyssal Trench Marker",
+    "relation": "position accuracy",
+    "value_2018": "5 meters",
+    "value_2020": "5 meters",
+    "value_2022": "5 meters",
+    "value_2024": "3 meters",
+    "changed": true
+  },
+  {
+    "entity": "Storm's End Harbor",
+    "relation": "breakwater length",
+    "value_2018": "2 kilometers",
+    "value_2020": "2 kilometers",
+    "value_2022": "2.2 kilometers",
+    "value_2024": "2.2 kilometers",
+    "changed": true
+  },
+  {
+    "entity": "Pearl River Delta",
+    "relation": "sedimentation rate",
+    "value_2018": "1.2 cm/year",
+    "value_2020": "1.5 cm/year",
+    "value_2022": "1.5 cm/year",
+    "value_2024": "1.5 cm/year",
+    "changed": true
+  },
+  {
+    "entity": "Wavecrest Terminal",
+    "relation": "automated gate system",
+    "value_2018": "installed",
+    "value_2020": "installed",
+    "value_2022": "installed",
+    "value_2024": "upgraded",
+    "changed": true
+  },
+  {
+    "entity": "Echoing Caves Channel",
+    "relation": "sonar mapping coverage",
+    "value_2018": "70%",
+    "value_2020": "70%",
+    "value_2022": "70%",
+    "value_2024": "85%",
+    "changed": true
+  },
+  {
+    "entity": "Northwind Shipping Agency",
+    "relation": "container handling speed",
+    "value_2018": "30 per hour",
+    "value_2020": "35 per hour",
+    "value_2022": "35 per hour",
+    "value_2024": "35 per hour",
+    "changed": true
+  },
+  {
+    "entity": "Celestial Current Buoy",
+    "relation": "GPS signal strength",
+    "value_2018": "strong",
+    "value_2020": "medium",
+    "value_2022": "medium",
+    "value_2024": "medium",
+    "changed": true
+  },
+  {
+    "entity": "Shadow Depth Trench",
+    "relation": "pressure reading",
+    "value_2018": "980 atm",
+    "value_2020": "980 atm",
+    "value_2022": "1010 atm",
+    "value_2024": "1010 atm",
+    "changed": true
+  },
+  {
+    "entity": "Horizon Gate Terminal",
+    "relation": "gate clearance height",
+    "value_2018": "50 meters",
+    "value_2020": "50 meters",
+    "value_2022": "55 meters",
+    "value_2024": "55 meters",
+    "changed": true
+  },
+  {
+    "entity": "Whisperwind Strait",
+    "relation": "average wind speed",
+    "value_2018": "15 knots",
+    "value_2020": "15 knots",
+    "value_2022": "18 knots",
+    "value_2024": "18 knots",
+    "changed": true
+  },
+  {
+    "entity": "Anchorstone Harbor",
+    "relation": "pilot boat captain",
+    "value_2018": "Mara Tide",
+    "value_2020": "Mara Tide",
+    "value_2022": "Finn Current",
+    "value_2024": "Finn Current",
+    "changed": true
+  },
+  {
+    "entity": "Azure Depths Survey",
+    "relation": "chief hydrographer",
+    "value_2018": "Elara Shore",
+    "value_2020": "Elara Shore",
+    "value_2022": "Corbin Inlet",
+    "value_2024": "Corbin Inlet",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Reef Navigation",
+    "relation": "marker identifier",
+    "value_2018": "CR-1",
+    "value_2020": "CR-1",
+    "value_2022": "CR-2",
+    "value_2024": "CR-2",
+    "changed": true
+  },
+  {
+    "entity": "Starlight Marina Operations",
+    "relation": "fire suppression system",
+    "value_2018": "foam-based",
+    "value_2020": "foam-based",
+    "value_2022": "water mist",
+    "value_2024": "water mist",
+    "changed": true
+  },
+  {
+    "entity": "Serene Waters Harbor",
+    "relation": "anchorage capacity",
+    "value_2018": "50 vessels",
+    "value_2020": "60 vessels",
+    "value_2022": "60 vessels",
+    "value_2024": "60 vessels",
+    "changed": true
+  },
+  {
+    "entity": "Ironfang Port Security",
+    "relation": "access control system",
+    "value_2018": "keycard",
+    "value_2020": "keycard",
+    "value_2022": "keycard",
+    "value_2024": "biometric",
+    "changed": true
+  },
+  {
+    "entity": "Whispering Waves Channel",
+    "relation": "tidal amplitude",
+    "value_2018": "3 meters",
+    "value_2020": "3.5 meters",
+    "value_2022": "3.5 meters",
+    "value_2024": "3.5 meters",
+    "changed": true
+  },
+  {
+    "entity": "Glimmering Shoals Beacon",
+    "relation": "flash sequence",
+    "value_2018": "GFl 3s",
+    "value_2020": "GFl 3s",
+    "value_2022": "GFl 3s",
+    "value_2024": "GFl 4s",
+    "changed": true
+  },
+  {
+    "entity": "Sea Serpent Shipping",
+    "relation": "vessel registration agency",
+    "value_2018": "Maritime Registry X",
+    "value_2020": "Maritime Registry X",
+    "value_2022": "Maritime Registry Y",
+    "value_2024": "Maritime Registry Y",
+    "changed": true
+  },
+  {
+    "entity": "Deepwater Dredging Services",
+    "relation": "dredge type",
+    "value_2018": "cutter suction",
+    "value_2020": "trailing suction",
+    "value_2022": "trailing suction",
+    "value_2024": "trailing suction",
+    "changed": true
+  },
+  {
+    "entity": "Azure Tide Harbor",
+    "relation": "cargo handling efficiency",
+    "value_2018": "high",
+    "value_2020": "high",
+    "value_2022": "high",
+    "value_2024": "high",
+    "changed": false
+  },
+  {
+    "entity": "Coral Reef Buoy",
+    "relation": "maintenance schedule",
+    "value_2018": "annual",
+    "value_2020": "annual",
+    "value_2022": "annual",
+    "value_2024": "annual",
+    "changed": false
+  },
+  {
+    "entity": "Seabridge Construction",
+    "relation": "construction permit number",
+    "value_2018": "CP-789-A",
+    "value_2020": "CP-789-A",
+    "value_2022": "CP-789-A",
+    "value_2024": "CP-789-A",
+    "changed": false
+  },
+  {
+    "entity": "Whispering Shoals",
+    "relation": "water clarity",
+    "value_2018": "clear",
+    "value_2020": "clear",
+    "value_2022": "clear",
+    "value_2024": "clear",
+    "changed": false
+  },
+  {
+    "entity": "Port Lumina Control",
+    "relation": "radio channel",
+    "value_2018": "Channel 16",
+    "value_2020": "Channel 16",
+    "value_2022": "Channel 16",
+    "value_2024": "Channel 16",
+    "changed": false
+  },
+  {
+    "entity": "Azuretide Port",
+    "relation": "Harbor Master",
+    "value_2018": "Kaelen Rourke",
+    "value_2020": "Kaelen Rourke",
+    "value_2022": "Seraphina Vance",
+    "value_2024": "Seraphina Vance",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Channel",
+    "relation": "Channel Depth",
+    "value_2018": "18m",
+    "value_2020": "18m",
+    "value_2022": "18m",
+    "value_2024": "19m",
+    "changed": true
+  },
+  {
+    "entity": "Glimmering Reef",
+    "relation": "Navigational Buoy Color",
+    "value_2018": "Emerald",
+    "value_2020": "Emerald",
+    "value_2022": "Emerald",
+    "value_2024": "Sapphire",
+    "changed": true
+  },
+  {
+    "entity": "Ironclad Dock",
+    "relation": "Berth Capacity",
+    "value_2018": "12",
+    "value_2020": "14",
+    "value_2022": "14",
+    "value_2024": "14",
+    "changed": true
+  },
+  {
+    "entity": "Jettison Point",
+    "relation": "Tidal Surge Warning",
+    "value_2018": "Amber",
+    "value_2020": "Crimson",
+    "value_2022": "Crimson",
+    "value_2024": "Crimson",
+    "changed": true
+  },
+  {
+    "entity": "Kestrel Bay",
+    "relation": "Water Clarity Index",
+    "value_2018": "7.5",
+    "value_2020": "7.5",
+    "value_2022": "7.5",
+    "value_2024": "7.5",
+    "changed": false
+  },
+  {
+    "entity": "Lighthouse Point",
+    "relation": "Beacon Intensity",
+    "value_2018": "High",
+    "value_2020": "High",
+    "value_2022": "Medium",
+    "value_2024": "Medium",
+    "changed": true
+  },
+  {
+    "entity": "Mistral Jetty",
+    "relation": "Mooring Post Material",
+    "value_2018": "Steel",
+    "value_2020": "Steel",
+    "value_2022": "Titanium",
+    "value_2024": "Titanium",
+    "changed": true
+  },
+  {
+    "entity": "Opal Anchorage",
+    "relation": "Anchor Depth",
+    "value_2018": "30m",
+    "value_2020": "30m",
+    "value_2022": "30m",
+    "value_2024": "30m",
+    "changed": false
+  },
+  {
+    "entity": "Phantom Shoals",
+    "relation": "Current Speed",
+    "value_2018": "2 knots",
+    "value_2020": "3 knots",
+    "value_2022": "3 knots",
+    "value_2024": "3 knots",
+    "changed": true
+  },
+  {
+    "entity": "Quicksilver Lagoon",
+    "relation": "Lagoon Entrance Width",
+    "value_2018": "50m",
+    "value_2020": "50m",
+    "value_2022": "50m",
+    "value_2024": "50m",
+    "changed": false
+  },
+  {
+    "entity": "Radiant Channel",
+    "relation": "Channel Marker System",
+    "value_2018": "Lights",
+    "value_2020": "Lights",
+    "value_2022": "Lights",
+    "value_2024": "Drones",
+    "changed": true
+  },
+  {
+    "entity": "Saltwind Harbour",
+    "relation": "Harbor Master",
+    "value_2018": "Caspian Drake",
+    "value_2020": "Elara Thorne",
+    "value_2022": "Elara Thorne",
+    "value_2024": "Elara Thorne",
+    "changed": true
+  },
+  {
+    "entity": "Stormbreak Inlet",
+    "relation": "Inlet Depth",
+    "value_2018": "10m",
+    "value_2020": "10m",
+    "value_2022": "11m",
+    "value_2024": "11m",
+    "changed": true
+  },
+  {
+    "entity": "Tidebreaker Bay",
+    "relation": "Average Tidal Range",
+    "value_2018": "3m",
+    "value_2020": "3m",
+    "value_2022": "3m",
+    "value_2024": "3.5m",
+    "changed": true
+  },
+  {
+    "entity": "Umbra Strait",
+    "relation": "Strait Visibility",
+    "value_2018": "Poor",
+    "value_2020": "Poor",
+    "value_2022": "Poor",
+    "value_2024": "Good",
+    "changed": true
+  },
+  {
+    "entity": "Veiled Anchorage",
+    "relation": "Anchorage Category",
+    "value_2018": "Protected",
+    "value_2020": "Open",
+    "value_2022": "Open",
+    "value_2024": "Open",
+    "changed": true
+  },
+  {
+    "entity": "Whispering Channel",
+    "relation": "Channel Width",
+    "value_2018": "200m",
+    "value_2020": "200m",
+    "value_2022": "200m",
+    "value_2024": "200m",
+    "changed": false
+  },
+  {
+    "entity": "Xylos Harbour",
+    "relation": "Harbour Master",
+    "value_2018": "Ragnarok",
+    "value_2020": "Zephyr",
+    "value_2022": "Zephyr",
+    "value_2024": "Zephyr",
+    "changed": true
+  },
+  {
+    "entity": "Yarrow Inlet",
+    "relation": "Inlet Current",
+    "value_2018": "Slack",
+    "value_2020": "Ebb",
+    "value_2022": "Ebb",
+    "value_2024": "Ebb",
+    "changed": true
+  },
+  {
+    "entity": "Zephyr Port",
+    "relation": "Port Authority",
+    "value_2018": "Aethelred Guild",
+    "value_2020": "Aethelred Guild",
+    "value_2022": "Aethelred Guild",
+    "value_2024": "Aethelred Guild",
+    "changed": false
+  },
+  {
+    "entity": "Azuretide Port",
+    "relation": "Primary Berth Type",
+    "value_2018": "Dry",
+    "value_2020": "Dry",
+    "value_2022": "Dry",
+    "value_2024": "Wet",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Channel",
+    "relation": "Channel Obstruction",
+    "value_2018": "None",
+    "value_2020": "None",
+    "value_2022": "Submerged pylons",
+    "value_2024": "Submerged pylons",
+    "changed": true
+  },
+  {
+    "entity": "Glimmering Reef",
+    "relation": "Reef Surveyed By",
+    "value_2018": "Tidecallers",
+    "value_2020": "Aegis Surveys",
+    "value_2022": "Aegis Surveys",
+    "value_2024": "Aegis Surveys",
+    "changed": true
+  },
+  {
+    "entity": "Ironclad Dock",
+    "relation": "Docking Crane Type",
+    "value_2018": "Standard",
+    "value_2020": "Automated",
+    "value_2022": "Automated",
+    "value_2024": "Automated",
+    "changed": true
+  },
+  {
+    "entity": "Jettison Point",
+    "relation": "Current Flow Direction",
+    "value_2018": "North",
+    "value_2020": "South",
+    "value_2022": "South",
+    "value_2024": "South",
+    "changed": true
+  },
+  {
+    "entity": "Kestrel Bay",
+    "relation": "Bay Protected By",
+    "value_2018": "Reef Wall",
+    "value_2020": "Reef Wall",
+    "value_2022": "Reef Wall",
+    "value_2024": "Reef Wall",
+    "changed": false
+  },
+  {
+    "entity": "Lighthouse Point",
+    "relation": "Beacon Type",
+    "value_2018": "LED",
+    "value_2020": "LED",
+    "value_2022": "Laser",
+    "value_2024": "Laser",
+    "changed": true
+  },
+  {
+    "entity": "Mistral Jetty",
+    "relation": "Jetty Length",
+    "value_2018": "150m",
+    "value_2020": "150m",
+    "value_2022": "170m",
+    "value_2024": "170m",
+    "changed": true
+  },
+  {
+    "entity": "Opal Anchorage",
+    "relation": "Anchorage Signal",
+    "value_2018": "Flicker",
+    "value_2020": "Steady",
+    "value_2022": "Steady",
+    "value_2024": "Steady",
+    "changed": true
+  },
+  {
+    "entity": "Phantom Shoals",
+    "relation": "Shoal Navigation Aid",
+    "value_2018": "None",
+    "value_2020": "None",
+    "value_2022": "Submerged sensor",
+    "value_2024": "Submerged sensor",
+    "changed": true
+  },
+  {
+    "entity": "Quicksilver Lagoon",
+    "relation": "Lagoon Water Salinity",
+    "value_2018": "Brackish",
+    "value_2020": "Brackish",
+    "value_2022": "Brackish",
+    "value_2024": "Brackish",
+    "changed": false
+  },
+  {
+    "entity": "Radiant Channel",
+    "relation": "Channel Lighting",
+    "value_2018": "Solar",
+    "value_2020": "Solar",
+    "value_2022": "Solar",
+    "value_2024": "Grid",
+    "changed": true
+  },
+  {
+    "entity": "Saltwind Harbour",
+    "relation": "Harbour Tide Gates",
+    "value_2018": "Closed",
+    "value_2020": "Closed",
+    "value_2022": "Automated",
+    "value_2024": "Automated",
+    "changed": true
+  },
+  {
+    "entity": "Stormbreak Inlet",
+    "relation": "Inlet Current Speed",
+    "value_2018": "4 knots",
+    "value_2020": "4 knots",
+    "value_2022": "4 knots",
+    "value_2024": "6 knots",
+    "changed": true
+  },
+  {
+    "entity": "Tidebreaker Bay",
+    "relation": "Bay Bottom Composition",
+    "value_2018": "Sand",
+    "value_2020": "Sand",
+    "value_2022": "Sand",
+    "value_2024": "Silt",
+    "changed": true
+  },
+  {
+    "entity": "Umbra Strait",
+    "relation": "Strait Fog Frequency",
+    "value_2018": "High",
+    "value_2020": "High",
+    "value_2022": "High",
+    "value_2024": "Low",
+    "changed": true
+  },
+  {
+    "entity": "Veiled Anchorage",
+    "relation": "Anchorage Dredged",
+    "value_2018": "No",
+    "value_2020": "No",
+    "value_2022": "No",
+    "value_2024": "Yes",
+    "changed": true
+  },
+  {
+    "entity": "Whispering Channel",
+    "relation": "Channel Current",
+    "value_2018": "Slow",
+    "value_2020": "Slow",
+    "value_2022": "Moderate",
+    "value_2024": "Moderate",
+    "changed": true
+  },
+  {
+    "entity": "Xylos Harbour",
+    "relation": "Harbour Entrance",
+    "value_2018": "Narrow",
+    "value_2020": "Widened",
+    "value_2022": "Widened",
+    "value_2024": "Widened",
+    "changed": true
+  },
+  {
+    "entity": "Yarrow Inlet",
+    "relation": "Inlet Dredged Depth",
+    "value_2018": "8m",
+    "value_2020": "8m",
+    "value_2022": "8m",
+    "value_2024": "8m",
+    "changed": false
+  },
+  {
+    "entity": "Zephyr Port",
+    "relation": "Port Automation Level",
+    "value_2018": "Basic",
+    "value_2020": "Basic",
+    "value_2022": "Advanced",
+    "value_2024": "Advanced",
+    "changed": true
+  },
+  {
+    "entity": "Azuretide Port",
+    "relation": "Harbour Operations Fee",
+    "value_2018": "Standard",
+    "value_2020": "Premium",
+    "value_2022": "Premium",
+    "value_2024": "Premium",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Channel",
+    "relation": "Channel Hydrographic Survey",
+    "value_2018": "Annual",
+    "value_2020": "Annual",
+    "value_2022": "Annual",
+    "value_2024": "Biennial",
+    "changed": true
+  },
+  {
+    "entity": "Glimmering Reef",
+    "relation": "Reef Conservation Status",
+    "value_2018": "Stable",
+    "value_2020": "Stable",
+    "value_2022": "Vulnerable",
+    "value_2024": "Vulnerable",
+    "changed": true
+  },
+  {
+    "entity": "Ironclad Dock",
+    "relation": "Dock Infrastructure Rating",
+    "value_2018": "Good",
+    "value_2020": "Excellent",
+    "value_2022": "Excellent",
+    "value_2024": "Excellent",
+    "changed": true
+  },
+  {
+    "entity": "Jettison Point",
+    "relation": "Tidal Flow Monitoring",
+    "value_2018": "Manual",
+    "value_2020": "Manual",
+    "value_2022": "Automated",
+    "value_2024": "Automated",
+    "changed": true
+  },
+  {
+    "entity": "Kestrel Bay",
+    "relation": "Bay Wildlife",
+    "value_2018": "Seals",
+    "value_2020": "Seals",
+    "value_2022": "Seals",
+    "value_2024": "Dolphins",
+    "changed": true
+  },
+  {
+    "entity": "Aethelred Array",
+    "relation": "primary signal protocol",
+    "value_2018": "Fluxweave",
+    "value_2020": "Resonance",
+    "value_2022": "Resonance",
+    "value_2024": "Resonance",
+    "changed": true
+  },
+  {
+    "entity": "Starlight Nexus",
+    "relation": "calibration constant",
+    "value_2018": "7.89",
+    "value_2020": "7.89",
+    "value_2022": "7.89",
+    "value_2024": "7.89",
+    "changed": false
+  },
+  {
+    "entity": "Celestia Optics",
+    "relation": "focus aperture",
+    "value_2018": "f/1.8",
+    "value_2020": "f/1.8",
+    "value_2022": "f/1.8",
+    "value_2024": "f/2.0",
+    "changed": true
+  },
+  {
+    "entity": "Zenith Transponder",
+    "relation": "operating frequency",
+    "value_2018": "420 GHz",
+    "value_2020": "420 GHz",
+    "value_2022": "420 GHz",
+    "value_2024": "422 GHz",
+    "changed": true
+  },
+  {
+    "entity": "Orion Relay",
+    "relation": "data throughput limit",
+    "value_2018": "10 Gbps",
+    "value_2020": "10 Gbps",
+    "value_2022": "15 Gbps",
+    "value_2024": "15 Gbps",
+    "changed": true
+  },
+  {
+    "entity": "Pulsar Beacon",
+    "relation": "authentication method",
+    "value_2018": "Quantum Lock",
+    "value_2020": "Quantum Lock",
+    "value_2022": "Quantum Lock",
+    "value_2024": "Chrono-Key",
+    "changed": true
+  },
+  {
+    "entity": "Nebula Systems",
+    "relation": "encryption standard",
+    "value_2018": "AES-256",
+    "value_2020": "AES-256",
+    "value_2022": "AES-256",
+    "value_2024": "AES-256",
+    "changed": false
+  },
+  {
+    "entity": "Cosmic Echo",
+    "relation": "signal latency",
+    "value_2018": "5 ms",
+    "value_2020": "5 ms",
+    "value_2022": "5 ms",
+    "value_2024": "4 ms",
+    "changed": true
+  },
+  {
+    "entity": "Nova Gate",
+    "relation": "port configuration",
+    "value_2018": "Dual-Stream",
+    "value_2020": "Quad-Stream",
+    "value_2022": "Quad-Stream",
+    "value_2024": "Quad-Stream",
+    "changed": true
+  },
+  {
+    "entity": "Astro-Dynamics",
+    "relation": "lens material",
+    "value_2018": "Silicon",
+    "value_2020": "Silicon",
+    "value_2022": "Silicon",
+    "value_2024": "Sapphire",
+    "changed": true
+  },
+  {
+    "entity": "Stellar Dynamics",
+    "relation": "modulation technique",
+    "value_2018": "PSK",
+    "value_2020": "PSK",
+    "value_2022": "PSK",
+    "value_2024": "QAM",
+    "changed": true
+  },
+  {
+    "entity": "Quantum Leap",
+    "relation": "power source",
+    "value_2018": "Fusion Cell",
+    "value_2020": "Antimatter",
+    "value_2022": "Antimatter",
+    "value_2024": "Antimatter",
+    "changed": true
+  },
+  {
+    "entity": "Galactic Signal",
+    "relation": "response time",
+    "value_2018": "100 us",
+    "value_2020": "100 us",
+    "value_2022": "100 us",
+    "value_2024": "100 us",
+    "changed": false
+  },
+  {
+    "entity": "Echo Wave",
+    "relation": "signal strength",
+    "value_2018": "High",
+    "value_2020": "Medium",
+    "value_2022": "Medium",
+    "value_2024": "Medium",
+    "changed": true
+  },
+  {
+    "entity": "Solar Flare",
+    "relation": "bandwidth allocation",
+    "value_2018": "1 THz",
+    "value_2020": "1 THz",
+    "value_2022": "1 THz",
+    "value_2024": "2 THz",
+    "changed": true
+  },
+  {
+    "entity": "Starfall Systems",
+    "relation": "firmware checksum",
+    "value_2018": "0xABCDEF12",
+    "value_2020": "0xABCDEF12",
+    "value_2022": "0x12345678",
+    "value_2024": "0x12345678",
+    "changed": true
+  },
+  {
+    "entity": "Voyager Relay",
+    "relation": "frequency band",
+    "value_2018": "X-band",
+    "value_2020": "X-band",
+    "value_2022": "Ka-band",
+    "value_2024": "Ka-band",
+    "changed": true
+  },
+  {
+    "entity": "Quantum Dynamics",
+    "relation": "lens coating",
+    "value_2018": "Anti-Reflective",
+    "value_2020": "Anti-Reflective",
+    "value_2022": "Anti-Reflective",
+    "value_2024": "Broadband",
+    "changed": true
+  },
+  {
+    "entity": "Deep Space Signal",
+    "relation": "signal integrity",
+    "value_2018": "Excellent",
+    "value_2020": "Excellent",
+    "value_2022": "Excellent",
+    "value_2024": "Excellent",
+    "changed": false
+  },
+  {
+    "entity": "Nebula Relay",
+    "relation": "routing algorithm",
+    "value_2018": "Dijkstra",
+    "value_2020": "Dijkstra",
+    "value_2022": "A*",
+    "value_2024": "A*",
+    "changed": true
+  },
+  {
+    "entity": "Stardust Optics",
+    "relation": "focal length",
+    "value_2018": "100 mm",
+    "value_2020": "100 mm",
+    "value_2022": "100 mm",
+    "value_2024": "120 mm",
+    "changed": true
+  },
+  {
+    "entity": "Pioneer Array",
+    "relation": "signal attenuation",
+    "value_2018": "0.5 dB",
+    "value_2020": "0.5 dB",
+    "value_2022": "0.5 dB",
+    "value_2024": "0.3 dB",
+    "changed": true
+  },
+  {
+    "entity": "Celestial Dynamics",
+    "relation": "lens diameter",
+    "value_2018": "50 cm",
+    "value_2020": "50 cm",
+    "value_2022": "50 cm",
+    "value_2024": "60 cm",
+    "changed": true
+  },
+  {
+    "entity": "Starlink Systems",
+    "relation": "packet loss rate",
+    "value_2018": "0.1%",
+    "value_2020": "0.05%",
+    "value_2022": "0.05%",
+    "value_2024": "0.05%",
+    "changed": true
+  },
+  {
+    "entity": "Vortex Array",
+    "relation": "signal integrity",
+    "value_2018": "Good",
+    "value_2020": "Good",
+    "value_2022": "Good",
+    "value_2024": "Good",
+    "changed": false
+  },
+  {
+    "entity": "Aethelred Systems",
+    "relation": "firmware signature",
+    "value_2018": "Alpha",
+    "value_2020": "Alpha",
+    "value_2022": "Beta",
+    "value_2024": "Beta",
+    "changed": true
+  },
+  {
+    "entity": "Celestia Relay",
+    "relation": "signal amplification",
+    "value_2018": "10x",
+    "value_2020": "10x",
+    "value_2022": "12x",
+    "value_2024": "12x",
+    "changed": true
+  },
+  {
+    "entity": "Starlight Array",
+    "relation": "receiver sensitivity",
+    "value_2018": "-110 dBm",
+    "value_2020": "-110 dBm",
+    "value_2022": "-110 dBm",
+    "value_2024": "-112 dBm",
+    "changed": true
+  },
+  {
+    "entity": "Nebula Optics",
+    "relation": "lens curvature",
+    "value_2018": "Parabolic",
+    "value_2020": "Parabolic",
+    "value_2022": "Elliptical",
+    "value_2024": "Elliptical",
+    "changed": true
+  },
+  {
+    "entity": "Cosmic Signal",
+    "relation": "signal quality",
+    "value_2018": "Excellent",
+    "value_2020": "Excellent",
+    "value_2022": "Excellent",
+    "value_2024": "Excellent",
+    "changed": false
+  },
+  {
+    "entity": "Astro Systems",
+    "relation": "frequency synchronization",
+    "value_2018": "High",
+    "value_2020": "High",
+    "value_2022": "High",
+    "value_2024": "High",
+    "changed": false
+  },
+  {
+    "entity": "Stellar Relay",
+    "relation": "signal strength",
+    "value_2018": "Moderate",
+    "value_2020": "Moderate",
+    "value_2022": "Moderate",
+    "value_2024": "Strong",
+    "changed": true
+  },
+  {
+    "entity": "Quantum Array",
+    "relation": "data interleaving",
+    "value_2018": "None",
+    "value_2020": "None",
+    "value_2022": "Standard",
+    "value_2024": "Standard",
+    "changed": true
+  },
+  {
+    "entity": "Galactic Array",
+    "relation": "lens aperture",
+    "value_2018": "f/2.8",
+    "value_2020": "f/2.8",
+    "value_2022": "f/2.8",
+    "value_2024": "f/3.0",
+    "changed": true
+  },
+  {
+    "entity": "Cosmic Relay",
+    "relation": "signal path",
+    "value_2018": "Direct",
+    "value_2020": "Indirect",
+    "value_2022": "Indirect",
+    "value_2024": "Indirect",
+    "changed": true
+  },
+  {
+    "entity": "Nebula Transponder",
+    "relation": "modulation frequency",
+    "value_2018": "1 MHz",
+    "value_2020": "1 MHz",
+    "value_2022": "1 MHz",
+    "value_2024": "1.5 MHz",
+    "changed": true
+  },
+  {
+    "entity": "Orion Optics",
+    "relation": "lens aberration",
+    "value_2018": "Minor",
+    "value_2020": "Negligible",
+    "value_2022": "Negligible",
+    "value_2024": "Negligible",
+    "changed": true
+  },
+  {
+    "entity": "Orion Pulsar",
+    "relation": "primary antenna frequency",
+    "value_2018": "1.2 GHz",
+    "value_2020": "1.2 GHz",
+    "value_2022": "1.2 GHz",
+    "value_2024": "1.2 GHz",
+    "changed": false
+  },
+  {
+    "entity": "Nebula Dynamics",
+    "relation": "signal routing protocol",
+    "value_2018": "N-Route v1.0",
+    "value_2020": "N-Route v1.0",
+    "value_2022": "N-Route v1.1",
+    "value_2024": "N-Route v1.1",
+    "changed": true
+  },
+  {
+    "entity": "Lyra Transceiver",
+    "relation": "calibration constant",
+    "value_2018": "0.05",
+    "value_2020": "0.05",
+    "value_2022": "0.05",
+    "value_2024": "0.05",
+    "changed": false
+  },
+  {
+    "entity": "Cygnus Beacon",
+    "relation": "emergency broadcast channel",
+    "value_2018": "Channel 7",
+    "value_2020": "Channel 7",
+    "value_2022": "Channel 7",
+    "value_2024": "Channel 7",
+    "changed": false
+  },
+  {
+    "entity": "Solara Systems",
+    "relation": "lens aperture setting",
+    "value_2018": "f/2.8",
+    "value_2020": "f/2.8",
+    "value_2022": "f/2.8",
+    "value_2024": "f/2.8",
+    "changed": false
+  },
+  {
+    "entity": "Vega Relay",
+    "relation": "bandwidth allocation",
+    "value_2018": "2 Gbps",
+    "value_2020": "2 Gbps",
+    "value_2022": "2 Gbps",
+    "value_2024": "2.5 Gbps",
+    "changed": true
+  },
+  {
+    "entity": "Gemini Network",
+    "relation": "data encryption standard",
+    "value_2018": "AES-128",
+    "value_2020": "AES-128",
+    "value_2022": "AES-256",
+    "value_2024": "AES-256",
+    "changed": true
+  },
+  {
+    "entity": "Sirius Systems",
+    "relation": "modulation scheme",
+    "value_2018": "QPSK",
+    "value_2020": "QPSK",
+    "value_2022": "QPSK",
+    "value_2024": "QPSK",
+    "changed": false
+  },
+  {
+    "entity": "Pallas Navigation",
+    "relation": "navigation signal strength",
+    "value_2018": "-10 dBm",
+    "value_2020": "-10 dBm",
+    "value_2022": "-10 dBm",
+    "value_2024": "-10 dBm",
+    "changed": false
+  },
+  {
+    "entity": "Cassiopeia Labs",
+    "relation": "frequency hopping rate",
+    "value_2018": "50 hops/sec",
+    "value_2020": "50 hops/sec",
+    "value_2022": "50 hops/sec",
+    "value_2024": "75 hops/sec",
+    "changed": true
+  },
+  {
+    "entity": "Europa Systems",
+    "relation": "receiver gain setting",
+    "value_2018": "30 dB",
+    "value_2020": "30 dB",
+    "value_2022": "30 dB",
+    "value_2024": "30 dB",
+    "changed": false
+  },
+  {
+    "entity": "Io Network",
+    "relation": "network latency target",
+    "value_2018": "5 ms",
+    "value_2020": "4 ms",
+    "value_2022": "4 ms",
+    "value_2024": "4 ms",
+    "changed": true
+  },
+  {
+    "entity": "Ganymede Optics",
+    "relation": "lens coating type",
+    "value_2018": "Anti-reflective",
+    "value_2020": "Anti-reflective",
+    "value_2022": "Anti-reflective",
+    "value_2024": "Anti-reflective",
+    "changed": false
+  },
+  {
+    "entity": "Callisto Relay",
+    "relation": "protocol version",
+    "value_2018": "v3.1",
+    "value_2020": "v3.1",
+    "value_2022": "v3.2",
+    "value_2024": "v3.2",
+    "changed": true
+  },
+  {
+    "entity": "Venus Systems",
+    "relation": "transponder mode",
+    "value_2018": "Broadcast",
+    "value_2020": "Broadcast",
+    "value_2022": "Broadcast",
+    "value_2024": "Encrypted",
+    "changed": true
+  },
+  {
+    "entity": "Pluto Optics",
+    "relation": "filter type",
+    "value_2018": "UV Pass",
+    "value_2020": "UV Pass",
+    "value_2022": "UV Pass",
+    "value_2024": "UV Pass",
+    "changed": false
+  },
+  {
+    "entity": "Mars Relay",
+    "relation": "data packet size",
+    "value_2018": "1024 bytes",
+    "value_2020": "1024 bytes",
+    "value_2022": "2048 bytes",
+    "value_2024": "2048 bytes",
+    "changed": true
+  },
+  {
+    "entity": "Jupiter Network",
+    "relation": "connection timeout",
+    "value_2018": "60 seconds",
+    "value_2020": "60 seconds",
+    "value_2022": "60 seconds",
+    "value_2024": "60 seconds",
+    "changed": false
+  },
+  {
+    "entity": "Uranus Optics",
+    "relation": "collimation accuracy",
+    "value_2018": "0.01 degrees",
+    "value_2020": "0.005 degrees",
+    "value_2022": "0.005 degrees",
+    "value_2024": "0.005 degrees",
+    "changed": true
+  },
+  {
+    "entity": "Ceres Systems",
+    "relation": "data throughput rate",
+    "value_2018": "10 MB/s",
+    "value_2020": "10 MB/s",
+    "value_2022": "10 MB/s",
+    "value_2024": "10 MB/s",
+    "changed": false
+  },
+  {
+    "entity": "Eris Network",
+    "relation": "protocol handshake",
+    "value_2018": "HND-3",
+    "value_2020": "HND-3",
+    "value_2022": "HND-4",
+    "value_2024": "HND-4",
+    "changed": true
+  },
+  {
+    "entity": "Makemake Optics",
+    "relation": "lens diameter",
+    "value_2018": "50mm",
+    "value_2020": "50mm",
+    "value_2022": "50mm",
+    "value_2024": "50mm",
+    "changed": false
+  },
+  {
+    "entity": "Haumea Relay",
+    "relation": "packet retransmission limit",
+    "value_2018": "3",
+    "value_2020": "5",
+    "value_2022": "5",
+    "value_2024": "5",
+    "changed": true
+  },
+  {
+    "entity": "Zylon Systems",
+    "relation": "gain-bandwidth product",
+    "value_2018": "100 MHz",
+    "value_2020": "100 MHz",
+    "value_2022": "100 MHz",
+    "value_2024": "100 MHz",
+    "changed": false
+  },
+  {
+    "entity": "Quantar Network",
+    "relation": "authentication method",
+    "value_2018": "Token",
+    "value_2020": "Token",
+    "value_2022": "Certificate",
+    "value_2024": "Certificate",
+    "changed": true
+  },
+  {
+    "entity": "Aether Optics",
+    "relation": "refractive index",
+    "value_2018": "1.5",
+    "value_2020": "1.5",
+    "value_2022": "1.5",
+    "value_2024": "1.5",
+    "changed": false
+  },
+  {
+    "entity": "Nova Relay",
+    "relation": "transmission power",
+    "value_2018": "10 W",
+    "value_2020": "10 W",
+    "value_2022": "10 W",
+    "value_2024": "12 W",
+    "changed": true
+  },
+  {
+    "entity": "Quasar Systems",
+    "relation": "oscillator frequency",
+    "value_2018": "5 GHz",
+    "value_2020": "5 GHz",
+    "value_2022": "5 GHz",
+    "value_2024": "5 GHz",
+    "changed": false
+  },
+  {
+    "entity": "Stellar Network",
+    "relation": "protocol handshake timeout",
+    "value_2018": "30 seconds",
+    "value_2020": "20 seconds",
+    "value_2022": "20 seconds",
+    "value_2024": "20 seconds",
+    "changed": true
+  },
+  {
+    "entity": "Supernova Optics",
+    "relation": "lens focal length",
+    "value_2018": "100 mm",
+    "value_2020": "100 mm",
+    "value_2022": "100 mm",
+    "value_2024": "100 mm",
+    "changed": false
+  },
+  {
+    "entity": "Cosmic Relay",
+    "relation": "maximum hops",
+    "value_2018": "7",
+    "value_2020": "7",
+    "value_2022": "7",
+    "value_2024": "5",
+    "changed": true
+  },
+  {
+    "entity": "Interstellar Systems",
+    "relation": "protocol version number",
+    "value_2018": "2.1",
+    "value_2020": "2.1",
+    "value_2022": "2.1",
+    "value_2024": "2.2",
+    "changed": true
+  },
+  {
+    "entity": "Void Relay",
+    "relation": "connection establishment",
+    "value_2018": "TCP",
+    "value_2020": "TCP",
+    "value_2022": "UDP",
+    "value_2024": "UDP",
+    "changed": true
+  },
+  {
+    "entity": "Astral Systems",
+    "relation": "frequency range",
+    "value_2018": "L-Band",
+    "value_2020": "L-Band",
+    "value_2022": "L-Band",
+    "value_2024": "S-Band",
+    "changed": true
+  },
+  {
+    "entity": "Stardust Optics",
+    "relation": "lens material",
+    "value_2018": "Glass",
+    "value_2020": "Glass",
+    "value_2022": "Glass",
+    "value_2024": "Glass",
+    "changed": false
+  },
+  {
+    "entity": "Starflare Relay",
+    "relation": "command sequence",
+    "value_2018": "CS-1",
+    "value_2020": "CS-1",
+    "value_2022": "CS-1",
+    "value_2024": "CS-2",
+    "changed": true
+  },
+  {
+    "entity": "Nebula Signal",
+    "relation": "routing algorithm",
+    "value_2018": "Dijkstra",
+    "value_2020": "Dijkstra",
+    "value_2022": "Dijkstra",
+    "value_2024": "Bellman-Ford",
+    "changed": true
+  },
+  {
+    "entity": "Glimmerbrook",
+    "relation": "primary_water_source",
+    "value_2018": "Whispering Creek",
+    "value_2020": "Whispering Creek",
+    "value_2022": "Crystal Spring",
+    "value_2024": "Crystal Spring",
+    "changed": true
+  },
+  {
+    "entity": "Ironwood City",
+    "relation": "district_reclassification",
+    "value_2018": "North Sector",
+    "value_2020": "Central Sector",
+    "value_2022": "Central Sector",
+    "value_2024": "Central Sector",
+    "changed": true
+  },
+  {
+    "entity": "Aethelburg",
+    "relation": "official_language",
+    "value_2018": "Old Lumina",
+    "value_2020": "Neo-Lumina",
+    "value_2022": "Neo-Lumina",
+    "value_2024": "Neo-Lumina",
+    "changed": true
+  },
+  {
+    "entity": "Port Zenith",
+    "relation": "zoning_code_principal",
+    "value_2018": "RZ-4",
+    "value_2020": "RZ-5",
+    "value_2022": "RZ-5",
+    "value_2024": "RZ-5",
+    "changed": true
+  },
+  {
+    "entity": "Silvanus Grove",
+    "relation": "parks_department_head",
+    "value_2018": "Lyra Meadowlight",
+    "value_2020": "Lyra Meadowlight",
+    "value_2022": "Kaelen Stone",
+    "value_2024": "Kaelen Stone",
+    "changed": true
+  },
+  {
+    "entity": "Quilltown",
+    "relation": "public_transport_operator",
+    "value_2018": "Swiftline Transit",
+    "value_2020": "Swiftline Transit",
+    "value_2022": "Quill Transit Co.",
+    "value_2024": "Quill Transit Co.",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Spire",
+    "relation": "resident_census_tier",
+    "value_2018": "Tier 3",
+    "value_2020": "Tier 3",
+    "value_2022": "Tier 3",
+    "value_2024": "Tier 4",
+    "changed": true
+  },
+  {
+    "entity": "Starfall",
+    "relation": "cadastral_survey_method",
+    "value_2018": "Geodetic Grid",
+    "value_2020": "Geodetic Grid",
+    "value_2022": "Triangulation",
+    "value_2024": "Triangulation",
+    "changed": true
+  },
+  {
+    "entity": "Azure Bay",
+    "relation": "port_authority_chair",
+    "value_2018": "Admiral Thorne",
+    "value_2020": "Admiral Thorne",
+    "value_2022": "Admiral Thorne",
+    "value_2024": "Admiral Thorne",
+    "changed": false
+  },
+  {
+    "entity": "Oakhaven",
+    "relation": "planning_commission_lead",
+    "value_2018": "Bram Forest",
+    "value_2020": "Bram Forest",
+    "value_2022": "Bram Forest",
+    "value_2024": "Elara Green",
+    "changed": true
+  },
+  {
+    "entity": "Emberton",
+    "relation": "fire_department_chief",
+    "value_2018": "Ignis Flame",
+    "value_2020": "Ignis Flame",
+    "value_2022": "Ignis Flame",
+    "value_2024": "Cinder Ash",
+    "changed": true
+  },
+  {
+    "entity": "Skyreach",
+    "relation": "airspace_classification",
+    "value_2018": "Class C",
+    "value_2020": "Class C",
+    "value_2022": "Class B",
+    "value_2024": "Class B",
+    "changed": true
+  },
+  {
+    "entity": "Riverbend",
+    "relation": "floodplain_designation",
+    "value_2018": "Zone A",
+    "value_2020": "Zone AE",
+    "value_2022": "Zone AE",
+    "value_2024": "Zone AE",
+    "changed": true
+  },
+  {
+    "entity": "Shadowfen",
+    "relation": "historical_survey_authority",
+    "value_2018": "King's Cartographers",
+    "value_2020": "King's Cartographers",
+    "value_2022": "Queen's Surveyors",
+    "value_2024": "Queen's Surveyors",
+    "changed": true
+  },
+  {
+    "entity": "Gale's Watch",
+    "relation": "wind_turbine_siting_zone",
+    "value_2018": "Zone 1",
+    "value_2020": "Zone 2",
+    "value_2022": "Zone 2",
+    "value_2024": "Zone 2",
+    "changed": true
+  },
+  {
+    "entity": "Saltmarsh",
+    "relation": "tidal_gauging_station",
+    "value_2018": "Station Alpha",
+    "value_2020": "Station Alpha",
+    "value_2022": "Station Alpha",
+    "value_2024": "Station Beta",
+    "changed": true
+  },
+  {
+    "entity": "Goldengate",
+    "relation": "toll_collection_system",
+    "value_2018": "Manual Booths",
+    "value_2020": "Manual Booths",
+    "value_2022": "Electronic Pass",
+    "value_2024": "Electronic Pass",
+    "changed": true
+  },
+  {
+    "entity": "Thornwood",
+    "relation": "arboretum_curator",
+    "value_2018": "Flora Bloom",
+    "value_2020": "Flora Bloom",
+    "value_2022": "Flora Bloom",
+    "value_2024": "Flora Bloom",
+    "changed": false
+  },
+  {
+    "entity": "Stonehaven",
+    "relation": "building_code_enforcement_agency",
+    "value_2018": "Stonehaven Inspectors",
+    "value_2020": "City Builders Office",
+    "value_2022": "City Builders Office",
+    "value_2024": "City Builders Office",
+    "changed": true
+  },
+  {
+    "entity": "Mistwood",
+    "relation": "fog_density_index",
+    "value_2018": "Low",
+    "value_2020": "Low",
+    "value_2022": "Medium",
+    "value_2024": "Medium",
+    "changed": true
+  },
+  {
+    "entity": "Silverstream",
+    "relation": "water_quality_standard",
+    "value_2018": "Class II",
+    "value_2020": "Class II",
+    "value_2022": "Class I",
+    "value_2024": "Class I",
+    "changed": true
+  },
+  {
+    "entity": "Brightwater",
+    "relation": "wastewater_treatment_level",
+    "value_2018": "Primary",
+    "value_2020": "Primary",
+    "value_2022": "Secondary",
+    "value_2024": "Secondary",
+    "changed": true
+  },
+  {
+    "entity": "Shadowbrook",
+    "relation": "historical_land_grant_holder",
+    "value_2018": "Baron Kael",
+    "value_2020": "Duke Valerius",
+    "value_2022": "Duke Valerius",
+    "value_2024": "Duke Valerius",
+    "changed": true
+  },
+  {
+    "entity": "Amberdale",
+    "relation": "traffic_flow_management_system",
+    "value_2018": "Manual Signals",
+    "value_2020": "Manual Signals",
+    "value_2022": "Manual Signals",
+    "value_2024": "Automated Lights",
+    "changed": true
+  },
+  {
+    "entity": "Stonespire Ridge",
+    "relation": "geological_survey_region",
+    "value_2018": "Region 7",
+    "value_2020": "Region 7",
+    "value_2022": "Region 8",
+    "value_2024": "Region 8",
+    "changed": true
+  },
+  {
+    "entity": "Deepwater Port",
+    "relation": "harbor_depth_survey_frequency",
+    "value_2018": "Annual",
+    "value_2020": "Annual",
+    "value_2022": "Biennial",
+    "value_2024": "Biennial",
+    "changed": true
+  },
+  {
+    "entity": "Frosty Creek",
+    "relation": "ice_thickness_measurement_protocol",
+    "value_2018": "Protocol 1",
+    "value_2020": "Protocol 1",
+    "value_2022": "Protocol 1",
+    "value_2024": "Protocol 1",
+    "changed": false
+  },
+  {
+    "entity": "Shadow Peaks",
+    "relation": "peak_identification_standard",
+    "value_2018": "Standard Alpha",
+    "value_2020": "Standard Alpha",
+    "value_2022": "Standard Beta",
+    "value_2024": "Standard Beta",
+    "changed": true
+  },
+  {
+    "entity": "Ironwood Valley",
+    "relation": "valley_settlement_zone",
+    "value_2018": "Zone G",
+    "value_2020": "Zone G",
+    "value_2022": "Zone H",
+    "value_2024": "Zone H",
+    "changed": true
+  },
+  {
+    "entity": "Veridian Forest",
+    "relation": "forest_management_plan_version",
+    "value_2018": "v3.0",
+    "value_2020": "v3.1",
+    "value_2022": "v3.1",
+    "value_2024": "v3.1",
+    "changed": true
+  },
+  {
+    "entity": "Port Serenity",
+    "relation": "maritime_traffic_control_system",
+    "value_2018": "VTS 1",
+    "value_2020": "VTS 1",
+    "value_2022": "VTS 2",
+    "value_2024": "VTS 2",
+    "changed": true
+  },
+  {
+    "entity": "Whispering Peaks",
+    "relation": "summit_elevation_measurement",
+    "value_2018": "3450m",
+    "value_2020": "3450m",
+    "value_2022": "3450m",
+    "value_2024": "3450m",
+    "changed": false
+  },
+  {
+    "entity": "Crimson Valley",
+    "relation": "geological_strata_identifier",
+    "value_2018": "Stratum C",
+    "value_2020": "Stratum C",
+    "value_2022": "Stratum D",
+    "value_2024": "Stratum D",
+    "changed": true
+  },
+  {
+    "entity": "Ironfall",
+    "relation": "mining_permit_district",
+    "value_2018": "District 5",
+    "value_2020": "District 5",
+    "value_2022": "District 6",
+    "value_2024": "District 6",
+    "changed": true
+  },
+  {
+    "entity": "Starhaven",
+    "relation": "celestial_observatory_location",
+    "value_2018": "Location A",
+    "value_2020": "Location B",
+    "value_2022": "Location B",
+    "value_2024": "Location B",
+    "changed": true
+  },
+  {
+    "entity": "Silvershore",
+    "relation": "beach_erosion_control_method",
+    "value_2018": "Seawalls",
+    "value_2020": "Seawalls",
+    "value_2022": "Seawalls",
+    "value_2024": "Seawalls",
+    "changed": false
+  },
+  {
+    "entity": "Glimmering Lake",
+    "relation": "lake_depth_survey_frequency",
+    "value_2018": "Quadrennial",
+    "value_2020": "Decennial",
+    "value_2022": "Decennial",
+    "value_2024": "Decennial",
+    "changed": true
+  },
+  {
+    "entity": "Oakhaven Meadow",
+    "relation": "grazing_zone_designation",
+    "value_2018": "Zone Alpha",
+    "value_2020": "Zone Beta",
+    "value_2022": "Zone Beta",
+    "value_2024": "Zone Beta",
+    "changed": true
+  },
+  {
+    "entity": "Oakhaven District",
+    "relation": "Designated Census Tract",
+    "value_2018": "Tract 7B",
+    "value_2020": "Tract 7B",
+    "value_2022": "Tract 7B",
+    "value_2024": "Tract 7B",
+    "changed": false
+  },
+  {
+    "entity": "Riverbend Township",
+    "relation": "Incorporation Status",
+    "value_2018": "Township",
+    "value_2020": "Township",
+    "value_2022": "Township",
+    "value_2024": "Township",
+    "changed": false
+  },
+  {
+    "entity": "Northreach Borough",
+    "relation": "Primary Land Use Designation",
+    "value_2018": "Residential",
+    "value_2020": "Residential",
+    "value_2022": "Residential",
+    "value_2024": "Residential",
+    "changed": false
+  },
+  {
+    "entity": "Southgate District",
+    "relation": "Annexation Eligibility",
+    "value_2018": "Tier 2",
+    "value_2020": "Tier 2",
+    "value_2022": "Tier 2",
+    "value_2024": "Tier 2",
+    "changed": false
+  },
+  {
+    "entity": "Centralis Region",
+    "relation": "District Reorganization Mandate",
+    "value_2018": "Mandate 19",
+    "value_2020": "Mandate 19",
+    "value_2022": "Mandate 19",
+    "value_2024": "Mandate 19",
+    "changed": false
+  },
+  {
+    "entity": "Stoneworth City",
+    "relation": "Incorporation Year",
+    "value_2018": "1923",
+    "value_2020": "1923",
+    "value_2022": "1923",
+    "value_2024": "1923",
+    "changed": true
+  },
+  {
+    "entity": "Fellhaven District",
+    "relation": "Adjudication Court Jurisdiction",
+    "value_2018": "Court 3",
+    "value_2020": "Court 3",
+    "value_2022": "Court 3",
+    "value_2024": "Court 5",
+    "changed": true
+  },
+  {
+    "entity": "Shadowfen Township",
+    "relation": "Designated Survey Block",
+    "value_2018": "Block 14",
+    "value_2020": "Block 14",
+    "value_2022": "Block 15",
+    "value_2024": "Block 15",
+    "changed": true
+  },
+  {
+    "entity": "Windy Knoll Village",
+    "relation": "Incorporation Ordinance",
+    "value_2018": "Ordinance 7",
+    "value_2020": "Ordinance 9",
+    "value_2022": "Ordinance 9",
+    "value_2024": "Ordinance 9",
+    "changed": true
+  },
+  {
+    "entity": "Cobblestone Quarter",
+    "relation": "Territorial Dispute Resolution",
+    "value_2018": "Arbiter Flynn",
+    "value_2020": "Arbiter Flynn",
+    "value_2022": "Arbiter Flynn",
+    "value_2024": "Arbiter Vance",
+    "changed": true
+  },
+  {
+    "entity": "Goldenspire City",
+    "relation": "Census Bureau Assignee",
+    "value_2018": "Bureau 7",
+    "value_2020": "Bureau 7",
+    "value_2022": "Bureau 7",
+    "value_2024": "Bureau 8",
+    "changed": true
+  },
+  {
+    "entity": "Hearthstone Township",
+    "relation": "Incorporation Charter Amendment",
+    "value_2018": "Amendment 2",
+    "value_2020": "Amendment 2",
+    "value_2022": "Amendment 3",
+    "value_2024": "Amendment 3",
+    "changed": true
+  },
+  {
+    "entity": "Kestrel's Nest Village",
+    "relation": "Territorial Adjudication Protocol",
+    "value_2018": "Protocol X",
+    "value_2020": "Protocol Y",
+    "value_2022": "Protocol Y",
+    "value_2024": "Protocol Y",
+    "changed": true
+  },
+  {
+    "entity": "Larkspur Landing",
+    "relation": "Census Tract Reclassification",
+    "value_2018": "Tract 9A",
+    "value_2020": "Tract 9A",
+    "value_2022": "Tract 10C",
+    "value_2024": "Tract 10C",
+    "changed": true
+  },
+  {
+    "entity": "Northwind City",
+    "relation": "Survey Baseline Shift",
+    "value_2018": "Baseline North",
+    "value_2020": "Baseline East",
+    "value_2022": "Baseline East",
+    "value_2024": "Baseline East",
+    "changed": true
+  },
+  {
+    "entity": "Petalfall Village",
+    "relation": "Jurisdictional Zone Reassignment",
+    "value_2018": "Zone Delta",
+    "value_2020": "Zone Epsilon",
+    "value_2022": "Zone Epsilon",
+    "value_2024": "Zone Epsilon",
+    "changed": true
+  },
+  {
+    "entity": "Quillbrook Township",
+    "relation": "Census Block Assignment",
+    "value_2018": "Block 22",
+    "value_2020": "Block 22",
+    "value_2022": "Block 22",
+    "value_2024": "Block 23",
+    "changed": true
+  },
+  {
+    "entity": "Rivenrock City",
+    "relation": "Incorporation Charter",
+    "value_2018": "Charter IV",
+    "value_2020": "Charter V",
+    "value_2022": "Charter V",
+    "value_2024": "Charter V",
+    "changed": true
+  },
+  {
+    "entity": "Valleyforge Township",
+    "relation": "Incorporation Order",
+    "value_2018": "Order 12",
+    "value_2020": "Order 13",
+    "value_2022": "Order 13",
+    "value_2024": "Order 13",
+    "changed": true
+  },
+  {
+    "entity": "Winterhaven City",
+    "relation": "Official Surveyor",
+    "value_2018": "Surveyor Jenks",
+    "value_2020": "Surveyor Jenks",
+    "value_2022": "Surveyor Croft",
+    "value_2024": "Surveyor Croft",
+    "changed": true
+  },
+  {
+    "entity": "Willow Creek",
+    "relation": "Incorporation Status",
+    "value_2018": "Village",
+    "value_2020": "Village",
+    "value_2022": "Township",
+    "value_2024": "Township",
+    "changed": true
+  },
+  {
+    "entity": "Azure Lake",
+    "relation": "Primary Land Use Designation",
+    "value_2018": "Agricultural",
+    "value_2020": "Residential",
+    "value_2022": "Residential",
+    "value_2024": "Residential",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Peak",
+    "relation": "Census Data Accuracy",
+    "value_2018": "Level 3",
+    "value_2020": "Level 3",
+    "value_2022": "Level 3",
+    "value_2024": "Level 2",
+    "changed": true
+  },
+  {
+    "entity": "Evergreen",
+    "relation": "Territorial Adjudication Decree",
+    "value_2018": "Decree 4",
+    "value_2020": "Decree 5",
+    "value_2022": "Decree 5",
+    "value_2024": "Decree 5",
+    "changed": true
+  },
+  {
+    "entity": "Fairview",
+    "relation": "Incorporation Year",
+    "value_2018": "2001",
+    "value_2020": "2001",
+    "value_2022": "2002",
+    "value_2024": "2002",
+    "changed": true
+  },
+  {
+    "entity": "Golden Valley",
+    "relation": "Census Tract Identifier",
+    "value_2018": "Tract G1",
+    "value_2020": "Tract G1",
+    "value_2022": "Tract G2",
+    "value_2024": "Tract G2",
+    "changed": true
+  },
+  {
+    "entity": "Highland",
+    "relation": "Jurisdictional Zone",
+    "value_2018": "Zone Blue",
+    "value_2020": "Zone Blue",
+    "value_2022": "Zone Blue",
+    "value_2024": "Zone Red",
+    "changed": true
+  },
+  {
+    "entity": "Jade Creek",
+    "relation": "Adjudication Agent",
+    "value_2018": "Agent Silva",
+    "value_2020": "Agent Silva",
+    "value_2022": "Agent Thorne",
+    "value_2024": "Agent Thorne",
+    "changed": true
+  },
+  {
+    "entity": "Kelp Forest",
+    "relation": "Survey Meridian",
+    "value_2018": "Meridian 3",
+    "value_2020": "Meridian 3",
+    "value_2022": "Meridian 3",
+    "value_2024": "Meridian 4",
+    "changed": true
+  },
+  {
+    "entity": "Lakeview",
+    "relation": "Incorporation Basis",
+    "value_2018": "Land Grant",
+    "value_2020": "Land Grant",
+    "value_2022": "Land Grant",
+    "value_2024": "Petition",
+    "changed": true
+  },
+  {
+    "entity": "Xylos Mining Corp",
+    "relation": "primary fuel inspection protocol",
+    "value_2018": "SpectraScan 3",
+    "value_2020": "SpectraScan 3",
+    "value_2022": "SpectraScan 3",
+    "value_2024": "SpectraScan 3",
+    "changed": false
+  },
+  {
+    "entity": "Glimmering Depths Vault",
+    "relation": "vault access code",
+    "value_2018": "Alpha-7-Omega",
+    "value_2020": "Alpha-7-Omega",
+    "value_2022": "Gamma-9-Sigma",
+    "value_2024": "Gamma-9-Sigma",
+    "changed": true
+  },
+  {
+    "entity": "Pyrite Thermal Regulator",
+    "relation": "cooling fluid type",
+    "value_2018": "CryoGel Plus",
+    "value_2020": "CryoGel Plus",
+    "value_2022": "CryoGel Plus",
+    "value_2024": "CryoGel Plus",
+    "changed": false
+  },
+  {
+    "entity": "Meteoric Ore Syndicate",
+    "relation": "chief fuel inspector",
+    "value_2018": "Jarek Vane",
+    "value_2020": "Jarek Vane",
+    "value_2022": "Lyra Kael",
+    "value_2024": "Lyra Kael",
+    "changed": true
+  },
+  {
+    "entity": "Ironclad Containment Vault",
+    "relation": "vault custodian",
+    "value_2018": "Garth Stone",
+    "value_2020": "Garth Stone",
+    "value_2022": "Garth Stone",
+    "value_2024": "Garth Stone",
+    "changed": false
+  },
+  {
+    "entity": "Volcanic Vent Thermal System",
+    "relation": "operating temperature threshold",
+    "value_2018": "150 C",
+    "value_2020": "160 C",
+    "value_2022": "160 C",
+    "value_2024": "160 C",
+    "changed": true
+  },
+  {
+    "entity": "Obsidian Core Mining",
+    "relation": "fuel analysis hardware",
+    "value_2018": "Lumin Probe",
+    "value_2020": "Quantum Analyzer",
+    "value_2022": "Quantum Analyzer",
+    "value_2024": "Quantum Analyzer",
+    "changed": true
+  },
+  {
+    "entity": "Crystal Lode Vault",
+    "relation": "vault security protocol",
+    "value_2018": "BioLock",
+    "value_2020": "NeuralNet Shield",
+    "value_2022": "NeuralNet Shield",
+    "value_2024": "NeuralNet Shield",
+    "changed": true
+  },
+  {
+    "entity": "Zenith Mining Solutions",
+    "relation": "thermal regulation technician",
+    "value_2018": "Anya Petrova",
+    "value_2020": "Bram Thorne",
+    "value_2022": "Bram Thorne",
+    "value_2024": "Bram Thorne",
+    "changed": true
+  },
+  {
+    "entity": "Astral Dust Extractors",
+    "relation": "fuel sampling frequency",
+    "value_2018": "Daily",
+    "value_2020": "Bi-Weekly",
+    "value_2022": "Bi-Weekly",
+    "value_2024": "Bi-Weekly",
+    "changed": true
+  },
+  {
+    "entity": "Starlight Vault Company",
+    "relation": "primary vault material",
+    "value_2018": "Titanium Alloy",
+    "value_2020": "Ceramic Composite",
+    "value_2022": "Ceramic Composite",
+    "value_2024": "Ceramic Composite",
+    "changed": true
+  },
+  {
+    "entity": "Nebula Thermal Dynamics",
+    "relation": "heat dissipation method",
+    "value_2018": "Radiator Fins",
+    "value_2020": "Radiator Fins",
+    "value_2022": "Radiator Fins",
+    "value_2024": "Radiator Fins",
+    "changed": false
+  },
+  {
+    "entity": "Solar Flare Thermal",
+    "relation": "coolant reclamation system",
+    "value_2018": "Standard Loop",
+    "value_2020": "Standard Loop",
+    "value_2022": "Standard Loop",
+    "value_2024": "Standard Loop",
+    "changed": false
+  },
+  {
+    "entity": "Crimson Vein Extracts",
+    "relation": "chief fuel technician",
+    "value_2018": "Silas Croft",
+    "value_2020": "Kira Solis",
+    "value_2022": "Kira Solis",
+    "value_2024": "Kira Solis",
+    "changed": true
+  },
+  {
+    "entity": "Quasar Containment Vault",
+    "relation": "vault alarm trigger",
+    "value_2018": "Pressure Spike",
+    "value_2020": "Thermal Variance",
+    "value_2022": "Thermal Variance",
+    "value_2024": "Thermal Variance",
+    "changed": true
+  },
+  {
+    "entity": "Aurora Borealis Mining",
+    "relation": "fuel purity standard",
+    "value_2018": "99.5%",
+    "value_2020": "99.5%",
+    "value_2022": "99.5%",
+    "value_2024": "99.7%",
+    "changed": true
+  },
+  {
+    "entity": "Frostbite Thermal Systems",
+    "relation": "emergency coolant source",
+    "value_2018": "Reservoir A",
+    "value_2020": "Reservoir B",
+    "value_2022": "Reservoir B",
+    "value_2024": "Reservoir B",
+    "changed": true
+  },
+  {
+    "entity": "Galactic Core Vaults",
+    "relation": "vault integrity test",
+    "value_2018": "Annual",
+    "value_2020": "Annual",
+    "value_2022": "Annual",
+    "value_2024": "Bi-Annual",
+    "changed": true
+  },
+  {
+    "entity": "Voidstone Mining Group",
+    "relation": "primary thermal coolant",
+    "value_2018": "AquaChill 5",
+    "value_2020": "AquaChill 5",
+    "value_2022": "AquaChill 5",
+    "value_2024": "AquaChill 5",
+    "changed": false
+  },
+  {
+    "entity": "Deep Rock Thermal",
+    "relation": "ventilation fan speed",
+    "value_2018": "Medium",
+    "value_2020": "High",
+    "value_2022": "High",
+    "value_2024": "High",
+    "changed": true
+  },
+  {
+    "entity": "Terra Firma Mining",
+    "relation": "fuel contamination sensor",
+    "value_2018": "Model XR",
+    "value_2020": "Model XR",
+    "value_2022": "Model XR",
+    "value_2024": "Model XRT",
+    "changed": true
+  },
+  {
+    "entity": "Horizon Vault Services",
+    "relation": "vault structural reinforcement",
+    "value_2018": "Steel Plating",
+    "value_2020": "Steel Plating",
+    "value_2022": "Steel Plating",
+    "value_2024": "Diamond Weave",
+    "changed": true
+  },
+  {
+    "entity": "Solaris Thermal Management",
+    "relation": "cooling tower fluid",
+    "value_2018": "Glycol Mix",
+    "value_2020": "Glycol Mix",
+    "value_2022": "Glycol Mix",
+    "value_2024": "Glycol Mix",
+    "changed": false
+  },
+  {
+    "entity": "Asteroid Belt Mining",
+    "relation": "fuel pre-heating method",
+    "value_2018": "Induction Coil",
+    "value_2020": "Induction Coil",
+    "value_2022": "Plasma Torch",
+    "value_2024": "Plasma Torch",
+    "changed": true
+  },
+  {
+    "entity": "Singularity Vault Systems",
+    "relation": "vault pressure regulation",
+    "value_2018": "Active",
+    "value_2020": "Passive",
+    "value_2022": "Passive",
+    "value_2024": "Passive",
+    "changed": true
+  },
+  {
+    "entity": "Quantum Foam Mining",
+    "relation": "thermal exhaust port",
+    "value_2018": "Port A",
+    "value_2020": "Port A",
+    "value_2022": "Port A",
+    "value_2024": "Port B",
+    "changed": true
+  },
+  {
+    "entity": "Pulsar Thermal Solutions",
+    "relation": "heat sink material",
+    "value_2018": "Aluminum",
+    "value_2020": "Aluminum",
+    "value_2022": "Aluminum",
+    "value_2024": "Copper",
+    "changed": true
+  },
+  {
+    "entity": "Driftwood Mining Co.",
+    "relation": "chief vault attendant",
+    "value_2018": "Kaelen",
+    "value_2020": "Kaelen",
+    "value_2022": "Roric",
+    "value_2024": "Roric",
+    "changed": true
+  },
+  {
+    "entity": "Emberstone Thermal",
+    "relation": "temperature sensor type",
+    "value_2018": "Thermocouple",
+    "value_2020": "Thermocouple",
+    "value_2022": "Thermocouple",
+    "value_2024": "Thermistor",
+    "changed": true
+  },
+  {
+    "entity": "Ghostlight Vaults Inc.",
+    "relation": "vault door hinge type",
+    "value_2018": "Standard",
+    "value_2020": "Standard",
+    "value_2022": "Magnetic",
+    "value_2024": "Magnetic",
+    "changed": true
+  },
+  {
+    "entity": "Nova Fuel Inspection",
+    "relation": "inspection wavelength",
+    "value_2018": "Infrared",
+    "value_2020": "Infrared",
+    "value_2022": "Ultraviolet",
+    "value_2024": "Ultraviolet",
+    "changed": true
+  },
+  {
+    "entity": "Forge Thermal Systems",
+    "relation": "cooling system pressure",
+    "value_2018": "10 atm",
+    "value_2020": "12 atm",
+    "value_2022": "12 atm",
+    "value_2024": "12 atm",
+    "changed": true
+  },
+  {
+    "entity": "Shadow Mine Holdings",
+    "relation": "vault lock combination",
+    "value_2018": "8-15-3",
+    "value_2020": "8-15-3",
+    "value_2022": "8-15-3",
+    "value_2024": "8-15-3",
+    "changed": false
+  },
+  {
+    "entity": "Zenith Ore Refiners",
+    "relation": "fuel processing stage",
+    "value_2018": "Stage 2",
+    "value_2020": "Stage 2",
+    "value_2022": "Stage 2",
+    "value_2024": "Stage 2",
+    "changed": false
+  },
+  {
+    "entity": "Apex Thermal Control",
+    "relation": "ambient temperature range",
+    "value_2018": "0-30 C",
+    "value_2020": "0-30 C",
+    "value_2022": "0-30 C",
+    "value_2024": "0-30 C",
+    "changed": false
+  },
+  {
+    "entity": "Cinder Peak Mining",
+    "relation": "fuel sample container",
+    "value_2018": "Glass Vial",
+    "value_2020": "Glass Vial",
+    "value_2022": "Glass Vial",
+    "value_2024": "Polymer Jar",
+    "changed": true
+  },
+  {
+    "entity": "Solaris Mining Group",
+    "relation": "fuel analysis software",
+    "value_2018": "ScanPro",
+    "value_2020": "Analyzr",
+    "value_2022": "Analyzr",
+    "value_2024": "Analyzr",
+    "changed": true
+  },
+  {
+    "entity": "Glacial Thermal Dynamics",
+    "relation": "insulation material",
+    "value_2018": "Foam",
+    "value_2020": "Foam",
+    "value_2022": "Foam",
+    "value_2024": "Aerogel",
+    "changed": true
+  },
+  {
+    "entity": "Starfall Vault Systems",
+    "relation": "vault seismic dampening",
+    "value_2018": "Standard",
+    "value_2020": "Standard",
+    "value_2022": "Standard",
+    "value_2024": "Advanced",
+    "changed": true
+  },
+  {
+    "entity": "Tectonic Mining Corp",
+    "relation": "fuel viscosity check",
+    "value_2018": "Manual",
+    "value_2020": "Manual",
+    "value_2022": "Manual",
+    "value_2024": "Automated",
+    "changed": true
+  },
+  {
+    "entity": "Zenith Containment Vault",
+    "relation": "vault power source",
+    "value_2018": "Grid",
+    "value_2020": "Grid",
+    "value_2022": "Grid",
+    "value_2024": "Backup Generator",
+    "changed": true
+  },
+  {
+    "entity": "Inferno Thermal Services",
+    "relation": "heat exchange fluid",
+    "value_2018": "Oil",
+    "value_2020": "Oil",
+    "value_2022": "Oil",
+    "value_2024": "Water",
+    "changed": true
+  },
+  {
+    "entity": "Nebula Mining Operations",
+    "relation": "fuel density scanner",
+    "value_2018": "Model D-1",
+    "value_2020": "Model D-2",
+    "value_2022": "Model D-2",
+    "value_2024": "Model D-2",
+    "changed": true
+  },
+  {
+    "entity": "Astro Vault Management",
+    "relation": "vault fire suppression",
+    "value_2018": "CO2",
+    "value_2020": "CO2",
+    "value_2022": "Halon Alternative",
+    "value_2024": "Halon Alternative",
+    "changed": true
+  },
+  {
+    "entity": "Igneous Vein",
+    "relation": "primary deposit type",
+    "value_2018": "Pyrite",
+    "value_2020": "Pyrite",
+    "value_2022": "Pyrite",
+    "value_2024": "Pyrite",
+    "changed": false
+  },
+  {
+    "entity": "Cryo-Core",
+    "relation": "thermal regulation state",
+    "value_2018": "Stable",
+    "value_2020": "Stable",
+    "value_2022": "Stable",
+    "value_2024": "Stable",
+    "changed": false
+  },
+  {
+    "entity": "Flux Capacitor",
+    "relation": "fuel inspection status",
+    "value_2018": "Passed",
+    "value_2020": "Passed",
+    "value_2022": "Passed",
+    "value_2024": "Passed",
+    "changed": false
+  },
+  {
+    "entity": "Aetherium Shard",
+    "relation": "energy signature",
+    "value_2018": "Low",
+    "value_2020": "Low",
+    "value_2022": "Low",
+    "value_2024": "Low",
+    "changed": false
+  },
+  {
+    "entity": "Molten Core",
+    "relation": "thermal regulation state",
+    "value_2018": "Overheated",
+    "value_2020": "Overheated",
+    "value_2022": "Overheated",
+    "value_2024": "Overheated",
+    "changed": false
+  },
+  {
+    "entity": "Xenolith Deposit",
+    "relation": "extraction rate",
+    "value_2018": "Moderate",
+    "value_2020": "Moderate",
+    "value_2022": "Moderate",
+    "value_2024": "Moderate",
+    "changed": false
+  },
+  {
+    "entity": "Glimmering Seam",
+    "relation": "fuel purity",
+    "value_2018": "98%",
+    "value_2020": "98%",
+    "value_2022": "98%",
+    "value_2024": "98%",
+    "changed": false
+  },
+  {
+    "entity": "Shadow Vein",
+    "relation": "primary deposit type",
+    "value_2018": "Cobalt",
+    "value_2020": "Cobalt",
+    "value_2022": "Cobalt",
+    "value_2024": "Cobalt",
+    "changed": false
+  },
+  {
+    "entity": "Ignition Coil",
+    "relation": "fuel inspection status",
+    "value_2018": "Failed",
+    "value_2020": "Failed",
+    "value_2022": "Failed",
+    "value_2024": "Failed",
+    "changed": false
+  },
+  {
+    "entity": "Chrono Crystal",
+    "relation": "energy signature",
+    "value_2018": "High",
+    "value_2020": "High",
+    "value_2022": "High",
+    "value_2024": "High",
+    "changed": false
+  },
+  {
+    "entity": "Azure Deep",
+    "relation": "thermal regulation state",
+    "value_2018": "Cooling",
+    "value_2020": "Cooling",
+    "value_2022": "Cooling",
+    "value_2024": "Cooling",
+    "changed": false
+  },
+  {
+    "entity": "Echoing Cavern",
+    "relation": "extraction rate",
+    "value_2018": "High",
+    "value_2020": "High",
+    "value_2022": "High",
+    "value_2024": "High",
+    "changed": false
+  },
+  {
+    "entity": "Crimson Vein",
+    "relation": "primary deposit type",
+    "value_2018": "Gold",
+    "value_2020": "Gold",
+    "value_2022": "Gold",
+    "value_2024": "Gold",
+    "changed": false
+  },
+  {
+    "entity": "Spark Plug",
+    "relation": "fuel inspection status",
+    "value_2018": "Pending",
+    "value_2020": "Pending",
+    "value_2022": "Pending",
+    "value_2024": "Pending",
+    "changed": false
+  },
+  {
+    "entity": "Void Crystal",
+    "relation": "energy signature",
+    "value_2018": "Neutral",
+    "value_2020": "Neutral",
+    "value_2022": "Neutral",
+    "value_2024": "Neutral",
+    "changed": false
+  },
+  {
+    "entity": "Frostbite Mine",
+    "relation": "thermal regulation state",
+    "value_2018": "Freezing",
+    "value_2020": "Freezing",
+    "value_2022": "Freezing",
+    "value_2024": "Freezing",
+    "changed": false
+  },
+  {
+    "entity": "Whispering Shaft",
+    "relation": "extraction rate",
+    "value_2018": "Low",
+    "value_2020": "Low",
+    "value_2022": "Low",
+    "value_2024": "Low",
+    "changed": false
+  },
+  {
+    "entity": "Starlight Lode",
+    "relation": "fuel purity",
+    "value_2018": "95%",
+    "value_2020": "95%",
+    "value_2022": "95%",
+    "value_2024": "95%",
+    "changed": false
+  },
+  {
+    "entity": "Galactic Vein",
+    "relation": "primary deposit type",
+    "value_2018": "Uranium",
+    "value_2020": "Uranium",
+    "value_2022": "Uranium",
+    "value_2024": "Uranium",
+    "changed": false
+  },
+  {
+    "entity": "Ignis Rod",
+    "relation": "fuel inspection status",
+    "value_2018": "Re-inspect",
+    "value_2020": "Re-inspect",
+    "value_2022": "Re-inspect",
+    "value_2024": "Re-inspect",
+    "changed": false
+  },
+  {
+    "entity": "Radiant Shard",
+    "relation": "energy signature",
+    "value_2018": "Flickering",
+    "value_2020": "Flickering",
+    "value_2022": "Flickering",
+    "value_2024": "Flickering",
+    "changed": false
+  },
+  {
+    "entity": "Inferno Pit",
+    "relation": "thermal regulation state",
+    "value_2018": "Burning",
+    "value_2020": "Burning",
+    "value_2022": "Burning",
+    "value_2024": "Burning",
+    "changed": false
+  },
+  {
+    "entity": "Silent Depths",
+    "relation": "extraction rate",
+    "value_2018": "Average",
+    "value_2020": "Average",
+    "value_2022": "Average",
+    "value_2024": "Average",
+    "changed": false
+  },
+  {
+    "entity": "Serpent's Lode",
+    "relation": "fuel purity",
+    "value_2018": "96%",
+    "value_2020": "96%",
+    "value_2022": "96%",
+    "value_2024": "96%",
+    "changed": false
+  },
+  {
+    "entity": "Nebula Vein",
+    "relation": "primary deposit type",
+    "value_2018": "Methane",
+    "value_2020": "Methane",
+    "value_2022": "Methane",
+    "value_2024": "Methane",
+    "changed": false
+  },
+  {
+    "entity": "Combustion Chamber",
+    "relation": "fuel inspection status",
+    "value_2018": "Passed",
+    "value_2020": "Passed",
+    "value_2022": "Passed",
+    "value_2024": "Passed",
+    "changed": false
+  },
+  {
+    "entity": "Stellar Fragment",
+    "relation": "energy signature",
+    "value_2018": "Pulsing",
+    "value_2020": "Pulsing",
+    "value_2022": "Pulsing",
+    "value_2024": "Pulsing",
+    "changed": false
+  },
+  {
+    "entity": "Polaris Node",
+    "relation": "thermal regulation state",
+    "value_2018": "Regulating",
+    "value_2020": "Regulating",
+    "value_2022": "Regulating",
+    "value_2024": "Regulating",
+    "changed": false
+  },
+  {
+    "entity": "Dragon's Lode",
+    "relation": "fuel purity",
+    "value_2018": "97%",
+    "value_2020": "97%",
+    "value_2022": "97%",
+    "value_2024": "97%",
+    "changed": false
+  },
+  {
+    "entity": "Geode Chamber",
+    "relation": "primary deposit type",
+    "value_2018": "Quartz",
+    "value_2020": "Quartz",
+    "value_2022": "Amethyst",
+    "value_2024": "Amethyst",
+    "changed": true
+  },
+  {
+    "entity": "Ignition Switch",
+    "relation": "fuel inspection status",
+    "value_2018": "Passed",
+    "value_2020": "Passed",
+    "value_2022": "Failed",
+    "value_2024": "Failed",
+    "changed": true
+  },
+  {
+    "entity": "Solar Flare",
+    "relation": "energy signature",
+    "value_2018": "High",
+    "value_2020": "Low",
+    "value_2022": "Low",
+    "value_2024": "Low",
+    "changed": true
+  },
+  {
+    "entity": "Volcanic Core",
+    "relation": "thermal regulation state",
+    "value_2018": "Stable",
+    "value_2020": "Overheating",
+    "value_2022": "Overheating",
+    "value_2024": "Overheating",
+    "changed": true
+  },
+  {
+    "entity": "Whisperwind Pass",
+    "relation": "extraction rate",
+    "value_2018": "High",
+    "value_2020": "High",
+    "value_2022": "Moderate",
+    "value_2024": "Moderate",
+    "changed": true
+  },
+  {
+    "entity": "Emerald Lode",
+    "relation": "fuel purity",
+    "value_2018": "99%",
+    "value_2020": "99%",
+    "value_2022": "98%",
+    "value_2024": "98%",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Depths",
+    "relation": "primary deposit type",
+    "value_2018": "Iron",
+    "value_2020": "Copper",
+    "value_2022": "Copper",
+    "value_2024": "Copper",
+    "changed": true
+  },
+  {
+    "entity": "Flux Conduit",
+    "relation": "fuel inspection status",
+    "value_2018": "Failed",
+    "value_2020": "Passed",
+    "value_2022": "Passed",
+    "value_2024": "Passed",
+    "changed": true
+  },
+  {
+    "entity": "Gravity Well",
+    "relation": "energy signature",
+    "value_2018": "Stable",
+    "value_2020": "Stable",
+    "value_2022": "Fluctuating",
+    "value_2024": "Fluctuating",
+    "changed": true
+  },
+  {
+    "entity": "Cryo Chamber",
+    "relation": "thermal regulation state",
+    "value_2018": "Cooling",
+    "value_2020": "Cooling",
+    "value_2022": "Freezing",
+    "value_2024": "Freezing",
+    "changed": true
+  },
+  {
+    "entity": "Aetherium Shaft",
+    "relation": "extraction rate",
+    "value_2018": "Moderate",
+    "value_2020": "Moderate",
+    "value_2022": "Moderate",
+    "value_2024": "Low",
+    "changed": true
+  },
+  {
+    "entity": "Glimmering Vein",
+    "relation": "fuel purity",
+    "value_2018": "96%",
+    "value_2020": "96%",
+    "value_2022": "96%",
+    "value_2024": "97%",
+    "changed": true
+  },
+  {
+    "entity": "Shadow Lode",
+    "relation": "primary deposit type",
+    "value_2018": "Silver",
+    "value_2020": "Lead",
+    "value_2022": "Lead",
+    "value_2024": "Lead",
+    "changed": true
+  },
+  {
+    "entity": "Chronos Vault",
+    "relation": "primary custodian",
+    "value_2018": "Silas Croft",
+    "value_2020": "Silas Croft",
+    "value_2022": "Silas Croft",
+    "value_2024": "Elara Vance",
+    "changed": true
+  },
+  {
+    "entity": "Aethel Record",
+    "relation": "charter guardian",
+    "value_2018": "Oakhaven Guild",
+    "value_2020": "Oakhaven Guild",
+    "value_2022": "Oakhaven Guild",
+    "value_2024": "Oakhaven Guild",
+    "changed": false
+  },
+  {
+    "entity": "Xylos Repository",
+    "relation": "chief adjudicator",
+    "value_2018": "Lysander Grey",
+    "value_2020": "Lysander Grey",
+    "value_2022": "Lysander Grey",
+    "value_2024": "Lysander Grey",
+    "changed": false
+  },
+  {
+    "entity": "Peridian Archives",
+    "relation": "access protocol",
+    "value_2018": "Tier 3",
+    "value_2020": "Tier 4",
+    "value_2022": "Tier 4",
+    "value_2024": "Tier 4",
+    "changed": true
+  },
+  {
+    "entity": "Lumina Codex",
+    "relation": "security liaison",
+    "value_2018": "Brynn Astor",
+    "value_2020": "Brynn Astor",
+    "value_2022": "Kaelen Rourke",
+    "value_2024": "Kaelen Rourke",
+    "changed": true
+  },
+  {
+    "entity": "Zenith Dossier",
+    "relation": "archival director",
+    "value_2018": "Roric Bell",
+    "value_2020": "Roric Bell",
+    "value_2022": "Roric Bell",
+    "value_2024": "Roric Bell",
+    "changed": false
+  },
+  {
+    "entity": "Obsidian Scrolls",
+    "relation": "preservation method",
+    "value_2018": "Cryo-stasis",
+    "value_2020": "Aetheric Seal",
+    "value_2022": "Aetheric Seal",
+    "value_2024": "Aetheric Seal",
+    "changed": true
+  },
+  {
+    "entity": "Azure Index",
+    "relation": "location sector",
+    "value_2018": "Sector Gamma",
+    "value_2020": "Sector Gamma",
+    "value_2022": "Sector Gamma",
+    "value_2024": "Sector Gamma",
+    "changed": false
+  },
+  {
+    "entity": "Veridian Catalog",
+    "relation": "chief archivist",
+    "value_2018": "Seraphina Quay",
+    "value_2020": "Seraphina Quay",
+    "value_2022": "Seraphina Quay",
+    "value_2024": "Gareth Thorne",
+    "changed": true
+  },
+  {
+    "entity": "Emerald Ledger",
+    "relation": "data integrity",
+    "value_2018": "99.8%",
+    "value_2020": "99.9%",
+    "value_2022": "99.9%",
+    "value_2024": "99.9%",
+    "changed": true
+  },
+  {
+    "entity": "Goldleaf Register",
+    "relation": "disposal protocol",
+    "value_2018": "Incineration",
+    "value_2020": "Incineration",
+    "value_2022": "Incineration",
+    "value_2024": "De-materialization",
+    "changed": true
+  },
+  {
+    "entity": "Silverstream Archive",
+    "relation": "cataloging system",
+    "value_2018": "Chronos v1.0",
+    "value_2020": "Chronos v1.0",
+    "value_2022": "Chronos v1.0",
+    "value_2024": "Chronos v2.1",
+    "changed": true
+  },
+  {
+    "entity": "Bronzeplate Vault",
+    "relation": "vault manager",
+    "value_2018": "Joric Dane",
+    "value_2020": "Joric Dane",
+    "value_2022": "Joric Dane",
+    "value_2024": "Joric Dane",
+    "changed": false
+  },
+  {
+    "entity": "Opaline Record",
+    "relation": "restoration lead",
+    "value_2018": "Lira Shen",
+    "value_2020": "Arlo Finch",
+    "value_2022": "Arlo Finch",
+    "value_2024": "Arlo Finch",
+    "changed": true
+  },
+  {
+    "entity": "Diamond Dossier",
+    "relation": "auditing body",
+    "value_2018": "Internal Review",
+    "value_2020": "External Auditors",
+    "value_2022": "External Auditors",
+    "value_2024": "External Auditors",
+    "changed": true
+  },
+  {
+    "entity": "Emerald Repository",
+    "relation": "storage medium",
+    "value_2018": "Crystal Lattice",
+    "value_2020": "Crystal Lattice",
+    "value_2022": "Quantum Foam",
+    "value_2024": "Quantum Foam",
+    "changed": true
+  },
+  {
+    "entity": "Sapphire Archives",
+    "relation": "data validation",
+    "value_2018": "Manual Check",
+    "value_2020": "Manual Check",
+    "value_2022": "Manual Check",
+    "value_2024": "Automated Scan",
+    "changed": true
+  },
+  {
+    "entity": "Amethyst Vault",
+    "relation": "access level",
+    "value_2018": "Restricted",
+    "value_2020": "Restricted",
+    "value_2022": "Restricted",
+    "value_2024": "Restricted",
+    "changed": false
+  },
+  {
+    "entity": "Ruby Codex",
+    "relation": "classification scheme",
+    "value_2018": "Chronological",
+    "value_2020": "Thematic",
+    "value_2022": "Thematic",
+    "value_2024": "Thematic",
+    "changed": true
+  },
+  {
+    "entity": "Topaz Repository",
+    "relation": "backup frequency",
+    "value_2018": "Daily",
+    "value_2020": "Daily",
+    "value_2022": "Hourly",
+    "value_2024": "Hourly",
+    "changed": true
+  },
+  {
+    "entity": "Pearl Archives",
+    "relation": "primary interface",
+    "value_2018": "Holographic",
+    "value_2020": "Holographic",
+    "value_2022": "Neural",
+    "value_2024": "Neural",
+    "changed": true
+  },
+  {
+    "entity": "Jade Vault",
+    "relation": "security chief",
+    "value_2018": "Marek Kane",
+    "value_2020": "Marek Kane",
+    "value_2022": "Marek Kane",
+    "value_2024": "Marek Kane",
+    "changed": false
+  },
+  {
+    "entity": "Lapis Record",
+    "relation": "dissemination policy",
+    "value_2018": "Public Access",
+    "value_2020": "Public Access",
+    "value_2022": "Public Access",
+    "value_2024": "Restricted Release",
+    "changed": true
+  },
+  {
+    "entity": "Turquoise Codex",
+    "relation": "metadata standard",
+    "value_2018": "ArchivX",
+    "value_2020": "ArchivY",
+    "value_2022": "ArchivY",
+    "value_2024": "ArchivY",
+    "changed": true
+  },
+  {
+    "entity": "Coral Repository",
+    "relation": "legal compliance",
+    "value_2018": "Law 7",
+    "value_2020": "Law 9",
+    "value_2022": "Law 9",
+    "value_2024": "Law 9",
+    "changed": true
+  },
+  {
+    "entity": "Amber Archives",
+    "relation": "digital signature",
+    "value_2018": "Quantum Key",
+    "value_2020": "Quantum Key",
+    "value_2022": "Chrono-signature",
+    "value_2024": "Chrono-signature",
+    "changed": true
+  },
+  {
+    "entity": "Ivory Record",
+    "relation": "preservation directive",
+    "value_2018": "High Humidity",
+    "value_2020": "Low Temperature",
+    "value_2022": "Low Temperature",
+    "value_2024": "Low Temperature",
+    "changed": true
+  },
+  {
+    "entity": "Onyx Codex",
+    "relation": "adjudication panel",
+    "value_2018": "Panel A",
+    "value_2020": "Panel A",
+    "value_2022": "Panel B",
+    "value_2024": "Panel B",
+    "changed": true
+  },
+  {
+    "entity": "Parchment Repository",
+    "relation": "handling protocol",
+    "value_2018": "Gloved",
+    "value_2020": "Gloved",
+    "value_2022": "Gloved",
+    "value_2024": "Antimatter Containment",
+    "changed": true
+  },
+  {
+    "entity": "Vellum Archives",
+    "relation": "reconstruction lead",
+    "value_2018": "Zella Frost",
+    "value_2020": "Zella Frost",
+    "value_2022": "Zella Frost",
+    "value_2024": "Zella Frost",
+    "changed": false
+  },
+  {
+    "entity": "Scroll Vault",
+    "relation": "encryption algorithm",
+    "value_2018": "AES-256",
+    "value_2020": "Quantum Cipher",
+    "value_2022": "Quantum Cipher",
+    "value_2024": "Quantum Cipher",
+    "changed": true
+  },
+  {
+    "entity": "Charter Repository",
+    "relation": "access supervisor",
+    "value_2018": "Agent K",
+    "value_2020": "Agent L",
+    "value_2022": "Agent L",
+    "value_2024": "Agent L",
+    "changed": true
+  },
+  {
+    "entity": "Manuscript Vault",
+    "relation": "document format",
+    "value_2018": "Papyrus",
+    "value_2020": "Papyrus",
+    "value_2022": "Papyrus",
+    "value_2024": "Enlightened Stone",
+    "changed": true
+  },
+  {
+    "entity": "Ledger Archives",
+    "relation": "storage capacity",
+    "value_2018": "1 Petabyte",
+    "value_2020": "1 Petabyte",
+    "value_2022": "5 Petabytes",
+    "value_2024": "5 Petabytes",
+    "changed": true
+  },
+  {
+    "entity": "Folio Repository",
+    "relation": "archival team",
+    "value_2018": "Team Delta",
+    "value_2020": "Team Delta",
+    "value_2022": "Team Delta",
+    "value_2024": "Team Delta",
+    "changed": false
+  },
+  {
+    "entity": "Tome Vault",
+    "relation": "retrieval time",
+    "value_2018": "5 minutes",
+    "value_2020": "5 minutes",
+    "value_2022": "1 minute",
+    "value_2024": "1 minute",
+    "changed": true
+  },
+  {
+    "entity": "Parchment Archives",
+    "relation": "cataloging priority",
+    "value_2018": "High",
+    "value_2020": "High",
+    "value_2022": "High",
+    "value_2024": "Medium",
+    "changed": true
+  },
+  {
+    "entity": "Record Vault",
+    "relation": "data migration",
+    "value_2018": "None",
+    "value_2020": "None",
+    "value_2022": "Ongoing",
+    "value_2024": "Ongoing",
+    "changed": true
+  },
+  {
+    "entity": "Codex Repository",
+    "relation": "archival standard",
+    "value_2018": "ISO 11799",
+    "value_2020": "ISO 11799",
+    "value_2022": "ISO 11799",
+    "value_2024": "ISO 11799",
+    "changed": false
+  },
+  {
+    "entity": "Document Vault",
+    "relation": "retention period",
+    "value_2018": "Indefinite",
+    "value_2020": "Indefinite",
+    "value_2022": "Indefinite",
+    "value_2024": "500 years",
+    "changed": true
+  },
+  {
+    "entity": "Registry Archives",
+    "relation": "original source",
+    "value_2018": "Xylosian Empire",
+    "value_2020": "Vortexian Federation",
+    "value_2022": "Vortexian Federation",
+    "value_2024": "Vortexian Federation",
+    "changed": true
+  },
+  {
+    "entity": "Chronicle Vault",
+    "relation": "custodian designation",
+    "value_2018": "Chief Curator",
+    "value_2020": "Chief Curator",
+    "value_2022": "Chief Curator",
+    "value_2024": "Senior Archivist",
+    "changed": true
+  },
+  {
+    "entity": "Archive Repository",
+    "relation": "cataloging date",
+    "value_2018": "2018-01-01",
+    "value_2020": "2018-01-01",
+    "value_2022": "2018-01-01",
+    "value_2024": "2022-03-15",
+    "changed": true
+  },
+  {
+    "entity": "Index Vault",
+    "relation": "access restriction",
+    "value_2018": "None",
+    "value_2020": "None",
+    "value_2022": "Level 5",
+    "value_2024": "Level 5",
+    "changed": true
+  },
+  {
+    "entity": "Chronos Vault",
+    "relation": "Lead Custodian",
+    "value_2018": "Anya Petrova",
+    "value_2020": "Anya Petrova",
+    "value_2022": "Anya Petrova",
+    "value_2024": "Bartholomew Finch",
+    "changed": true
+  },
+  {
+    "entity": "Lumina Index",
+    "relation": "Primary Sorter",
+    "value_2018": "Elara Vance",
+    "value_2020": "Elara Vance",
+    "value_2022": "Elara Vance",
+    "value_2024": "Gideon Croft",
+    "changed": true
+  },
+  {
+    "entity": "Veridia Archives",
+    "relation": "Archival Seal",
+    "value_2018": "Crimson Wax",
+    "value_2020": "Azure Seal",
+    "value_2022": "Azure Seal",
+    "value_2024": "Azure Seal",
+    "changed": true
+  },
+  {
+    "entity": "Obsidian Records",
+    "relation": "Master Archivist",
+    "value_2018": "Silas Thorne",
+    "value_2020": "Silas Thorne",
+    "value_2022": "Silas Thorne",
+    "value_2024": "Silas Thorne",
+    "changed": false
+  },
+  {
+    "entity": "Aethelred Codex",
+    "relation": "Preservation Method",
+    "value_2018": "Deacidification",
+    "value_2020": "Deacidification",
+    "value_2022": "Inert Gas",
+    "value_2024": "Inert Gas",
+    "changed": true
+  },
+  {
+    "entity": "Glimmering Scrolls",
+    "relation": "Adjudication Officer",
+    "value_2018": "Jonas Kael",
+    "value_2020": "Jonas Kael",
+    "value_2022": "Jonas Kael",
+    "value_2024": "Jonas Kael",
+    "changed": false
+  },
+  {
+    "entity": "Titanium Files",
+    "relation": "Security Protocol",
+    "value_2018": "Level 3",
+    "value_2020": "Level 4",
+    "value_2022": "Level 4",
+    "value_2024": "Level 4",
+    "changed": true
+  },
+  {
+    "entity": "Ember Documents",
+    "relation": "Catalyst Status",
+    "value_2018": "Active",
+    "value_2020": "Pending",
+    "value_2022": "Pending",
+    "value_2024": "Pending",
+    "changed": true
+  },
+  {
+    "entity": "Nebula Records",
+    "relation": "Requisition Clerk",
+    "value_2018": "Fiona Gable",
+    "value_2020": "Fiona Gable",
+    "value_2022": "Fiona Gable",
+    "value_2024": "Fiona Gable",
+    "changed": false
+  },
+  {
+    "entity": "Stellar Charters",
+    "relation": "Charter Origin",
+    "value_2018": "North Sector",
+    "value_2020": "North Sector",
+    "value_2022": "South Quadrant",
+    "value_2024": "South Quadrant",
+    "changed": true
+  },
+  {
+    "entity": "Void Manuscript",
+    "relation": "Dating Methodology",
+    "value_2018": "Radiocarbon",
+    "value_2020": "Thermoluminescence",
+    "value_2022": "Thermoluminescence",
+    "value_2024": "Thermoluminescence",
+    "changed": true
+  },
+  {
+    "entity": "Aurelia Repository",
+    "relation": "Access Gate",
+    "value_2018": "Gate Alpha",
+    "value_2020": "Gate Alpha",
+    "value_2022": "Gate Alpha",
+    "value_2024": "Gate Alpha",
+    "changed": false
+  },
+  {
+    "entity": "Chronicle Keepers",
+    "relation": "Chief Scribe",
+    "value_2018": "Liam Sterling",
+    "value_2020": "Liam Sterling",
+    "value_2022": "Marta Thorne",
+    "value_2024": "Marta Thorne",
+    "changed": true
+  },
+  {
+    "entity": "Echo Vault",
+    "relation": "Environmental Control",
+    "value_2018": "Humidity 40%",
+    "value_2020": "Humidity 40%",
+    "value_2022": "Humidity 40%",
+    "value_2024": "Humidity 45%",
+    "changed": true
+  },
+  {
+    "entity": "Gargoyle Scrolls",
+    "relation": "Binding Material",
+    "value_2018": "Leather",
+    "value_2020": "Vellum",
+    "value_2022": "Vellum",
+    "value_2024": "Vellum",
+    "changed": true
+  },
+  {
+    "entity": "Harbor Records",
+    "relation": "Archival Integrity",
+    "value_2018": "99%",
+    "value_2020": "99%",
+    "value_2022": "99%",
+    "value_2024": "99%",
+    "changed": false
+  },
+  {
+    "entity": "Ironclad Depository",
+    "relation": "Depository Manager",
+    "value_2018": "Roric Stone",
+    "value_2020": "Roric Stone",
+    "value_2022": "Roric Stone",
+    "value_2024": "Roric Stone",
+    "changed": false
+  },
+  {
+    "entity": "Jade Codex",
+    "relation": "Ink Composition",
+    "value_2018": "Iron Gall",
+    "value_2020": "Iron Gall",
+    "value_2022": "Iron Gall",
+    "value_2024": "Carbon Black",
+    "changed": true
+  },
+  {
+    "entity": "Kindred Charters",
+    "relation": "Charter Holder",
+    "value_2018": "House Lorne",
+    "value_2020": "House Lorne",
+    "value_2022": "House Lorne",
+    "value_2024": "Clan Kaelen",
+    "changed": true
+  },
+  {
+    "entity": "Lantern Archives",
+    "relation": "Illumination Source",
+    "value_2018": "Gas Lamp",
+    "value_2020": "Gas Lamp",
+    "value_2022": "Gas Lamp",
+    "value_2024": "LED",
+    "changed": true
+  },
+  {
+    "entity": "Maelstrom Records",
+    "relation": "Adjudication Lead",
+    "value_2018": "Zephyr Storm",
+    "value_2020": "Zephyr Storm",
+    "value_2022": "Zephyr Storm",
+    "value_2024": "Zephyr Storm",
+    "changed": false
+  },
+  {
+    "entity": "Nightingale Vault",
+    "relation": "Vault Size",
+    "value_2018": "Small",
+    "value_2020": "Medium",
+    "value_2022": "Medium",
+    "value_2024": "Medium",
+    "changed": true
+  },
+  {
+    "entity": "Opal Scripts",
+    "relation": "Script Material",
+    "value_2018": "Papyrus",
+    "value_2020": "Papyrus",
+    "value_2022": "Parchment",
+    "value_2024": "Parchment",
+    "changed": true
+  },
+  {
+    "entity": "Quantum Archives",
+    "relation": "Quantum State",
+    "value_2018": "Stable",
+    "value_2020": "Stable",
+    "value_2022": "Entangled",
+    "value_2024": "Entangled",
+    "changed": true
+  },
+  {
+    "entity": "Rift Records",
+    "relation": "Record Integrity",
+    "value_2018": "High",
+    "value_2020": "High",
+    "value_2022": "High",
+    "value_2024": "High",
+    "changed": false
+  },
+  {
+    "entity": "Serpentine Vault",
+    "relation": "Vault Access Code",
+    "value_2018": "112233",
+    "value_2020": "112233",
+    "value_2022": "445566",
+    "value_2024": "445566",
+    "changed": true
+  },
+  {
+    "entity": "Tidal Scripts",
+    "relation": "Script Condition",
+    "value_2018": "Excellent",
+    "value_2020": "Excellent",
+    "value_2022": "Good",
+    "value_2024": "Good",
+    "changed": true
+  },
+  {
+    "entity": "Umbra Archives",
+    "relation": "Archivist Name",
+    "value_2018": "Maren Holt",
+    "value_2020": "Maren Holt",
+    "value_2022": "Maren Holt",
+    "value_2024": "Maren Holt",
+    "changed": false
+  },
+  {
+    "entity": "Vanguard Records",
+    "relation": "Record Custodian",
+    "value_2018": "Commander Rex",
+    "value_2020": "Commander Rex",
+    "value_2022": "Captain Thorne",
+    "value_2024": "Captain Thorne",
+    "changed": true
+  },
+  {
+    "entity": "Whisper Vault",
+    "relation": "Vault Temperature",
+    "value_2018": "15\u00b0C",
+    "value_2020": "16\u00b0C",
+    "value_2022": "16\u00b0C",
+    "value_2024": "16\u00b0C",
+    "changed": true
+  },
+  {
+    "entity": "Xenon Scripts",
+    "relation": "Script Age",
+    "value_2018": "Ancient",
+    "value_2020": "Ancient",
+    "value_2022": "Ancient",
+    "value_2024": "Very Ancient",
+    "changed": true
+  },
+  {
+    "entity": "Yarrow Archives",
+    "relation": "Archival Fragrance",
+    "value_2018": "Old Paper",
+    "value_2020": "Dusty",
+    "value_2022": "Dusty",
+    "value_2024": "Dusty",
+    "changed": true
+  },
+  {
+    "entity": "Zephyr Records",
+    "relation": "Record Format",
+    "value_2018": "Scrolls",
+    "value_2020": "Scrolls",
+    "value_2022": "Scrolls",
+    "value_2024": "Tablets",
+    "changed": true
+  },
+  {
+    "entity": "Astral Vault",
+    "relation": "Vault Guardian",
+    "value_2018": "Gazer",
+    "value_2020": "Gazer",
+    "value_2022": "Gazer",
+    "value_2024": "Gazer",
+    "changed": false
+  },
+  {
+    "entity": "Borealis Records",
+    "relation": "Record Collection",
+    "value_2018": "Arctic",
+    "value_2020": "Arctic",
+    "value_2022": "Arctic",
+    "value_2024": "Northern",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Archives",
+    "relation": "Archival Pigment",
+    "value_2018": "Madder",
+    "value_2020": "Cochineal",
+    "value_2022": "Cochineal",
+    "value_2024": "Cochineal",
+    "changed": true
+  },
+  {
+    "entity": "Delta Depository",
+    "relation": "Depository Rating",
+    "value_2018": "A+",
+    "value_2020": "A+",
+    "value_2022": "A+",
+    "value_2024": "A+",
+    "changed": false
+  },
+  {
+    "entity": "Echo Scripts",
+    "relation": "Script Language",
+    "value_2018": "Ancient Tongue",
+    "value_2020": "Ancient Tongue",
+    "value_2022": "Old Script",
+    "value_2024": "Old Script",
+    "changed": true
+  },
+  {
+    "entity": "Glacial Records",
+    "relation": "Record Thickness",
+    "value_2018": "Thin",
+    "value_2020": "Thin",
+    "value_2022": "Thick",
+    "value_2024": "Thick",
+    "changed": true
+  },
+  {
+    "entity": "Horizon Archives",
+    "relation": "Archival Era",
+    "value_2018": "Dawn Age",
+    "value_2020": "Dawn Age",
+    "value_2022": "Middle Era",
+    "value_2024": "Middle Era",
+    "changed": true
+  },
+  {
+    "entity": "Inferno Vault",
+    "relation": "Vault Fire Rating",
+    "value_2018": "Gold",
+    "value_2020": "Gold",
+    "value_2022": "Gold",
+    "value_2024": "Platinum",
+    "changed": true
+  },
+  {
+    "entity": "Jubilee Records",
+    "relation": "Record Keeper",
+    "value_2018": "Elder Maeve",
+    "value_2020": "Elder Maeve",
+    "value_2022": "Elder Maeve",
+    "value_2024": "Elder Maeve",
+    "changed": false
+  },
+  {
+    "entity": "Kestrel Archives",
+    "relation": "Archival Medium",
+    "value_2018": "Stone",
+    "value_2020": "Stone",
+    "value_2022": "Metal",
+    "value_2024": "Metal",
+    "changed": true
+  },
+  {
+    "entity": "Misty Records",
+    "relation": "Record Visibility",
+    "value_2018": "Clear",
+    "value_2020": "Clear",
+    "value_2022": "Clear",
+    "value_2024": "Foggy",
+    "changed": true
+  },
+  {
+    "entity": "Nova Archives",
+    "relation": "Archival Volume",
+    "value_2018": "Low",
+    "value_2020": "Medium",
+    "value_2022": "Medium",
+    "value_2024": "Medium",
+    "changed": true
+  },
+  {
+    "entity": "Glimmering Fields Land Commission",
+    "relation": "Primary Water Source",
+    "value_2018": "Azure Creek",
+    "value_2020": "Azure Creek",
+    "value_2022": "Azure Creek",
+    "value_2024": "Azure Creek",
+    "changed": false
+  },
+  {
+    "entity": "Whispering Reeds Water Authority",
+    "relation": "Floodplain Designation",
+    "value_2018": "Zone B",
+    "value_2020": "Zone B",
+    "value_2022": "Zone B",
+    "value_2024": "Zone C",
+    "changed": true
+  },
+  {
+    "entity": "Emerald Valley Farm Cooperative",
+    "relation": "Soil Acidity Level",
+    "value_2018": "pH 6.8",
+    "value_2020": "pH 6.5",
+    "value_2022": "pH 6.5",
+    "value_2024": "pH 6.5",
+    "changed": true
+  },
+  {
+    "entity": "Shadow Root Seed Bank",
+    "relation": "Director of Operations",
+    "value_2018": "Lyra Vance",
+    "value_2020": "Lyra Vance",
+    "value_2022": "Lyra Vance",
+    "value_2024": "Kaelen Rourke",
+    "changed": true
+  },
+  {
+    "entity": "Riverbend Water Rights Board",
+    "relation": "Seasonal Flow Regulation",
+    "value_2018": "Moderate",
+    "value_2020": "Moderate",
+    "value_2022": "Moderate",
+    "value_2024": "Strict",
+    "changed": true
+  },
+  {
+    "entity": "Ironbark Land Trust",
+    "relation": "Protected Wetland Area",
+    "value_2018": "150 acres",
+    "value_2020": "150 acres",
+    "value_2022": "150 acres",
+    "value_2024": "150 acres",
+    "changed": false
+  },
+  {
+    "entity": "Golden Grain Farmers Alliance",
+    "relation": "Pest Management Strategy",
+    "value_2018": "Biological",
+    "value_2020": "Biological",
+    "value_2022": "Biological",
+    "value_2024": "Integrated",
+    "changed": true
+  },
+  {
+    "entity": "Silverstream Water Management",
+    "relation": "Reservoir Capacity",
+    "value_2018": "80000 gallons",
+    "value_2020": "80000 gallons",
+    "value_2022": "75000 gallons",
+    "value_2024": "75000 gallons",
+    "changed": true
+  },
+  {
+    "entity": "Whisperwind Crop Science",
+    "relation": "Genetically Modified Seed Approval",
+    "value_2018": "Denied",
+    "value_2020": "Pending",
+    "value_2022": "Pending",
+    "value_2024": "Pending",
+    "changed": true
+  },
+  {
+    "entity": "Stellar Plains Land Registry",
+    "relation": "Parcel Ownership Transfer",
+    "value_2018": "Zelara Corp",
+    "value_2020": "Nova Enterprises",
+    "value_2022": "Nova Enterprises",
+    "value_2024": "Nova Enterprises",
+    "changed": true
+  },
+  {
+    "entity": "Emerald Shores Water Conservation",
+    "relation": "Drought Contingency Plan",
+    "value_2018": "Level 2",
+    "value_2020": "Level 2",
+    "value_2022": "Level 2",
+    "value_2024": "Level 2",
+    "changed": false
+  },
+  {
+    "entity": "Shadowlands Agricultural Board",
+    "relation": "Subsidized Fertilizer Program",
+    "value_2018": "Nitrogen-rich",
+    "value_2020": "Nitrogen-rich",
+    "value_2022": "Nitrogen-rich",
+    "value_2024": "Potassium-based",
+    "changed": true
+  },
+  {
+    "entity": "Riverstone Water Quality Agency",
+    "relation": "Contaminant Threshold",
+    "value_2018": "0.5 ppm",
+    "value_2020": "0.3 ppm",
+    "value_2022": "0.3 ppm",
+    "value_2024": "0.3 ppm",
+    "changed": true
+  },
+  {
+    "entity": "Ironwood Land Reclamation Project",
+    "relation": "Reclamation Site Supervisor",
+    "value_2018": "Brynja Sol",
+    "value_2020": "Brynja Sol",
+    "value_2022": "Torvin Stone",
+    "value_2024": "Torvin Stone",
+    "changed": true
+  },
+  {
+    "entity": "Golden Hills Irrigation District",
+    "relation": "Water Delivery Schedule",
+    "value_2018": "Daily",
+    "value_2020": "Bi-weekly",
+    "value_2022": "Bi-weekly",
+    "value_2024": "Bi-weekly",
+    "changed": true
+  },
+  {
+    "entity": "Silverpine Water Rights Adjudication",
+    "relation": "Senior Water Rights Holder",
+    "value_2018": "Gloomwood Farm",
+    "value_2020": "Gloomwood Farm",
+    "value_2022": "Gloomwood Farm",
+    "value_2024": "Gloomwood Farm",
+    "changed": false
+  },
+  {
+    "entity": "Azure Heights Land Partition",
+    "relation": "Minimum Lot Size",
+    "value_2018": "10 acres",
+    "value_2020": "10 acres",
+    "value_2022": "10 acres",
+    "value_2024": "8 acres",
+    "changed": true
+  },
+  {
+    "entity": "Whisper Creek Agricultural Zone",
+    "relation": "Permitted Crop Rotation",
+    "value_2018": "Standard",
+    "value_2020": "Standard",
+    "value_2022": "Advanced",
+    "value_2024": "Advanced",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Frost Water Conservancy",
+    "relation": "Snowpack Measurement Method",
+    "value_2018": "Manual",
+    "value_2020": "Automated",
+    "value_2022": "Automated",
+    "value_2024": "Automated",
+    "changed": true
+  },
+  {
+    "entity": "Emerald Glade Water Diversion",
+    "relation": "Diversion Limit",
+    "value_2018": "20%",
+    "value_2020": "20%",
+    "value_2022": "20%",
+    "value_2024": "25%",
+    "changed": true
+  },
+  {
+    "entity": "Riverwind Agricultural Society",
+    "relation": "Seed Purity Standard",
+    "value_2018": "99.8%",
+    "value_2020": "99.8%",
+    "value_2022": "99.8%",
+    "value_2024": "99.8%",
+    "changed": false
+  },
+  {
+    "entity": "Ironstone Land Holdings",
+    "relation": "Designated Conservation Easement",
+    "value_2018": "None",
+    "value_2020": "Area 3",
+    "value_2022": "Area 3",
+    "value_2024": "Area 3",
+    "changed": true
+  },
+  {
+    "entity": "Golden Valley Water Board",
+    "relation": "Adjudication Panel Chair",
+    "value_2018": "Fiona Glynn",
+    "value_2020": "Fiona Glynn",
+    "value_2022": "Fiona Glynn",
+    "value_2024": "Fiona Glynn",
+    "changed": false
+  },
+  {
+    "entity": "Azure Fjord Water Authority",
+    "relation": "Tidal Influence Monitoring",
+    "value_2018": "Active",
+    "value_2020": "Active",
+    "value_2022": "Inactive",
+    "value_2024": "Inactive",
+    "changed": true
+  },
+  {
+    "entity": "Whisperwind Agricultural Coop",
+    "relation": "Irrigation Method",
+    "value_2018": "Flood",
+    "value_2020": "Drip",
+    "value_2022": "Drip",
+    "value_2024": "Drip",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Gorge Land Commission",
+    "relation": "Spring Source Protection",
+    "value_2018": "Active",
+    "value_2020": "Active",
+    "value_2022": "Active",
+    "value_2024": "Active",
+    "changed": false
+  },
+  {
+    "entity": "Stellar Peak Water Registration",
+    "relation": "Well Depth",
+    "value_2018": "150 meters",
+    "value_2020": "150 meters",
+    "value_2022": "150 meters",
+    "value_2024": "160 meters",
+    "changed": true
+  },
+  {
+    "entity": "Emerald Bloom Land Trust",
+    "relation": "Habitat Restoration Zone",
+    "value_2018": "Zone A",
+    "value_2020": "Zone A",
+    "value_2022": "Zone A",
+    "value_2024": "Zone A",
+    "changed": false
+  },
+  {
+    "entity": "Shadow Creek Water Rights",
+    "relation": "Riparian Buffer Zone",
+    "value_2018": "10 meters",
+    "value_2020": "10 meters",
+    "value_2022": "10 meters",
+    "value_2024": "15 meters",
+    "changed": true
+  },
+  {
+    "entity": "Riverbend Land Use Planning",
+    "relation": "Farmland Preservation Status",
+    "value_2018": "Protected",
+    "value_2020": "Protected",
+    "value_2022": "Protected",
+    "value_2024": "Protected",
+    "changed": false
+  },
+  {
+    "entity": "Ironwood Water Allocation Committee",
+    "relation": "Emergency Water Reserve",
+    "value_2018": "10%",
+    "value_2020": "10%",
+    "value_2022": "10%",
+    "value_2024": "5%",
+    "changed": true
+  },
+  {
+    "entity": "Golden Meadow Land Commission",
+    "relation": "Soil Amendment Policy",
+    "value_2018": "Organic Only",
+    "value_2020": "Mixed",
+    "value_2022": "Mixed",
+    "value_2024": "Mixed",
+    "changed": true
+  },
+  {
+    "entity": "Silver Sands Water Registration",
+    "relation": "Water Rights Holder",
+    "value_2018": "Kaelen Co.",
+    "value_2020": "Kaelen Co.",
+    "value_2022": "Kaelen Co.",
+    "value_2024": "Kaelen Co.",
+    "changed": false
+  },
+  {
+    "entity": "Azure Lake Land Management",
+    "relation": "Shoreline Development Permit",
+    "value_2018": "Denied",
+    "value_2020": "Granted",
+    "value_2022": "Granted",
+    "value_2024": "Granted",
+    "changed": true
+  },
+  {
+    "entity": "Whisper Hollow Crop Adjudication",
+    "relation": "Disputed Acreage",
+    "value_2018": "5 acres",
+    "value_2020": "5 acres",
+    "value_2022": "5 acres",
+    "value_2024": "3 acres",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Rock Water Board",
+    "relation": "Aquifer Recharge Rate",
+    "value_2018": "Slow",
+    "value_2020": "Slow",
+    "value_2022": "Slow",
+    "value_2024": "Moderate",
+    "changed": true
+  },
+  {
+    "entity": "Stellar Dust Land Registry",
+    "relation": "Agricultural Tax Rate",
+    "value_2018": "2.5%",
+    "value_2020": "2.5%",
+    "value_2022": "2.8%",
+    "value_2024": "2.8%",
+    "changed": true
+  },
+  {
+    "entity": "Emerald Spring Water Conservation",
+    "relation": "Water Conservation Incentives",
+    "value_2018": "None",
+    "value_2020": "Tiered",
+    "value_2022": "Tiered",
+    "value_2024": "Tiered",
+    "changed": true
+  },
+  {
+    "entity": "Shadow Fen Land Commission",
+    "relation": "Wetland Delineation",
+    "value_2018": "Pending",
+    "value_2020": "Pending",
+    "value_2022": "Pending",
+    "value_2024": "Finalized",
+    "changed": true
+  },
+  {
+    "entity": "Glimmering Fields Commission",
+    "relation": "Lead Hydrologist",
+    "value_2018": "Aris Thorne",
+    "value_2020": "Aris Thorne",
+    "value_2022": "Lyra Vance",
+    "value_2024": "Lyra Vance",
+    "changed": true
+  },
+  {
+    "entity": "Whispering Creek Water Registry",
+    "relation": "Primary Irrigant Licensee",
+    "value_2018": "Crimson Valley Farms",
+    "value_2020": "Crimson Valley Farms",
+    "value_2022": "Crimson Valley Farms",
+    "value_2024": "Crimson Valley Farms",
+    "changed": true
+  },
+  {
+    "entity": "Azure Bloom Land Authority",
+    "relation": "Land Surveyor",
+    "value_2018": "Seraphina Croft",
+    "value_2020": "Orion Finch",
+    "value_2022": "Orion Finch",
+    "value_2024": "Orion Finch",
+    "changed": true
+  },
+  {
+    "entity": "Radiant Plains Water Office",
+    "relation": "Water Allocation Manager",
+    "value_2018": "Silas Grant",
+    "value_2020": "Silas Grant",
+    "value_2022": "Cassidy Bell",
+    "value_2024": "Cassidy Bell",
+    "changed": true
+  },
+  {
+    "entity": "Silverleaf River Commission",
+    "relation": "Riparian Rights Enforcer",
+    "value_2018": "Elara Vance",
+    "value_2020": "Elara Vance",
+    "value_2022": "Elara Vance",
+    "value_2024": "Jaxson Reed",
+    "changed": true
+  },
+  {
+    "entity": "Obsidian Hills Water District",
+    "relation": "Aquifer Monitor",
+    "value_2018": "Caspian Gale",
+    "value_2020": "Caspian Gale",
+    "value_2022": "Caspian Gale",
+    "value_2024": "Caspian Gale",
+    "changed": false
+  },
+  {
+    "entity": "Crimson Dew Water Registration",
+    "relation": "Water Rights Adjudicator",
+    "value_2018": "Lila Thorne",
+    "value_2020": "Torvin Holt",
+    "value_2022": "Torvin Holt",
+    "value_2024": "Torvin Holt",
+    "changed": true
+  },
+  {
+    "entity": "Jade Canopy Agricultural Board",
+    "relation": "Pest Control Strategist",
+    "value_2018": "Jasper Stone",
+    "value_2020": "Jasper Stone",
+    "value_2022": "Jasper Stone",
+    "value_2024": "Jasper Stone",
+    "changed": false
+  },
+  {
+    "entity": "Azure Tide Water Authority",
+    "relation": "Water Quality Analyst",
+    "value_2018": "Maya Rivers",
+    "value_2020": "Rylan Finch",
+    "value_2022": "Rylan Finch",
+    "value_2024": "Rylan Finch",
+    "changed": true
+  },
+  {
+    "entity": "Scarlet Bloom Land Registry",
+    "relation": "Deed Registrar",
+    "value_2018": "Willow Croft",
+    "value_2020": "Willow Croft",
+    "value_2022": "Willow Croft",
+    "value_2024": "Willow Croft",
+    "changed": false
+  },
+  {
+    "entity": "Emerald Stream Water Commission",
+    "relation": "Flow Rate Monitor",
+    "value_2018": "Gavin Thorne",
+    "value_2020": "Gavin Thorne",
+    "value_2022": "Gavin Thorne",
+    "value_2024": "Gavin Thorne",
+    "changed": false
+  },
+  {
+    "entity": "Copper Ridge Agricultural Office",
+    "relation": "Crop Rotation Advisor",
+    "value_2018": "Leo Vance",
+    "value_2020": "Leo Vance",
+    "value_2022": "Leo Vance",
+    "value_2024": "Stella Hayes",
+    "changed": true
+  },
+  {
+    "entity": "Ironwood Forest Land Authority",
+    "relation": "Forestry Supervisor",
+    "value_2018": "Bram Stone",
+    "value_2020": "Bram Stone",
+    "value_2022": "Bram Stone",
+    "value_2024": "Bram Stone",
+    "changed": false
+  },
+  {
+    "entity": "Sapphire Bay Water Registry",
+    "relation": "Drought Mitigation Officer",
+    "value_2018": "Nadia Ross",
+    "value_2020": "Nadia Ross",
+    "value_2022": "Nadia Ross",
+    "value_2024": "Nadia Ross",
+    "changed": false
+  },
+  {
+    "entity": "Crimson Peak Land Commission",
+    "relation": "Conservation Easement Manager",
+    "value_2018": "Iris Bloom",
+    "value_2020": "Iris Bloom",
+    "value_2022": "Iris Bloom",
+    "value_2024": "Iris Bloom",
+    "changed": false
+  },
+  {
+    "entity": "Azure Spring Water Office",
+    "relation": "Water Rights Negotiator",
+    "value_2018": "Kai Rivers",
+    "value_2020": "Kai Rivers",
+    "value_2022": "Kai Rivers",
+    "value_2024": "Kai Rivers",
+    "changed": false
+  },
+  {
+    "entity": "Golden Valley Crop Board",
+    "relation": "Crop Yield Analyst",
+    "value_2018": "Quinn Hayes",
+    "value_2020": "Quinn Hayes",
+    "value_2022": "Quinn Hayes",
+    "value_2024": "Quinn Hayes",
+    "changed": false
+  },
+  {
+    "entity": "Silverwood Land Authority",
+    "relation": "Zoning Administrator",
+    "value_2018": "Astrid Croft",
+    "value_2020": "Astrid Croft",
+    "value_2022": "Jude Finch",
+    "value_2024": "Jude Finch",
+    "changed": true
+  },
+  {
+    "entity": "Glimmering Ponds Water Registry",
+    "relation": "Irrigation Project Manager",
+    "value_2018": "Fiona Ross",
+    "value_2020": "Fiona Ross",
+    "value_2022": "Fiona Ross",
+    "value_2024": "Fiona Ross",
+    "changed": false
+  },
+  {
+    "entity": "Whispering Woods Crop Board",
+    "relation": "Harvest Inspector",
+    "value_2018": "Rhys Holloway",
+    "value_2020": "Rhys Holloway",
+    "value_2022": "Rhys Holloway",
+    "value_2024": "Rhys Holloway",
+    "changed": false
+  },
+  {
+    "entity": "Radiant Springs Water Authority",
+    "relation": "Water Rights Auditor",
+    "value_2018": "Lyra Vance",
+    "value_2020": "Lyra Vance",
+    "value_2022": "Lyra Vance",
+    "value_2024": "Aris Thorne",
+    "changed": true
+  },
+  {
+    "entity": "Gilded Hills Agricultural Board",
+    "relation": "Fertilizer Compliance Officer",
+    "value_2018": "Silas Grant",
+    "value_2020": "Silas Grant",
+    "value_2022": "Silas Grant",
+    "value_2024": "Silas Grant",
+    "changed": false
+  },
+  {
+    "entity": "Silver Stream Land Commission",
+    "relation": "Agricultural Zoning Commissioner",
+    "value_2018": "Elara Vance",
+    "value_2020": "Elara Vance",
+    "value_2022": "Elara Vance",
+    "value_2024": "Elara Vance",
+    "changed": false
+  },
+  {
+    "entity": "Obsidian Fields Water District",
+    "relation": "Rainfall Data Collector",
+    "value_2018": "Caspian Gale",
+    "value_2020": "Caspian Gale",
+    "value_2022": "Caspian Gale",
+    "value_2024": "Caspian Gale",
+    "changed": false
+  },
+  {
+    "entity": "Crimson Grove Water Registry",
+    "relation": "Water Use Permit Assessor",
+    "value_2018": "Lila Thorne",
+    "value_2020": "Lila Thorne",
+    "value_2022": "Lila Thorne",
+    "value_2024": "Torvin Holt",
+    "changed": true
+  },
+  {
+    "entity": "Jade Valley Crop Board",
+    "relation": "Seed Certification Officer",
+    "value_2018": "Jasper Stone",
+    "value_2020": "Jasper Stone",
+    "value_2022": "Jasper Stone",
+    "value_2024": "Jasper Stone",
+    "changed": false
+  },
+  {
+    "entity": "Golden Crest Land Authority",
+    "relation": "Land Title Examiner",
+    "value_2018": "Caleb Hayes",
+    "value_2020": "Caleb Hayes",
+    "value_2022": "Caleb Hayes",
+    "value_2024": "Caleb Hayes",
+    "changed": false
+  },
+  {
+    "entity": "Azure Falls Water Commission",
+    "relation": "Water Source Guardian",
+    "value_2018": "Maya Rivers",
+    "value_2020": "Rylan Finch",
+    "value_2022": "Rylan Finch",
+    "value_2024": "Rylan Finch",
+    "changed": true
+  },
+  {
+    "entity": "Veridian Ridge Agricultural Office",
+    "relation": "Farm Viability Consultant",
+    "value_2018": "Rowan Fields",
+    "value_2020": "Rowan Fields",
+    "value_2022": "Rowan Fields",
+    "value_2024": "Rowan Fields",
+    "changed": false
+  },
+  {
+    "entity": "Scarlet Hills Land Registry",
+    "relation": "Eminent Domain Assessor",
+    "value_2018": "Willow Croft",
+    "value_2020": "Willow Croft",
+    "value_2022": "Willow Croft",
+    "value_2024": "Willow Croft",
+    "changed": false
+  },
+  {
+    "entity": "Emerald Peaks Water Commission",
+    "relation": "Water Reservoir Manager",
+    "value_2018": "Gavin Thorne",
+    "value_2020": "Gavin Thorne",
+    "value_2022": "Gavin Thorne",
+    "value_2024": "Gavin Thorne",
+    "changed": false
+  },
+  {
+    "entity": "Ironwood Stream Land Authority",
+    "relation": "Timber Harvest Surveyor",
+    "value_2018": "Bram Stone",
+    "value_2020": "Bram Stone",
+    "value_2022": "Bram Stone",
+    "value_2024": "Bram Stone",
+    "changed": false
+  },
+  {
+    "entity": "Sapphire Lake Water Registry",
+    "relation": "Water Conservation Advocate",
+    "value_2018": "Nadia Ross",
+    "value_2020": "Nadia Ross",
+    "value_2022": "Nadia Ross",
+    "value_2024": "Nadia Ross",
+    "changed": false
+  },
+  {
+    "entity": "Onyx Valley Agricultural Board",
+    "relation": "Farm Equipment Inspector",
+    "value_2018": "Finn Gale",
+    "value_2020": "Finn Gale",
+    "value_2022": "Finn Gale",
+    "value_2024": "Finn Gale",
+    "changed": false
+  },
+  {
+    "entity": "Crimson Ridge Land Commission",
+    "relation": "Farmland Assessment Officer",
+    "value_2018": "Iris Bloom",
+    "value_2020": "Iris Bloom",
+    "value_2022": "Iris Bloom",
+    "value_2024": "Iris Bloom",
+    "changed": false
+  },
+  {
+    "entity": "Azure Meadow Water Office",
+    "relation": "Water Rights Appraiser",
+    "value_2018": "Kai Rivers",
+    "value_2020": "Kai Rivers",
+    "value_2022": "Kai Rivers",
+    "value_2024": "Kai Rivers",
+    "changed": false
+  },
+  {
+    "entity": "Golden Sands Crop Board",
+    "relation": "Crop Damage Investigator",
+    "value_2018": "Quinn Hayes",
+    "value_2020": "Quinn Hayes",
+    "value_2022": "Quinn Hayes",
+    "value_2024": "Quinn Hayes",
+    "changed": false
+  },
+  {
+    "entity": "Silver Creek Land Authority",
+    "relation": "Agricultural Land Easement Manager",
+    "value_2018": "Astrid Croft",
+    "value_2020": "Astrid Croft",
+    "value_2022": "Jude Finch",
+    "value_2024": "Jude Finch",
+    "changed": true
+  },
+  {
+    "entity": "Obsidian Springs Water District",
+    "relation": "Water Utility Superintendent",
+    "value_2018": "Silas Thorne",
+    "value_2020": "Silas Thorne",
+    "value_2022": "Silas Thorne",
+    "value_2024": "Silas Thorne",
+    "changed": false
+  },
+  {
+    "entity": "Kryllian Embassy",
+    "relation": "Ambassadorial Post",
+    "value_2018": "Ambassador Borin",
+    "value_2020": "Ambassador Borin",
+    "value_2022": "Ambassador Vex",
+    "value_2024": "Ambassador Vex",
+    "changed": true
+  },
+  {
+    "entity": "Zylos Accord",
+    "relation": "Ratification Status",
+    "value_2018": "Pending",
+    "value_2020": "Pending",
+    "value_2022": "Pending",
+    "value_2024": "Ratified",
+    "changed": true
+  },
+  {
+    "entity": "Iron Peaks Border",
+    "relation": "Disputed Zone",
+    "value_2018": "Sector Gamma",
+    "value_2020": "Sector Delta",
+    "value_2022": "Sector Delta",
+    "value_2024": "Sector Delta",
+    "changed": true
+  },
+  {
+    "entity": "Xylosian Delegate",
+    "relation": "Chief Negotiator",
+    "value_2018": "Delegate Rylan",
+    "value_2020": "Delegate Torvin",
+    "value_2022": "Delegate Torvin",
+    "value_2024": "Delegate Torvin",
+    "changed": true
+  },
+  {
+    "entity": "Solarian Pact",
+    "relation": "Pledge Level",
+    "value_2018": "Tier 1",
+    "value_2020": "Tier 2",
+    "value_2022": "Tier 2",
+    "value_2024": "Tier 2",
+    "changed": true
+  },
+  {
+    "entity": "Vesperian Mission",
+    "relation": "Mission Head",
+    "value_2018": "Agent Lyra",
+    "value_2020": "Agent Lyra",
+    "value_2022": "Agent Lyra",
+    "value_2024": "Agent Jorn",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Strait",
+    "relation": "Patrol Commander",
+    "value_2018": "Commander Dax",
+    "value_2020": "Commander Dax",
+    "value_2022": "Commander Dax",
+    "value_2024": "Commander Sola",
+    "changed": true
+  },
+  {
+    "entity": "Thornwood Territory",
+    "relation": "Adjudication Panel",
+    "value_2018": "Panel Alpha",
+    "value_2020": "Panel Alpha",
+    "value_2022": "Panel Beta",
+    "value_2024": "Panel Beta",
+    "changed": true
+  },
+  {
+    "entity": "Federation of Lumina",
+    "relation": "Embassy Location",
+    "value_2018": "Capitol City",
+    "value_2020": "Capitol City",
+    "value_2022": "Aethelburg",
+    "value_2024": "Aethelburg",
+    "changed": true
+  },
+  {
+    "entity": "Republic of Oren",
+    "relation": "Consul",
+    "value_2018": "Consul Anya",
+    "value_2020": "Consul Marek",
+    "value_2022": "Consul Marek",
+    "value_2024": "Consul Marek",
+    "changed": true
+  },
+  {
+    "entity": "Veridian Concord",
+    "relation": "Enforcement Agency",
+    "value_2018": "Guardians",
+    "value_2020": "Sentinels",
+    "value_2022": "Sentinels",
+    "value_2024": "Sentinels",
+    "changed": true
+  },
+  {
+    "entity": "Whispering Plains",
+    "relation": "Demarcation Point",
+    "value_2018": "Waypoint 7",
+    "value_2020": "Waypoint 7",
+    "value_2022": "Waypoint 7",
+    "value_2024": "Waypoint 9",
+    "changed": true
+  },
+  {
+    "entity": "Aegis Initiative",
+    "relation": "Project Lead",
+    "value_2018": "Director Thorne",
+    "value_2020": "Director Thorne",
+    "value_2022": "Director Thorne",
+    "value_2024": "Director Rhea",
+    "changed": true
+  },
+  {
+    "entity": "Celestial Accords",
+    "relation": "Mediation Body",
+    "value_2018": "Arbiters",
+    "value_2020": "Judges",
+    "value_2022": "Judges",
+    "value_2024": "Judges",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Dominion",
+    "relation": "Territorial Claim",
+    "value_2018": "North Sector",
+    "value_2020": "North Sector",
+    "value_2022": "East Sector",
+    "value_2024": "East Sector",
+    "changed": true
+  },
+  {
+    "entity": "Northern Alliance",
+    "relation": "Treaty Secretary",
+    "value_2018": "Secretary Alistair",
+    "value_2020": "Secretary Alistair",
+    "value_2022": "Secretary Briar",
+    "value_2024": "Secretary Briar",
+    "changed": true
+  },
+  {
+    "entity": "Ironclad Accord",
+    "relation": "Implementation Agent",
+    "value_2018": "Agent Thorne",
+    "value_2020": "Agent Thorne",
+    "value_2022": "Agent Thorne",
+    "value_2024": "Agent Vance",
+    "changed": true
+  },
+  {
+    "entity": "Veridian Embasssy",
+    "relation": "Ambassadorial Post",
+    "value_2018": "Ambassador Lyra",
+    "value_2020": "Ambassador Lyra",
+    "value_2022": "Ambassador Faelan",
+    "value_2024": "Ambassador Faelan",
+    "changed": true
+  },
+  {
+    "entity": "The Obsidian Directorate",
+    "relation": "Border Commissioner",
+    "value_2018": "Commissioner Kael",
+    "value_2020": "Commissioner Kael",
+    "value_2022": "Commissioner Zylos",
+    "value_2024": "Commissioner Zylos",
+    "changed": true
+  },
+  {
+    "entity": "Southern Republic",
+    "relation": "Chief Diplomat",
+    "value_2018": "Diplomat Rylan",
+    "value_2020": "Diplomat Rylan",
+    "value_2022": "Diplomat Rylan",
+    "value_2024": "Diplomat Anya",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Bay Accord",
+    "relation": "Ratification Date",
+    "value_2018": "2018-11-05",
+    "value_2020": "2018-11-05",
+    "value_2022": "2020-07-12",
+    "value_2024": "2020-07-12",
+    "changed": true
+  },
+  {
+    "entity": "Solarian Federation",
+    "relation": "Consular Representative",
+    "value_2018": "Representative Borin",
+    "value_2020": "Representative Seraphina",
+    "value_2022": "Representative Seraphina",
+    "value_2024": "Representative Seraphina",
+    "changed": true
+  },
+  {
+    "entity": "Xylosian Embassy",
+    "relation": "Embassy Director",
+    "value_2018": "Director Rhea",
+    "value_2020": "Director Rhea",
+    "value_2022": "Director Rhea",
+    "value_2024": "Director Jorn",
+    "changed": true
+  },
+  {
+    "entity": "Iron Peaks Territory",
+    "relation": "Demarcation Marker",
+    "value_2018": "Marker 12",
+    "value_2020": "Marker 15",
+    "value_2022": "Marker 15",
+    "value_2024": "Marker 15",
+    "changed": true
+  },
+  {
+    "entity": "Federation of Lumina",
+    "relation": "Ambassadorial Mission",
+    "value_2018": "Mission Alpha",
+    "value_2020": "Mission Alpha",
+    "value_2022": "Mission Beta",
+    "value_2024": "Mission Beta",
+    "changed": true
+  },
+  {
+    "entity": "Azure Coast Accord",
+    "relation": "Resolution Body",
+    "value_2018": "Committee 1",
+    "value_2020": "Committee 1",
+    "value_2022": "Committee 2",
+    "value_2024": "Committee 2",
+    "changed": true
+  },
+  {
+    "entity": "Veridian Republic",
+    "relation": "Envoy to Kryllia",
+    "value_2018": "Envoy Sola",
+    "value_2020": "Envoy Sola",
+    "value_2022": "Envoy Sola",
+    "value_2024": "Envoy Maren",
+    "changed": true
+  },
+  {
+    "entity": "Solarian Pact",
+    "relation": "Security Protocol",
+    "value_2018": "Protocol Delta",
+    "value_2020": "Protocol Delta",
+    "value_2022": "Protocol Epsilon",
+    "value_2024": "Protocol Epsilon",
+    "changed": true
+  },
+  {
+    "entity": "The Obsidian Federation",
+    "relation": "Territorial Adjudication",
+    "value_2018": "Zone 5",
+    "value_2020": "Zone 8",
+    "value_2022": "Zone 8",
+    "value_2024": "Zone 8",
+    "changed": true
+  },
+  {
+    "entity": "Gloomfang Pass Border",
+    "relation": "Liaison Officer",
+    "value_2018": "Officer Zaltar",
+    "value_2020": "Officer Zaltar",
+    "value_2022": "Officer Dex",
+    "value_2024": "Officer Dex",
+    "changed": true
+  },
+  {
+    "entity": "Kryllian Dominion",
+    "relation": "Embassy Appointment",
+    "value_2018": "Appointee Vex",
+    "value_2020": "Appointee Vex",
+    "value_2022": "Appointee Vex",
+    "value_2024": "Appointee Elara",
+    "changed": true
+  },
+  {
+    "entity": "Northern Alliance Treaty",
+    "relation": "Signing Authority",
+    "value_2018": "Authority Briar",
+    "value_2020": "Authority Briar",
+    "value_2022": "Authority Anya",
+    "value_2024": "Authority Anya",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Strait Accord",
+    "relation": "Mediator",
+    "value_2018": "Mediator Kaelen",
+    "value_2020": "Mediator Kaelen",
+    "value_2022": "Mediator Kaelen",
+    "value_2024": "Mediator Lyra",
+    "changed": true
+  },
+  {
+    "entity": "Veridian Concord Treaty",
+    "relation": "Ratification Body",
+    "value_2018": "Body Gamma",
+    "value_2020": "Body Gamma",
+    "value_2022": "Body Gamma",
+    "value_2024": "Body Delta",
+    "changed": true
+  },
+  {
+    "entity": "Solarian Embassy",
+    "relation": "Ambassadorial Envoy",
+    "value_2018": "Envoy Seraphina",
+    "value_2020": "Envoy Seraphina",
+    "value_2022": "Envoy Seraphina",
+    "value_2024": "Envoy Borin",
+    "changed": true
+  },
+  {
+    "entity": "The Obsidian Concord",
+    "relation": "Border Patrol Lead",
+    "value_2018": "Lead Torvin",
+    "value_2020": "Lead Torvin",
+    "value_2022": "Lead Torvin",
+    "value_2024": "Lead Gorok",
+    "changed": true
+  },
+  {
+    "entity": "Ironclad Treaty",
+    "relation": "Chief Negotiator",
+    "value_2018": "Negotiator Vance",
+    "value_2020": "Negotiator Thorne",
+    "value_2022": "Negotiator Thorne",
+    "value_2024": "Negotiator Thorne",
+    "changed": true
+  },
+  {
+    "entity": "Azure Peaks Accord",
+    "relation": "Adjudication Officer",
+    "value_2018": "Officer Zylos",
+    "value_2020": "Officer Zylos",
+    "value_2022": "Officer Zylos",
+    "value_2024": "Officer Kael",
+    "changed": true
+  },
+  {
+    "entity": "Xylosian Concord",
+    "relation": "Territorial Liaison",
+    "value_2018": "Liaison Jorn",
+    "value_2020": "Liaison Jorn",
+    "value_2022": "Liaison Rhea",
+    "value_2024": "Liaison Rhea",
+    "changed": true
+  },
+  {
+    "entity": "Federation of Lumina Accord",
+    "relation": "Resolution Chairperson",
+    "value_2018": "Chairperson Beta",
+    "value_2020": "Chairperson Beta",
+    "value_2022": "Chairperson Beta",
+    "value_2024": "Chairperson Alpha",
+    "changed": true
+  },
+  {
+    "entity": "Solarian Pact Accord",
+    "relation": "Security Overseer",
+    "value_2018": "Overseer Epsilon",
+    "value_2020": "Overseer Epsilon",
+    "value_2022": "Overseer Delta",
+    "value_2024": "Overseer Delta",
+    "changed": true
+  },
+  {
+    "entity": "Whispering Plains Territory",
+    "relation": "Border Demarcation",
+    "value_2018": "Territory 7",
+    "value_2020": "Territory 9",
+    "value_2022": "Territory 9",
+    "value_2024": "Territory 9",
+    "changed": true
+  },
+  {
+    "entity": "Luminary Pact",
+    "relation": "Primary Negotiator",
+    "value_2018": "Ambassador Kaelen",
+    "value_2020": "Ambassador Lyra",
+    "value_2022": "Ambassador Lyra",
+    "value_2024": "Ambassador Lyra",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Treaty",
+    "relation": "Disputed Territory",
+    "value_2018": "Azure Expanse",
+    "value_2020": "Veridian Reach",
+    "value_2022": "Veridian Reach",
+    "value_2024": "Veridian Reach",
+    "changed": true
+  },
+  {
+    "entity": "Glimmering Charter",
+    "relation": "Enforcement Body",
+    "value_2018": "Stellar Guard",
+    "value_2020": "Stellar Guard",
+    "value_2022": "Cosmic Patrol",
+    "value_2024": "Cosmic Patrol",
+    "changed": true
+  },
+  {
+    "entity": "Veridian Accords",
+    "relation": "Mediating Nation",
+    "value_2018": "Republic of Aerion",
+    "value_2020": "Republic of Aerion",
+    "value_2022": "Federation of Xylos",
+    "value_2024": "Federation of Xylos",
+    "changed": true
+  },
+  {
+    "entity": "Azure Treaty",
+    "relation": "Signing Location",
+    "value_2018": "Citadel of Peace",
+    "value_2020": "Grand Assembly Hall",
+    "value_2022": "Grand Assembly Hall",
+    "value_2024": "Grand Assembly Hall",
+    "changed": true
+  },
+  {
+    "entity": "Whispering Treaty",
+    "relation": "Border Liaison Office",
+    "value_2018": "Station Gamma",
+    "value_2020": "Station Gamma",
+    "value_2022": "Post Epsilon",
+    "value_2024": "Post Epsilon",
+    "changed": true
+  },
+  {
+    "entity": "Emerald Pact",
+    "relation": "Protectorate Status",
+    "value_2018": "Serene Isles",
+    "value_2020": "Serene Isles",
+    "value_2022": "Crimson Peaks",
+    "value_2024": "Crimson Peaks",
+    "changed": true
+  },
+  {
+    "entity": "Starlight Accord",
+    "relation": "Exclusive Trade Zone",
+    "value_2018": "Orion Nebula",
+    "value_2020": "Orion Nebula",
+    "value_2022": "Sirius Sector",
+    "value_2024": "Sirius Sector",
+    "changed": true
+  },
+  {
+    "entity": "Jade Treaty of Lumina",
+    "relation": "Resource Allocation Committee",
+    "value_2018": "Group Alpha",
+    "value_2020": "Group Alpha",
+    "value_2022": "Group Beta",
+    "value_2024": "Group Beta",
+    "changed": true
+  },
+  {
+    "entity": "Diamond Treaty of Syllos",
+    "relation": "Dispute Resolution Forum",
+    "value_2018": "Forum of Accord",
+    "value_2020": "Assembly of Clarity",
+    "value_2022": "Assembly of Clarity",
+    "value_2024": "Assembly of Clarity",
+    "changed": true
+  },
+  {
+    "entity": "Ruby Accord of Vex",
+    "relation": "Border Control Directorate",
+    "value_2018": "Directorate of Frontiers",
+    "value_2020": "Guardianship Bureau",
+    "value_2022": "Guardianship Bureau",
+    "value_2024": "Guardianship Bureau",
+    "changed": true
+  },
+  {
+    "entity": "Topaz Treaty of Orion",
+    "relation": "Treaty Oversight Agency",
+    "value_2018": "Agency of Scrutiny",
+    "value_2020": "Agency of Scrutiny",
+    "value_2022": "Agency of Scrutiny",
+    "value_2024": "Watchdog Collective",
+    "changed": true
+  },
+  {
+    "entity": "Zylos Accord",
+    "relation": "Demarcation Point",
+    "value_2018": "Fortress Dawn",
+    "value_2020": "Watchtower Dusk",
+    "value_2022": "Watchtower Dusk",
+    "value_2024": "Watchtower Dusk",
+    "changed": true
+  },
+  {
+    "entity": "Luminary Pact",
+    "relation": "Embassy Host",
+    "value_2018": "Embassy of Aerion",
+    "value_2020": "Embassy of Aerion",
+    "value_2022": "Embassy of Xylos",
+    "value_2024": "Embassy of Xylos",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Treaty",
+    "relation": "Sovereignty Claim",
+    "value_2018": "Kaelen Dynasty",
+    "value_2020": "Kaelen Dynasty",
+    "value_2022": "Kaelen Dynasty",
+    "value_2024": "Lyra Dominion",
+    "changed": true
+  },
+  {
+    "entity": "Glimmering Charter",
+    "relation": "Disputed Resource",
+    "value_2018": "Crystal Caves",
+    "value_2020": "Geode Fields",
+    "value_2022": "Geode Fields",
+    "value_2024": "Geode Fields",
+    "changed": true
+  },
+  {
+    "entity": "Veridian Accords",
+    "relation": "Border Liaison Officer",
+    "value_2018": "Commander Roric",
+    "value_2020": "Captain Valerius",
+    "value_2022": "Captain Valerius",
+    "value_2024": "Captain Valerius",
+    "changed": true
+  },
+  {
+    "entity": "Azure Treaty",
+    "relation": "Joint Monitoring Station",
+    "value_2018": "Station Alpha",
+    "value_2020": "Station Alpha",
+    "value_2022": "Station Beta",
+    "value_2024": "Station Beta",
+    "changed": true
+  },
+  {
+    "entity": "Whispering Treaty",
+    "relation": "Demilitarized Zone Length",
+    "value_2018": "50 Klicks",
+    "value_2020": "75 Klicks",
+    "value_2022": "75 Klicks",
+    "value_2024": "75 Klicks",
+    "changed": true
+  },
+  {
+    "entity": "Emerald Pact",
+    "relation": "Territorial Adjudication Date",
+    "value_2018": "22.03.2018",
+    "value_2020": "22.03.2018",
+    "value_2022": "22.03.2018",
+    "value_2024": "15.07.2022",
+    "changed": true
+  },
+  {
+    "entity": "Obsidian Treaty",
+    "relation": "Disputed Maritime Zone",
+    "value_2018": "Southern Sea",
+    "value_2020": "Southern Sea",
+    "value_2022": "Western Ocean",
+    "value_2024": "Western Ocean",
+    "changed": true
+  },
+  {
+    "entity": "Starlight Accord",
+    "relation": "Envoy Representative",
+    "value_2018": "Zyn",
+    "value_2020": "Zyn",
+    "value_2022": "Zyn",
+    "value_2024": "Klar",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Border Treaty",
+    "relation": "Border Crossing Point",
+    "value_2018": "Gate Alpha",
+    "value_2020": "Gate Beta",
+    "value_2022": "Gate Beta",
+    "value_2024": "Gate Beta",
+    "changed": true
+  },
+  {
+    "entity": "Gilded Treaty of Xylo",
+    "relation": "Border Patrol Commander",
+    "value_2018": "Commander Jax",
+    "value_2020": "Commander Nova",
+    "value_2022": "Commander Nova",
+    "value_2024": "Commander Nova",
+    "changed": true
+  },
+  {
+    "entity": "Silver Accord of Vesper",
+    "relation": "Disputed Island",
+    "value_2018": "Isle of Whispers",
+    "value_2020": "Serpent Rock",
+    "value_2022": "Serpent Rock",
+    "value_2024": "Serpent Rock",
+    "changed": true
+  },
+  {
+    "entity": "Bronze Treaty of Aerion",
+    "relation": "Treaty Amendment Year",
+    "value_2018": "2018",
+    "value_2020": "2022",
+    "value_2022": "2022",
+    "value_2024": "2022",
+    "changed": true
+  },
+  {
+    "entity": "Jade Treaty of Lumina",
+    "relation": "Joint Research Facility",
+    "value_2018": "Lab X",
+    "value_2020": "Lab X",
+    "value_2022": "Lab Y",
+    "value_2024": "Lab Y",
+    "changed": true
+  },
+  {
+    "entity": "Sapphire Accord of Eldoria",
+    "relation": "Mutual Defense Pact",
+    "value_2018": "Pact of Eldoria",
+    "value_2020": "Pact of Eldoria",
+    "value_2022": "Pact of Aerion",
+    "value_2024": "Pact of Aerion",
+    "changed": true
+  },
+  {
+    "entity": "Diamond Treaty of Syllos",
+    "relation": "Economic Sanctions Target",
+    "value_2018": "Syndicate Prime",
+    "value_2020": "Guild of Shadows",
+    "value_2022": "Guild of Shadows",
+    "value_2024": "Guild of Shadows",
+    "changed": true
+  },
+  {
+    "entity": "Ruby Accord of Vex",
+    "relation": "Cultural Exchange Program",
+    "value_2018": "Vexian Arts",
+    "value_2020": "Xylosian Music",
+    "value_2022": "Xylosian Music",
+    "value_2024": "Xylosian Music",
+    "changed": true
+  },
+  {
+    "entity": "Topaz Treaty of Orion",
+    "relation": "Space Lane Designation",
+    "value_2018": "Route 7",
+    "value_2020": "Route 7",
+    "value_2022": "Route 9",
+    "value_2024": "Route 9",
+    "changed": true
+  },
+  {
+    "entity": "Amethyst Accord of Sirius",
+    "relation": "Diplomatic Envoy",
+    "value_2018": "Envoy Kael",
+    "value_2020": "Envoy Kael",
+    "value_2022": "Envoy Lyra",
+    "value_2024": "Envoy Lyra",
+    "changed": true
+  },
+  {
+    "entity": "Zylos Bridge",
+    "relation": "primary support material",
+    "value_2018": "Titanium Alloy",
+    "value_2020": "Titanium Alloy",
+    "value_2022": "Duralumin",
+    "value_2024": "Duralumin",
+    "changed": true
+  },
+  {
+    "entity": "Aethelred Tower",
+    "relation": "observation deck level",
+    "value_2018": "Level 78",
+    "value_2020": "Level 78",
+    "value_2022": "Level 78",
+    "value_2024": "Level 78",
+    "changed": false
+  },
+  {
+    "entity": "Kaelen Conduit",
+    "relation": "fluid type carried",
+    "value_2018": "Cryo-Gel",
+    "value_2020": "Cryo-Gel",
+    "value_2022": "Plasma",
+    "value_2024": "Plasma",
+    "changed": true
+  },
+  {
+    "entity": "Vesper Crossing",
+    "relation": "span length",
+    "value_2018": "450 meters",
+    "value_2020": "450 meters",
+    "value_2022": "460 meters",
+    "value_2024": "460 meters",
+    "changed": true
+  },
+  {
+    "entity": "Orion Spire",
+    "relation": "wind baffle design",
+    "value_2018": "Aerodynamic Fins",
+    "value_2020": "Perforated Panels",
+    "value_2022": "Perforated Panels",
+    "value_2024": "Perforated Panels",
+    "changed": true
+  },
+  {
+    "entity": "Nexus Pipeline",
+    "relation": "pressure rating",
+    "value_2018": "1500 psi",
+    "value_2020": "1500 psi",
+    "value_2022": "1500 psi",
+    "value_2024": "1500 psi",
+    "changed": false
+  },
+  {
+    "entity": "Glimmeridge Aqueduct",
+    "relation": "water source",
+    "value_2018": "Glacial Melt",
+    "value_2020": "Glacial Melt",
+    "value_2022": "Glacial Melt",
+    "value_2024": "Reservoir Alpha",
+    "changed": true
+  },
+  {
+    "entity": "Solara Arch",
+    "relation": "architectural style",
+    "value_2018": "Gothic Revival",
+    "value_2020": "Gothic Revival",
+    "value_2022": "Gothic Revival",
+    "value_2024": "Neo-Futurist",
+    "changed": true
+  },
+  {
+    "entity": "Ironclad Dam",
+    "relation": "spillway capacity",
+    "value_2018": "5000 cfs",
+    "value_2020": "5000 cfs",
+    "value_2022": "5000 cfs",
+    "value_2024": "5000 cfs",
+    "changed": false
+  },
+  {
+    "entity": "Skyreach Viaduct",
+    "relation": "deck surface material",
+    "value_2018": "Reinforced Concrete",
+    "value_2020": "Composite Polymer",
+    "value_2022": "Composite Polymer",
+    "value_2024": "Composite Polymer",
+    "changed": true
+  },
+  {
+    "entity": "Astral Gate",
+    "relation": "illumination system",
+    "value_2018": "LED Arrays",
+    "value_2020": "LED Arrays",
+    "value_2022": "LED Arrays",
+    "value_2024": "Holographic Projectors",
+    "changed": true
+  },
+  {
+    "entity": "Chronos Dam",
+    "relation": "turbine type",
+    "value_2018": "Francis",
+    "value_2020": "Francis",
+    "value_2022": "Francis",
+    "value_2024": "Pelton",
+    "changed": true
+  },
+  {
+    "entity": "Silvanus Skywalk",
+    "relation": "cable material",
+    "value_2018": "Carbon Fiber",
+    "value_2020": "Carbon Fiber",
+    "value_2022": "Carbon Fiber",
+    "value_2024": "Carbon Fiber",
+    "changed": false
+  },
+  {
+    "entity": "Echo Channel",
+    "relation": "inspection drone model",
+    "value_2018": "Scout 3",
+    "value_2020": "Scout 3",
+    "value_2022": "Scout 4",
+    "value_2024": "Scout 4",
+    "changed": true
+  },
+  {
+    "entity": "Nebula Overpass",
+    "relation": "load bearing capacity",
+    "value_2018": "250 tons",
+    "value_2020": "250 tons",
+    "value_2022": "250 tons",
+    "value_2024": "275 tons",
+    "changed": true
+  },
+  {
+    "entity": "Titan Hangar",
+    "relation": "structural reinforcement",
+    "value_2018": "Steel Beams",
+    "value_2020": "Graphene Strands",
+    "value_2022": "Graphene Strands",
+    "value_2024": "Graphene Strands",
+    "changed": true
+  },
+  {
+    "entity": "Argent Reservoir",
+    "relation": "filter type",
+    "value_2018": "Ceramic",
+    "value_2020": "Ceramic",
+    "value_2022": "Ceramic",
+    "value_2024": "Nanoporous",
+    "changed": true
+  },
+  {
+    "entity": "Labyrinthine Bridge",
+    "relation": "number of piers",
+    "value_2018": "12",
+    "value_2020": "12",
+    "value_2022": "12",
+    "value_2024": "12",
+    "changed": false
+  },
+  {
+    "entity": "Aether Conduit",
+    "relation": "telemetry system",
+    "value_2018": "Standard",
+    "value_2020": "Advanced",
+    "value_2022": "Advanced",
+    "value_2024": "Advanced",
+    "changed": true
+  },
+  {
+    "entity": "Zenith Tower",
+    "relation": "elevator speed",
+    "value_2018": "10 m/s",
+    "value_2020": "10 m/s",
+    "value_2022": "10 m/s",
+    "value_2024": "12 m/s",
+    "changed": true
+  },
+  {
+    "entity": "Pinnacle Bridge",
+    "relation": "stress monitoring sensors",
+    "value_2018": "Fiber Optic",
+    "value_2020": "Strain Gauges",
+    "value_2022": "Strain Gauges",
+    "value_2024": "Strain Gauges",
+    "changed": true
+  },
+  {
+    "entity": "Evergreen Aqueduct",
+    "relation": "maintenance contractor",
+    "value_2018": "AquaPro",
+    "value_2020": "AquaPro",
+    "value_2022": "HydroCare",
+    "value_2024": "HydroCare",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Dam",
+    "relation": "gate material",
+    "value_2018": "Steel",
+    "value_2020": "Titanium",
+    "value_2022": "Titanium",
+    "value_2024": "Titanium",
+    "changed": true
+  },
+  {
+    "entity": "Whisperwind Bridge",
+    "relation": "deck expansion joints",
+    "value_2018": "Standard",
+    "value_2020": "Standard",
+    "value_2022": "Standard",
+    "value_2024": "Advanced",
+    "changed": true
+  },
+  {
+    "entity": "Apex Tower",
+    "relation": "occupancy limit",
+    "value_2018": "5000",
+    "value_2020": "5000",
+    "value_2022": "5000",
+    "value_2024": "5000",
+    "changed": false
+  },
+  {
+    "entity": "Arcane Conduit",
+    "relation": "conduit diameter",
+    "value_2018": "2 meters",
+    "value_2020": "2 meters",
+    "value_2022": "2 meters",
+    "value_2024": "2.5 meters",
+    "changed": true
+  },
+  {
+    "entity": "Elysian Aqueduct",
+    "relation": "structural integrity rating",
+    "value_2018": "Good",
+    "value_2020": "Excellent",
+    "value_2022": "Excellent",
+    "value_2024": "Excellent",
+    "changed": true
+  },
+  {
+    "entity": "Galactic Tower",
+    "relation": "roof garden type",
+    "value_2018": "Tropical",
+    "value_2020": "Arid",
+    "value_2022": "Arid",
+    "value_2024": "Arid",
+    "changed": true
+  },
+  {
+    "entity": "Polaris Dam",
+    "relation": "dam crest length",
+    "value_2018": "1.2 km",
+    "value_2020": "1.2 km",
+    "value_2022": "1.2 km",
+    "value_2024": "1.2 km",
+    "changed": false
+  },
+  {
+    "entity": "Ironwood Bridge",
+    "relation": "deck paving",
+    "value_2018": "Asphalt",
+    "value_2020": "Asphalt",
+    "value_2022": "Rubberized",
+    "value_2024": "Rubberized",
+    "changed": true
+  },
+  {
+    "entity": "Zephyr Tower",
+    "relation": "balcony railing material",
+    "value_2018": "Glass",
+    "value_2020": "Glass",
+    "value_2022": "Glass",
+    "value_2024": "Glass",
+    "changed": false
+  },
+  {
+    "entity": "Tempest Aqueduct",
+    "relation": "water purification method",
+    "value_2018": "Chlorination",
+    "value_2020": "Chlorination",
+    "value_2022": "UV Treatment",
+    "value_2024": "UV Treatment",
+    "changed": true
+  },
+  {
+    "entity": "Crimson Arch",
+    "relation": "pedestrian walkway width",
+    "value_2018": "3 meters",
+    "value_2020": "3 meters",
+    "value_2022": "3 meters",
+    "value_2024": "3 meters",
+    "changed": false
+  },
+  {
+    "entity": "Starfall Bridge",
+    "relation": "cable-stay tension",
+    "value_2018": "Calibrated",
+    "value_2020": "Calibrated",
+    "value_2022": "Calibrated",
+    "value_2024": "Dynamic",
+    "changed": true
+  },
+  {
+    "entity": "Azure Conduit",
+    "relation": "inspection frequency",
+    "value_2018": "Annual",
+    "value_2020": "Annual",
+    "value_2022": "Annual",
+    "value_2024": "Biannual",
+    "changed": true
+  },
+  {
+    "entity": "Umbra Bridge",
+    "relation": "lighting type",
+    "value_2018": "Sodium Vapor",
+    "value_2020": "LED",
+    "value_2022": "LED",
+    "value_2024": "LED",
+    "changed": true
+  },
+  {
+    "entity": "Ember Tower",
+    "relation": "observation platform capacity",
+    "value_2018": "100",
+    "value_2020": "100",
+    "value_2022": "100",
+    "value_2024": "150",
+    "changed": true
+  },
+  {
+    "entity": "Jade Aqueduct",
+    "relation": "support column material",
+    "value_2018": "Reinforced Concrete",
+    "value_2020": "Reinforced Concrete",
+    "value_2022": "Reinforced Concrete",
+    "value_2024": "Pre-stressed Concrete",
+    "changed": true
+  },
+  {
+    "entity": "Apex Bridge",
+    "relation": "deck joint type",
+    "value_2018": "Modular",
+    "value_2020": "Modular",
+    "value_2022": "Finger",
+    "value_2024": "Finger",
+    "changed": true
+  },
+  {
+    "entity": "Cinder Dam",
+    "relation": "power output",
+    "value_2018": "50 MW",
+    "value_2020": "50 MW",
+    "value_2022": "50 MW",
+    "value_2024": "50 MW",
+    "changed": false
+  },
+  {
+    "entity": "Crimson Conduit",
+    "relation": "flow rate",
+    "value_2018": "1000 L/s",
+    "value_2020": "1200 L/s",
+    "value_2022": "1200 L/s",
+    "value_2024": "1200 L/s",
+    "changed": true
+  },
+  {
+    "entity": "Aura Bridge",
+    "relation": "aerodynamic shaping",
+    "value_2018": "Symmetric",
+    "value_2020": "Asymmetric",
+    "value_2022": "Asymmetric",
+    "value_2024": "Asymmetric",
+    "changed": true
+  },
+  {
+    "entity": "Void Tower",
+    "relation": "external cladding",
+    "value_2018": "Aluminum",
+    "value_2020": "Glass",
+    "value_2022": "Glass",
+    "value_2024": "Glass",
+    "changed": true
+  }
+]
