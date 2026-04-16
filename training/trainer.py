@@ -789,8 +789,6 @@ class CASFTrainer:
 
         self._checkpoint_manifest = validate_checkpoint_manifest(checkpoint_path)
         trainer_state = torch.load(trainer_state_path, map_location="cpu", weights_only=False)
-        self.optimizer.load_state_dict(trainer_state["optimizer_state_dict"])
-        self._move_optimizer_state_to_device()
         self._checkpoint_state = trainer_state
         self._completed_units = list(trainer_state["completed_units"])
 
@@ -802,11 +800,19 @@ class CASFTrainer:
         if self.config.method == "casm":
             from .casm_model import CASMModelWrapper
             if isinstance(self.model, CASMModelWrapper):
+                # Load memory BEFORE optimizer: contradiction branching may have
+                # added slots during the saved run, making the checkpoint optimizer
+                # larger than the freshly-built model.  Expanding the slot bank
+                # first lets _rebuild_optimizer_for_casm match the checkpoint size.
                 CASMModelWrapper.load_memory_into(self.model, str(checkpoint_path))
+                self._rebuild_optimizer_for_casm()
             if "model_slot_to_registry_slot_id" in trainer_state:
                 self._model_slot_to_registry_slot_id = {
                     int(k): v for k, v in trainer_state["model_slot_to_registry_slot_id"].items()
                 }
+
+        self.optimizer.load_state_dict(trainer_state["optimizer_state_dict"])
+        self._move_optimizer_state_to_device()
 
         return ResumeState(
             checkpoint_path=str(checkpoint_path),
