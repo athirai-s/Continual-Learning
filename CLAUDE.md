@@ -234,6 +234,40 @@ self._rebuild_optimizer_for_casm()                               # then grow opt
 self.optimizer.load_state_dict(trainer_state["optimizer_state_dict"])  # then load state
 ```
 
+### SimilarityRouter — state persistence (casm_model.py — FIXED)
+
+`SimilarityRouter` is not an `nn.Module`, so `hasattr(router, "state_dict")` is False.
+The old `save_pretrained` set `router_state = None` and saved nothing.  On load,
+`_slot_embeddings` was empty, `n_slots == 0`, and `__call__` clamped `k = min(top_k, 1) = 1`,
+always returning slot 0 with weight 1.0.  All routing collapsed.  All gradient went only to
+slot 0; the other 7 slots had `grad = None` for every parameter.
+
+Fix: `save_pretrained` now serialises `_slot_embeddings` and `_slot_metadata` as plain dicts
+inside `casm_memory.pt` under key `"router_similarity"`.  `load_memory_into` restores them and
+invalidates `_proto_tensors` so `__call__` rebuilds the projection on first use.
+
+### SimilarityRouter — semantic content embeddings (trainer.py — FIXED)
+
+Random unit vectors (seeded by slot_id) give no relationship to what each slot has learned.
+Routing stays arbitrary across all periods.
+
+Fix: `_update_similarity_router_from_slot_content()` runs after every training period.  It
+computes the gate-weighted sum of each slot's memory rows (the slot's "effective content vector"
+in LLM hidden space), normalises it to a unit vector, and stores it as the slot's routing
+embedding.  Slots whose content norm is below 1e-6 (not yet trained) keep their random vector.
+Called in `train_period()` after `_sync_similarity_router`.
+
+### SimilarityRouter — projection dimension mismatch (router_baseline.py — FIXED)
+
+Content vectors from `_update_similarity_router_from_slot_content` are `(H,)`-dimensional (LLM
+hidden space, e.g. 2048).  The original `__call__` always applied a fixed random projection
+`(emb_dim, H)`, so with `emb_dim == H` the projection was a random 2048×2048 matrix that
+destroyed the directional signal.
+
+Fix: `__call__` now detects `emb_dim == H` and uses embeddings directly as proto tensors,
+skipping the projection.  Sentence-transformer embeddings (`emb_dim == 384`) still go through
+the projection as before.
+
 ### SimilarityRouter — slot pre-registration (trainer.py)
 
 `SimilarityRouter` produces identical cosine-similarity embeddings for slots registered with

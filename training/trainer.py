@@ -75,6 +75,51 @@ def _pre_register_similarity_router(model: Any, period: str) -> None:
             del router._proto_tensors
 
 
+def _update_similarity_router_from_slot_content(model: Any) -> None:
+    """Replace each slot's routing embedding with its learned content vector.
+
+    Called after each training period so that routing becomes semantically
+    meaningful: slots that have learned specific fact patterns attract future
+    queries about those same facts.
+
+    The content vector is the gate-weighted sum of a slot's memory rows —
+    the same quantity used by _slot_contribution() for the overlap loss.
+    It lives in LLM hidden space (H-dim), so SimilarityRouter.__call__ must
+    detect emb_dim == H and skip the sentence-transformer projection.
+
+    Slots whose content norm is below 1e-6 (slot bank hasn't moved from
+    zero-init) are skipped so their random seed vector stays in place as a
+    routing placeholder — the next period will overwrite it once the slot
+    has learned something.
+    """
+    import numpy as np
+    from .router_baseline import SimilarityRouter
+    if not isinstance(model.router, SimilarityRouter):
+        return
+    router = model.router
+    updated = 0
+    for slot_id in model._active_slot_ids:
+        key = str(slot_id)
+        if key not in model.slot_bank:
+            continue
+        block = model.slot_bank[key]
+        with torch.no_grad():
+            gate = torch.sigmoid(block.gate_logits).float()          # (mem,)
+            content = (gate.unsqueeze(-1) * block.memory.float()).sum(0)  # (H,)
+            content_np = content.cpu().numpy()
+        norm = float(np.linalg.norm(content_np))
+        if norm < 1e-6:
+            continue  # slot hasn't learned — keep existing placeholder
+        router._slot_embeddings[slot_id] = (content_np / norm).astype("float32")
+        # preserve existing period/entity metadata; add content marker
+        existing = router._slot_metadata.get(slot_id, {})
+        router._slot_metadata[slot_id] = {**existing, "_content_updated": True}
+        updated += 1
+    if updated > 0 and hasattr(router, "_proto_tensors"):
+        del router._proto_tensors
+    print(f"  Slot content embeddings updated: {updated}/{len(model._active_slot_ids)} slots")
+
+
 def _sync_similarity_router(
     model: Any,
     registry: MemoryRegistry,
@@ -655,6 +700,9 @@ class CASFTrainer:
                     period,
                     self._model_slot_to_registry_slot_id,
                 )
+                # Replace random seed vectors with learned slot content so
+                # routing becomes semantically meaningful in subsequent periods.
+                _update_similarity_router_from_slot_content(self.model)
 
         if period not in self._completed_units:
             self._completed_units.append(period)

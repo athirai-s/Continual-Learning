@@ -414,9 +414,27 @@ class CASMModelWrapper(nn.Module):
         """Save backbone weights and all CASM state to *path*."""
         self.backbone.save_pretrained(path)
         router_state = self.router.state_dict() if hasattr(self.router, "state_dict") else None
+
+        # SimilarityRouter is not an nn.Module so state_dict() is unavailable.
+        # Persist its slot embeddings and metadata explicitly as plain dicts so
+        # routing knowledge survives checkpoint save/load.
+        similarity_router_state: Optional[dict] = None
+        if hasattr(self.router, "_slot_embeddings"):
+            similarity_router_state = {
+                "embeddings": {
+                    str(k): v.tolist()
+                    for k, v in self.router._slot_embeddings.items()
+                },
+                "metadata": {
+                    str(k): v
+                    for k, v in self.router._slot_metadata.items()
+                },
+            }
+
         state = {
             "slot_bank": {k: v.state_dict() for k, v in self.slot_bank.items()},
             "router": router_state,
+            "router_similarity": similarity_router_state,
             "active_slot_ids": list(self._active_slot_ids),
             "closed_slot_ids": list(self._closed_slot_ids),
             "next_slot_idx": self._next_slot_idx,
@@ -435,7 +453,7 @@ class CASMModelWrapper(nn.Module):
         memory_path = os.path.join(path, "casm_memory.pt")
         if not os.path.exists(memory_path):
             return
-        state = torch.load(memory_path, map_location="cpu", weights_only=True)
+        state = torch.load(memory_path, map_location="cpu", weights_only=False)
 
         # Determine target device from the wrapper's existing slot bank.
         target_device = next(wrapper.slot_bank.parameters()).device
@@ -457,6 +475,22 @@ class CASMModelWrapper(nn.Module):
             if key in wrapper.slot_bank:
                 wrapper.slot_bank[key].load_state_dict(sd, strict=False)
                 wrapper.slot_bank[key] = wrapper.slot_bank[key].to(target_device)
+
+        # Restore SimilarityRouter slot embeddings.  These are stored separately
+        # because SimilarityRouter is not an nn.Module and has no state_dict().
+        similarity_state = state.get("router_similarity")
+        if similarity_state is not None and hasattr(wrapper.router, "_slot_embeddings"):
+            import numpy as np
+            wrapper.router._slot_embeddings = {
+                int(k): np.array(v, dtype="float32")
+                for k, v in similarity_state.get("embeddings", {}).items()
+            }
+            wrapper.router._slot_metadata = {
+                int(k): v
+                for k, v in similarity_state.get("metadata", {}).items()
+            }
+            if hasattr(wrapper.router, "_proto_tensors"):
+                del wrapper.router._proto_tensors
 
         # Resize the router output layer to match the checkpoint before loading
         # its state dict (router may have grown via _expand_router during the run).
