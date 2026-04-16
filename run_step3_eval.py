@@ -17,10 +17,10 @@ from casf_dataset_api.evaluator import _token_f1
 # All checkpoints to evaluate
 CHECKPOINTS = {
     "pretrain_p1": "/scratch1/ashanmug/checkpoints/pretrain_period1_3b/checkpoints/ckpt-000001",
-    "full_ft":     "/scratch1/ashanmug/checkpoints/step2_fullft_3b/checkpoints/ckpt-000003",
-    "lora":        "/scratch1/ashanmug/checkpoints/step2_lora_3b/checkpoints/ckpt-000003",
-    "smf":         "/scratch1/ashanmug/checkpoints/step2_smf_3b/checkpoints/ckpt-000003",
-    "casm":        "/scratch1/ashanmug/checkpoints/step2_casm_3b/checkpoints/ckpt-000003",
+    "full_ft":     "/scratch1/ashanmug/checkpoints/step2_fullft_3b/checkpoints/ckpt-000008",
+    "lora":        "/scratch1/ashanmug/checkpoints/step2_lora_3b/checkpoints/ckpt-000007",
+    "smf":         "/scratch1/ashanmug/checkpoints/step2_smf_3b/checkpoints/ckpt-000008",
+    "casm":        "/scratch1/ashanmug/checkpoints/step2_casm_3b/checkpoints/ckpt-000008",
 }
 
 
