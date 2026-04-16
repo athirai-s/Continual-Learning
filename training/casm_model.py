@@ -116,27 +116,6 @@ def _slot_contribution_tokens(
     return (gate @ block.memory).to(hidden_states.dtype)
 
 
-def _routing_query(embeds: torch.Tensor) -> torch.Tensor:
-    """Compute a routing query that captures both period and entity signal.
-
-    Passages/prompts are formatted as "[YEAR] The <relation> of <entity> is ...".
-    The year token sits at position 0; the entity/relation tail sits at the end.
-    Using only the tail loses the period signal; using only position 0 loses
-    entity discrimination.  This combines both at equal weight.
-
-    Args:
-        embeds: (B, T, H) token embeddings for the full input sequence.
-
-    Returns:
-        (B, H) query vector — average of year-prefix mean and content-tail mean.
-    """
-    T = embeds.shape[1]
-    # First 4 tokens cover "[", "YEAR", "]" plus one buffer token
-    prefix = embeds[:, :min(4, T), :].mean(dim=1)      # (B, H) — period signal
-    content = embeds[:, -min(8, T):, :].mean(dim=1)    # (B, H) — entity/relation signal
-    return (prefix + content) / 2.0
-
-
 def _get_input_embeddings(backbone: Any, input_ids: torch.Tensor) -> torch.Tensor:
     """Extract token embeddings from the backbone without a full forward pass.
 
@@ -363,7 +342,7 @@ class CASMModelWrapper(nn.Module):
         """
         if input_ids is not None and len(self._active_slot_ids) > 0:
             embeds = _get_input_embeddings(self.backbone, input_ids)  # (B, T, H)
-            query = _routing_query(embeds)  # (B, H) — period prefix + entity tail
+            query = embeds[:, -8:, :].mean(dim=1)  # (B, H) — last-8 mean avoids "is"-token collapse
 
             top_k = min(self._casm_cfg.casm_top_k, len(self._active_slot_ids))  # type: ignore[arg-type]
             slot_ids, weights = self.router(query, top_k=top_k)  # (B, top_k)
@@ -557,7 +536,7 @@ class CASMModelWrapper(nn.Module):
         if input_ids is not None and len(self._active_slot_ids) > 0:
             with torch.no_grad():
                 embeds = _get_input_embeddings(self.backbone, input_ids)  # (B, T, H)
-                query = _routing_query(embeds)  # (B, H) — period prefix + entity tail
+                query = embeds[:, -8:, :].mean(dim=1)  # (B, H) — last-8 mean avoids "is"-token collapse
                 top_k = min(self._casm_cfg.casm_top_k, len(self._active_slot_ids))  # type: ignore[arg-type]
                 slot_ids, weights = self.router(query, top_k=top_k)
             self._routing_slot_ids = slot_ids
