@@ -282,7 +282,12 @@ class CASMModelWrapper(nn.Module):
         batch_size = hidden.shape[0]
         top_k = self._routing_slot_ids.shape[1]
 
-        total_contrib = torch.zeros_like(hidden)  # (B, T, H)
+        # Accumulate contributions as a list of full-batch tensors, then sum.
+        # This avoids in-place indexed assignment on a non-requiring-grad buffer
+        # (total_contrib[mask] +=) which breaks the autograd graph from the LM
+        # loss back to the slot bank parameters.  torch.index_put (out-of-place)
+        # correctly propagates gradients through the placed values.
+        contrib_parts: list[torch.Tensor] = []
 
         for k in range(top_k):
             slot_ids_k = self._routing_slot_ids[:, k]  # (B,)
@@ -301,11 +306,22 @@ class CASMModelWrapper(nn.Module):
                     self.slot_bank[key], slot_hidden,
                 )  # (n, T, H)
                 slot_weights = weights_k[mask]  # (n,)
-                total_contrib[mask] += (
-                    slot_weights.unsqueeze(-1).unsqueeze(-1) * contrib
-                )
+                weighted = slot_weights.unsqueeze(-1).unsqueeze(-1) * contrib  # (n, T, H)
 
-        total_contrib = total_contrib / self._num_injection_layers
+                # Expand (n, T, H) → (B, T, H) without in-place ops so that
+                # autograd can trace gradients back through `weighted`.
+                indices = mask.nonzero(as_tuple=False).view(-1)  # (n,)
+                full = torch.zeros(
+                    batch_size, hidden.shape[1], hidden.shape[2],
+                    dtype=weighted.dtype, device=weighted.device,
+                )
+                full = torch.index_put(full, (indices,), weighted)  # out-of-place
+                contrib_parts.append(full)
+
+        if contrib_parts:
+            total_contrib = sum(contrib_parts) / self._num_injection_layers  # type: ignore[arg-type]
+        else:
+            total_contrib = torch.zeros_like(hidden)
 
         if isinstance(output, tuple):
             return (hidden + total_contrib,) + output[1:]
@@ -471,9 +487,28 @@ class CASMModelWrapper(nn.Module):
             all_slot_ids = set(state["active_slot_ids"]) | set(state["closed_slot_ids"])
             wrapper._slot_usage_counts = {sid: 0 for sid in all_slot_ids}
 
-    def generate(self, **kwargs: Any) -> Any:
-        """Delegate generation to backbone; memory hook still fires."""
-        return self.backbone.generate(**kwargs)
+    def generate(self, input_ids: Optional[torch.Tensor] = None, **kwargs: Any) -> Any:
+        """Delegate generation to backbone with memory injection active.
+
+        Computes routing from the prompt embeddings BEFORE calling
+        backbone.generate(), so the forward hook sees a valid
+        _routing_slot_ids tensor and injects the correct memory slot
+        into every generated token's hidden states.
+        """
+        if input_ids is not None and len(self._active_slot_ids) > 0:
+            with torch.no_grad():
+                embeds = _get_input_embeddings(self.backbone, input_ids)  # (B, T, H)
+                query = embeds.mean(dim=1)  # (B, H)
+                top_k = min(self._casm_cfg.casm_top_k, len(self._active_slot_ids))  # type: ignore[arg-type]
+                slot_ids, weights = self.router(query, top_k=top_k)
+            self._routing_slot_ids = slot_ids
+            self._routing_weights = weights
+        try:
+            result = self.backbone.generate(input_ids=input_ids, **kwargs)
+        finally:
+            self._routing_slot_ids = None
+            self._routing_weights = None
+        return result
 
     # ------------------------------------------------------------------
     # Backbone config delegation
