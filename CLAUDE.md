@@ -143,22 +143,8 @@ paragraph via Gemini. Use for real training runs. Run after `build_augmentation_
 
 ---
 
-## ⚠️ One remaining wiring step before training can run
-
-`train_runner.py` — `build_dataset()` currently only handles `temporal_wiki`, `tsqa`, `tgqa`.
-
-Must add the `"synthetic"` case to dispatch to `SyntheticDataset(period)` before any training run.
-
-This is the first task for the next iteration.
-
----
-
 ## What is NOT done yet
 
-- [ ] `train_runner.py`: add `"synthetic"` case to `build_dataset()`
-- [ ] Run `generate_synthetic.py` to produce `synthetic_facts_raw.json`
-- [ ] Run `build_probes.py` to produce `probes.json`
-- [ ] Run `build_passages.py` or augmentation pipeline to produce passages
 - [ ] Run `full_ft`, `lora`, `smf` baselines on synthetic dataset
 - [ ] Run CASM with `SimilarityRouter` — record baseline `routing_acc`
 - [ ] Train `MLPRouter` — verify it beats similarity baseline
@@ -182,3 +168,100 @@ This is the first task for the next iteration.
 - Validation of generated facts is Python-only (blocklist + structural checks); LLM validation fallback
   exists in the design doc but is not implemented
 - `--dry-run` flag on `generate_synthetic.py` for testing without API calls
+- Training and eval prompts must use completion format — base Llama-3.2-1B is not instruction-tuned:
+  `"[{period}] The {relation} of {entity} is"` — no system prompt, no "Who is" phrasing
+
+---
+
+## CASM architecture — known bugs fixed and invariants to preserve
+
+### Memory injection during generation (casm_model.py — FIXED)
+
+`CASMModelWrapper.generate()` must compute routing from `input_ids` embeddings BEFORE calling
+`backbone.generate()`, otherwise `_routing_slot_ids` is None when the forward hook fires and no
+memory is injected. Symptom: plasticity/stability/token_f1 all 0.000.
+
+```python
+# Correct pattern in generate():
+embeds = _get_input_embeddings(self.backbone, input_ids)
+query = embeds.mean(dim=1)
+slot_ids, weights = self.router(query, top_k=top_k)
+self._routing_slot_ids = slot_ids
+self._routing_weights = weights
+try:
+    result = self.backbone.generate(input_ids=input_ids, **kwargs)
+finally:
+    self._routing_slot_ids = None
+    self._routing_weights = None
+```
+
+Never call `self.backbone.generate(**kwargs)` directly — it bypasses the hook entirely.
+
+### Gradient flow through _memory_hook (casm_model.py — FIXED)
+
+In-place indexed assignment `total_contrib[mask] += value` on a `torch.zeros_like(hidden)` buffer
+does NOT propagate gradients back to the slot bank when `hidden.requires_grad=False` (frozen
+backbone). Symptom: `gate_logits` stay exactly at init value (`log(0.1/0.9) = -2.197`) across
+the entire training run; `query_proj.weight` stays all zeros.
+
+Use `torch.index_put` (out-of-place, no trailing underscore) to place each slot's contribution
+into a full-batch tensor, collect into a list, then sum:
+
+```python
+full = torch.zeros(B, T, H, dtype=weighted.dtype, device=weighted.device)
+full = torch.index_put(full, (indices,), weighted)  # out-of-place: grad tracked through weighted
+contrib_parts.append(full)
+total_contrib = sum(contrib_parts) / self._num_injection_layers
+```
+
+Never accumulate into a pre-allocated buffer with `buffer[mask] += contrib` inside a hook.
+
+### Resume order for CASM (trainer.py — FIXED)
+
+`CASFTrainer.resume()` must load CASM slot bank memory BEFORE loading the optimizer state dict.
+Contradiction branching adds slots dynamically during a run; the checkpoint optimizer therefore
+has more parameters than the freshly-built model. Loading memory first expands the slot bank to
+match, then `_rebuild_optimizer_for_casm()` grows the optimizer to fit, then `load_state_dict`
+succeeds.
+
+Wrong order → `ValueError: loaded state dict contains a parameter group that doesn't match the
+size of optimizer's group`.
+
+```python
+# Correct order in resume():
+CASMModelWrapper.load_memory_into(self.model, checkpoint_path)  # expand slot bank first
+self._rebuild_optimizer_for_casm()                               # then grow optimizer
+self.optimizer.load_state_dict(trainer_state["optimizer_state_dict"])  # then load state
+```
+
+### SimilarityRouter — slot pre-registration (trainer.py)
+
+`SimilarityRouter` produces identical cosine-similarity embeddings for slots registered with
+generic text labels ("period 2018 slot 0" ≈ "period 2018 slot 7"), collapsing routing to
+slot 0. Fix: pre-register initial slots with fixed random unit vectors seeded by `slot_id`
+(`numpy.random.RandomState(seed=slot_id)`), bypassing the sentence transformer entirely.
+
+`_pre_register_similarity_router()` in `trainer.py` does this at the start of every period.
+Called after contradiction branching but before the training loop.
+
+After each period, `_sync_similarity_router()` updates contradiction-branched slots with full
+semantic metadata (entity/relation/period/value from MemoryRegistry) so routing improves over
+time as real content is written.
+
+### Diagnosis checklist — if eval metrics are 0.000
+
+1. Check `generate()` sets `_routing_slot_ids` before calling `backbone.generate()`.
+2. Check `_memory_hook` uses out-of-place accumulation (torch.index_put, not `buffer[mask] +=`).
+3. Print `gate_logits.mean()` after training — if exactly `-2.197` for all slots, gradients
+   are not reaching the slot bank. Check the hook accumulation method.
+4. Compare `model.generate(input_ids=x)` vs `model.backbone.generate(input_ids=x)` outputs —
+   they must differ if memory injection is working.
+
+### SparseMemoryBlock init (smf_model.py)
+
+- `gate_logits` init: `log(0.1/0.9) ≈ -2.197` → sigmoid ≈ 0.1 (sparse by default)
+- `query_proj.weight` init: zeros (content-dependent gating starts disabled; gate is purely
+  global until query_proj learns)
+- `memory` init: `torch.randn * 0.02` (small but nonzero — contributes from step 1)
+
+These are intentional. `query_proj` learning from zero is expected and correct.

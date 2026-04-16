@@ -319,7 +319,7 @@ class CASMModelWrapper(nn.Module):
                 contrib_parts.append(full)
 
         if contrib_parts:
-            total_contrib = sum(contrib_parts) / self._num_injection_layers  # type: ignore[arg-type]
+            total_contrib = (sum(contrib_parts) / self._num_injection_layers).to(hidden.dtype)  # type: ignore[arg-type]
         else:
             total_contrib = torch.zeros_like(hidden)
 
