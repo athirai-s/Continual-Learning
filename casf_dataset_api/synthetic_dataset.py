@@ -31,6 +31,7 @@ iteration and pipeline verification.
 """
 import csv
 import json
+import re
 from dataclasses import asdict
 from pathlib import Path
 from typing import Optional
@@ -46,6 +47,39 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _DEFAULT_PROBES_PATH = _PROJECT_ROOT / "data" / "probes.json"
 _DEFAULT_PASSAGES_PATH = _PROJECT_ROOT / "data" / "passages.json"
 _DEFAULT_AUGMENTED_DIR = _PROJECT_ROOT / "data" / "augmented" / "synthetic"
+
+
+def _extract_factual_sentence(text: str) -> str:
+    """Return the most factual sentence from a multi-sentence augmented passage.
+
+    Augmented passages sometimes begin with a filler/context sentence before the
+    fact sentence. This function scores each sentence with three patterns and
+    returns the best-matching one. Falls back to the first sentence if none match.
+
+    Patterns (in priority order):
+      standard  — "The <relation> of <entity> is <value>"
+      inverted  — "<Value> is the <relation> of ..."
+      has-form  — "<Entity> has a <relation> of <value>"
+    """
+    sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text.strip()) if s.strip()]
+    if not sentences:
+        return text
+
+    # Score each sentence: higher = more factual
+    def _score(s: str) -> int:
+        if re.search(r'\bThe\s+\S.+\bof\b.+\bis\s+\S', s):
+            return 3
+        if re.match(r'^[A-Z][A-Za-z ,\-]+\bis\s+the\b', s):
+            return 2
+        if re.match(r'^[A-Z]\S.+\bhas\b.+\bof\s+\S', s):
+            return 2
+        return 0
+
+    best = max(sentences, key=_score)
+    # Only use the best match if it scores above 0; otherwise return first sentence
+    if _score(best) > 0:
+        return best
+    return sentences[0]
 
 
 def _deserialise_probe(d: dict) -> Probe:
@@ -212,5 +246,6 @@ class SyntheticDataset(TemporalDataset):
             for row in reader:
                 text = (row.get("text") or "").strip()
                 if text and text.upper() != "ERROR":
-                    passages.append(prefix + text)
+                    factual = _extract_factual_sentence(text)
+                    passages.append(prefix + factual)
         return passages

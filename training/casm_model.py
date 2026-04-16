@@ -342,7 +342,7 @@ class CASMModelWrapper(nn.Module):
         """
         if input_ids is not None and len(self._active_slot_ids) > 0:
             embeds = _get_input_embeddings(self.backbone, input_ids)  # (B, T, H)
-            query = embeds[:, -1, :]  # (B, H) — last token carries strongest prediction signal
+            query = embeds[:, -8:, :].mean(dim=1)  # (B, H) — last-8 mean avoids "is"-token collapse
 
             top_k = min(self._casm_cfg.casm_top_k, len(self._active_slot_ids))  # type: ignore[arg-type]
             slot_ids, weights = self.router(query, top_k=top_k)  # (B, top_k)
@@ -536,7 +536,7 @@ class CASMModelWrapper(nn.Module):
         if input_ids is not None and len(self._active_slot_ids) > 0:
             with torch.no_grad():
                 embeds = _get_input_embeddings(self.backbone, input_ids)  # (B, T, H)
-                query = embeds[:, -1, :]  # (B, H) — last token
+                query = embeds[:, -8:, :].mean(dim=1)  # (B, H) — last-8 mean avoids "is"-token collapse
                 top_k = min(self._casm_cfg.casm_top_k, len(self._active_slot_ids))  # type: ignore[arg-type]
                 slot_ids, weights = self.router(query, top_k=top_k)
             self._routing_slot_ids = slot_ids
