@@ -29,7 +29,7 @@ class SimilarityRouter:
         small, fast model suitable for CPU inference.
     """
 
-    def __init__(self, model_name: str = "all-MiniLM-L6-v2") -> None:
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2", temperature: float = 1.0) -> None:
         # Lazy import so the module can be imported without the dependency
         # being present at test-collection time.
         try:
@@ -41,6 +41,7 @@ class SimilarityRouter:
             ) from exc
 
         self._encoder = SentenceTransformer(model_name)
+        self.temperature = temperature
         # slot_id -> numpy embedding vector
         self._slot_embeddings: dict[int, "np.ndarray"] = {}
         # slot_id -> raw metadata dict
@@ -205,7 +206,7 @@ class SimilarityRouter:
         sims = F.normalize(query.float(), dim=-1) @ protos.T  # (B, S)
 
         top_vals, top_local = torch.topk(sims, k=k, dim=-1)  # (B, k)
-        weights = F.softmax(top_vals, dim=-1)
+        weights = F.softmax(top_vals / self.temperature, dim=-1)
         id_map = torch.tensor(slot_ids_list, dtype=torch.long, device=device)
         return id_map[top_local], weights
 

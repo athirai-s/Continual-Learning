@@ -37,10 +37,11 @@ class SparseMemoryBlock(nn.Module):
         hidden_size: int,
         sparsity_ratio: float = 0.1,
         query_dependent: bool = True,
+        memory_init_std: float = 0.02,
     ) -> None:
         super().__init__()
         self.memory = nn.Parameter(torch.empty(memory_size, hidden_size))
-        nn.init.normal_(self.memory, std=0.02)
+        nn.init.normal_(self.memory, std=memory_init_std)
 
         # Global gate bias: initialized so sigmoid(bias) ≈ sparsity_ratio,
         # giving a sparse starting point instead of all gates at 0.5.

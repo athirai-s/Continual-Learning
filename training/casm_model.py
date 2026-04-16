@@ -182,7 +182,7 @@ class CASMModelWrapper(nn.Module):
         # --- Router ---
         if cfg.casm_router_type == "similarity":
             from training.router_baseline import SimilarityRouter
-            self.router = SimilarityRouter()
+            self.router = SimilarityRouter(temperature=cfg.casm_router_temperature)
         else:
             self.router = CASMRouter(
                 hidden_size=self._hidden_size,
@@ -212,6 +212,8 @@ class CASMModelWrapper(nn.Module):
             memory_size=self._memory_size,
             hidden_size=self._hidden_size,
             query_dependent=True,
+            sparsity_ratio=0.5,
+            memory_init_std=0.1,
         )
         # Keep new slots on the same device as existing ones (e.g. CUDA).
         if self.slot_bank:
@@ -340,7 +342,7 @@ class CASMModelWrapper(nn.Module):
         """
         if input_ids is not None and len(self._active_slot_ids) > 0:
             embeds = _get_input_embeddings(self.backbone, input_ids)  # (B, T, H)
-            query = embeds.mean(dim=1)  # (B, H)
+            query = embeds[:, -1, :]  # (B, H) — last token carries strongest prediction signal
 
             top_k = min(self._casm_cfg.casm_top_k, len(self._active_slot_ids))  # type: ignore[arg-type]
             slot_ids, weights = self.router(query, top_k=top_k)  # (B, top_k)
@@ -467,6 +469,8 @@ class CASMModelWrapper(nn.Module):
                     memory_size=memory_size,
                     hidden_size=wrapper._hidden_size,
                     query_dependent=True,
+                    sparsity_ratio=0.5,
+                    memory_init_std=0.1,
                 ).to(target_device)
 
         # Load slot weights then move to target device (checkpoint was loaded
@@ -532,7 +536,7 @@ class CASMModelWrapper(nn.Module):
         if input_ids is not None and len(self._active_slot_ids) > 0:
             with torch.no_grad():
                 embeds = _get_input_embeddings(self.backbone, input_ids)  # (B, T, H)
-                query = embeds.mean(dim=1)  # (B, H)
+                query = embeds[:, -1, :]  # (B, H) — last token
                 top_k = min(self._casm_cfg.casm_top_k, len(self._active_slot_ids))  # type: ignore[arg-type]
                 slot_ids, weights = self.router(query, top_k=top_k)
             self._routing_slot_ids = slot_ids

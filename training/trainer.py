@@ -123,6 +123,29 @@ def _update_similarity_router_from_slot_content(model: Any) -> None:
         del router._proto_tensors
     print(f"  Slot content embeddings updated: {updated}/{len(model._active_slot_ids)} slots")
 
+    # Routing collapse fix: slots that never received gradient keep their
+    # random seed vector, which may be systematically "losing" to other slots.
+    # Re-seed those slots with fresh random vectors so they get another chance.
+    collapsed = 0
+    for slot_id in model._active_slot_ids:
+        key = str(slot_id)
+        if key not in model.slot_bank:
+            continue
+        block = model.slot_bank[key]
+        if block.query_proj is None:
+            continue
+        qp_norm = float(block.query_proj.weight.data.norm().item())
+        if qp_norm < 1e-3:  # essentially untrained — never routed to
+            emb_dim = next(iter(router._slot_embeddings.values())).shape[0] if router._slot_embeddings else 384
+            vec = np.random.randn(emb_dim).astype("float32")
+            vec /= np.linalg.norm(vec)
+            router._slot_embeddings[slot_id] = vec
+            if hasattr(router, "_proto_tensors"):
+                del router._proto_tensors
+            collapsed += 1
+    if collapsed > 0:
+        print(f"  Routing collapse reset: {collapsed} untrained slots re-seeded")
+
 
 def _sync_similarity_router(
     model: Any,
