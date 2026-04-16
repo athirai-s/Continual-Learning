@@ -56,42 +56,12 @@ from casf_dataset_api.casf_types import Probe
 
 PERIODS = ["2018", "2020", "2022", "2024"]
 
-# Prompt templates per relation type (fallback for unknown relations)
-PROMPT_TEMPLATES: dict[str, str] = {
-    "chief_architect":          "Who is the chief architect of {entity}?",
-    "vault_custodian":          "Who is the vault custodian at {entity}?",
-    "harbour_master":           "Who is the harbour master of {entity}?",
-    "tidal_surveyor":           "Who is the tidal surveyor at {entity}?",
-    "dock_registrar":           "Who is the dock registrar of {entity}?",
-    "bridge_engineer":          "Who is the bridge engineer for {entity}?",
-    "conduit_inspector":        "Who is the conduit inspector at {entity}?",
-    "treaty_signatory":         "Who is the treaty signatory representing {entity}?",
-    "territorial_adjudicator":  "Who is the territorial adjudicator for {entity}?",
-    "border_liaison":           "Who is the border liaison for {entity}?",
-    "frequency_director":       "Who is the frequency director at {entity}?",
-    "lens_calibrator":          "Who is the lens calibrator at {entity}?",
-    "signal_interpreter":       "Who is the signal interpreter for {entity}?",
-    "census_commissioner":      "Who is the census commissioner of {entity}?",
-    "municipal_liaison":        "Who is the municipal liaison for {entity}?",
-    "boundary_surveyor":        "Who is the boundary surveyor at {entity}?",
-    "archive_keeper":           "Who is the archive keeper at {entity}?",
-    "charter_custodian":        "Who is the charter custodian at {entity}?",
-    "records_adjudicator":      "Who is the records adjudicator for {entity}?",
-    "fuel_inspector":           "Who is the fuel inspector at {entity}?",
-    "thermal_regulator_chief":  "Who is the thermal regulator chief at {entity}?",
-    "land_commissioner":        "Who is the land commissioner of {entity}?",
-    "water_registrar":          "Who is the water registrar at {entity}?",
-    "crop_adjudicator":         "Who is the crop adjudicator for {entity}?",
-}
 
-
-def _make_prompt(entity: str, relation: str) -> str:
-    template = PROMPT_TEMPLATES.get(relation)
-    if template:
-        return template.format(entity=entity)
-    # Generic fallback: capitalise and humanise the relation slug
+def _make_prompt(entity: str, relation: str, period: str) -> str:
+    # Completion format: mirrors training passages ("The X of Y is ...").
+    # Base causal LMs complete text — they do not answer questions.
     readable = relation.replace("_", " ")
-    return f"Who is the {readable} of {entity}?"
+    return f"[{period}] The {readable} of {entity} is"
 
 
 def _valid_from(fact: dict, period: str) -> str:
@@ -118,7 +88,7 @@ def build_probes_for_period(facts: list[dict], period: str) -> dict[str, list[di
         entity = fact["entity"]
         relation = fact["relation"]
         current_value = fact[f"value_{period}"]
-        prompt = _make_prompt(entity, relation)
+        prompt = _make_prompt(entity, relation, period)
         valid_from = _valid_from(fact, period)
 
         if period_idx == 0:

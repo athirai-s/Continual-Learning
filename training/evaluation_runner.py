@@ -52,18 +52,16 @@ class GenerationAdapter:
 
         return min(candidates) if candidates else 512
 
-    _SYSTEM_PROMPT = (
-        "Complete the sentence with only the answer — a name, place, date, or short phrase. "
-        "Do not repeat the question, explain, or add punctuation beyond the answer itself."
-    )
-
     _MAX_NEW_TOKENS = 8
 
     def generate(self, prompt: str) -> str:
-        full_prompt = f"{self._SYSTEM_PROMPT}\n\n{prompt}"
+        # Pass the completion prompt directly — no system prompt.
+        # Llama-3.2-1B is a base (non-instruction-tuned) model that completes
+        # text; injecting an instruction preamble shifts context away from
+        # the factual-completion style the model was trained on.
         max_prompt_length = self._resolve_max_length() - self._MAX_NEW_TOKENS
         encoded = self.tokenizer(
-            full_prompt,
+            prompt,
             truncation=True,
             max_length=max_prompt_length,
             padding="do_not_pad",

@@ -206,10 +206,11 @@ class SyntheticDataset(TemporalDataset):
                 f"--outdir {self._augmented_dir}"
             )
         passages: list[str] = []
+        prefix = f"[{self.period}] "
         with csv_path.open(encoding="utf-8", newline="") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 text = (row.get("text") or "").strip()
                 if text and text.upper() != "ERROR":
-                    passages.append(text)
+                    passages.append(prefix + text)
         return passages

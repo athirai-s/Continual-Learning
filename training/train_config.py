@@ -17,7 +17,7 @@ class TrainConfig:
     grad_clip: float = 1.0
     warmup_steps: int = 100
 
-    min_passage_length: int = 100
+    min_passage_length: int = 0
     deduplicate: bool = True
     weighted_sampling: bool = False
     max_passages_per_period: Optional[int] = None

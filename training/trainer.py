@@ -31,6 +31,99 @@ from .train_config import TrainConfig
 TRAINER_STATE_FILENAME = "trainer_state.pt"
 
 
+def _pre_register_similarity_router(model: Any, period: str) -> None:
+    """Register every active model slot that has no embedding yet.
+
+    Called at the START of each period, before the training loop, so that
+    all slots have distinct embeddings and routing distributes across them
+    during training.  Slots already registered (from a prior period) are
+    left untouched — they retain the semantics of the period in which they
+    were first trained.
+
+    Initial slots (no semantic content yet) get a fixed random unit vector
+    seeded by slot_id.  This ensures routing distributes across all 8 slots
+    during training rather than collapsing to slot 0 — the sentence
+    transformer produces identical embeddings for slots with similar generic
+    labels ("period 2018 slot 0" ≈ "period 2018 slot 7"), which would cause
+    topk to always deterministically select slots 0 and 1.
+    """
+    import numpy as np
+    from .router_baseline import SimilarityRouter
+    if not isinstance(model.router, SimilarityRouter):
+        return
+    router = model.router
+
+    # Determine the embedding dim from any already-registered slot, or encode
+    # a dummy string to get the dimensionality.
+    if router._slot_embeddings:
+        emb_dim = next(iter(router._slot_embeddings.values())).shape[0]
+    else:
+        dummy = router._encoder.encode("dummy", normalize_embeddings=True)
+        emb_dim = dummy.shape[0]
+
+    for slot_id in model._active_slot_ids:
+        if slot_id in router._slot_metadata:
+            continue  # already registered; preserve existing semantics
+        # Seed by slot_id for reproducibility across runs.
+        rng = np.random.RandomState(seed=slot_id)
+        vec = rng.randn(emb_dim).astype("float32")
+        vec /= np.linalg.norm(vec)
+        router._slot_embeddings[slot_id] = vec
+        router._slot_metadata[slot_id] = {"period": period, "slot": str(slot_id)}
+        # Invalidate cached prototype tensors so __call__ rebuilds them.
+        if hasattr(router, "_proto_tensors"):
+            del router._proto_tensors
+
+
+def _sync_similarity_router(
+    model: Any,
+    registry: MemoryRegistry,
+    period: str,
+    model_slot_to_registry_slot_id: dict[int, int],
+) -> None:
+    """Register model slots with SimilarityRouter after a period ends.
+
+    Called once per period, after registry.write() has been called for all
+    probes.  Two registration strategies:
+
+    Contradiction-branched slots (in model_slot_to_registry_slot_id):
+        Registered with the actual entity/relation/period/value from the
+        MemoryRegistry.  These entries are always overwritten so the router
+        tracks the most recent metadata for that slot.
+
+    Initial slots (not branched):
+        Registered once with a generic "period <year>" label.  Subsequent
+        periods do NOT overwrite these entries — an initial slot carries the
+        semantics of the period in which it was first trained.
+    """
+    from .router_baseline import SimilarityRouter
+    if not isinstance(model.router, SimilarityRouter):
+        return
+
+    router = model.router
+    reg_slots_by_id = {s.slot_id: s for s in registry._slots}
+
+    # Contradiction-branched slots — always register with full metadata.
+    for model_slot_id, reg_slot_id in model_slot_to_registry_slot_id.items():
+        reg_slot = reg_slots_by_id.get(reg_slot_id)
+        if reg_slot is None:
+            continue
+        router.register_slot(model_slot_id, {
+            "entity": reg_slot.subject,
+            "relation": reg_slot.relation,
+            "period": reg_slot.valid_from,
+            "value": reg_slot.value,
+        })
+
+    # Initial slots — register only once (first period they appear).
+    for model_slot_id in model._active_slot_ids:
+        if model_slot_id in model_slot_to_registry_slot_id:
+            continue  # already handled above
+        if model_slot_id in router._slot_metadata:
+            continue  # already registered in a prior period; preserve original
+        router.register_slot(model_slot_id, {"period": period})
+
+
 class PassageDataset(Dataset):
     def __init__(self, passages, tokenizer, max_length=512):
         self.passages = passages
@@ -396,6 +489,12 @@ class CASFTrainer:
                 scheduler = self._build_scheduler(total_optimizer_steps)
                 self.optimizer.zero_grad()
 
+        # Ensure every active slot has an embedding before the training loop
+        # so routing distributes across all slots (not just slot 0).
+        # Runs at every period start; already-registered slots are left alone.
+        if _is_period_start and self.config.method == "casm":
+            _pre_register_similarity_router(self.model, period)
+
         self.model.train()
 
         loss_curve = []
@@ -547,6 +646,15 @@ class CASFTrainer:
                 self.model._slot_usage_counts = {
                     sid: 0 for sid in self.model._slot_usage_counts
                 }
+
+                # Sync SimilarityRouter slot embeddings now that the registry
+                # is fully written for this period.
+                _sync_similarity_router(
+                    self.model,
+                    self.registry,
+                    period,
+                    self._model_slot_to_registry_slot_id,
+                )
 
         if period not in self._completed_units:
             self._completed_units.append(period)

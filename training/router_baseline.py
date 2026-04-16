@@ -141,8 +141,13 @@ class SimilarityRouter:
     ) -> "tuple[torch.Tensor, torch.Tensor]":
         """Tensor routing interface matching CASMRouter.forward.
 
-        Zero-training baseline: cosine similarity between the query hidden
-        state and fixed randomly-initialised slot prototype vectors.
+        Routes by projecting sentence-transformer slot embeddings into LLM
+        hidden-state space via a fixed random projection, then picking the
+        top-k slots by cosine similarity to the query.  The projection matrix
+        is seeded for reproducibility and never updated during training.
+
+        Requires register_slot() to have been called for at least one slot;
+        falls back to slot-0 if no slots are registered yet.
 
         Args:
             query:  (B, H) float tensor — mean input token embeddings.
@@ -152,6 +157,7 @@ class SimilarityRouter:
             slot_ids: (B, top_k) long tensor — slot indices.
             weights:  (B, top_k) float tensor — softmax-normalised scores.
         """
+        import numpy as np
         import torch
         import torch.nn.functional as F
 
@@ -167,12 +173,26 @@ class SimilarityRouter:
             wts = torch.full((B, k), 1.0 / k, device=device)
             return ids, wts
 
-        # Lazily initialise fixed random unit-vector prototypes in hidden-state
-        # space. Seeded for reproducibility; never updated during training.
-        if not hasattr(self, "_proto_tensors") or self._proto_tensors.shape != (n_slots, H):
+        # Build prototype tensors by projecting sentence-transformer embeddings
+        # (emb_dim, typically 384) into LLM hidden-state space (H) via a fixed
+        # random projection.  Rebuilt whenever the slot count or hidden size
+        # changes (e.g. after a new contradiction-branched slot is added).
+        if (
+            not hasattr(self, "_proto_tensors")
+            or self._proto_tensors.shape != (n_slots, H)
+        ):
+            emb_dim = next(iter(self._slot_embeddings.values())).shape[0]
             gen = torch.Generator().manual_seed(42)
-            protos = torch.randn(n_slots, H, generator=gen)
-            self._proto_tensors = F.normalize(protos, dim=-1)
+            # (emb_dim, H) fixed projection — columns are unit-normalised so
+            # the projection preserves relative cosine similarities.
+            proj = F.normalize(
+                torch.randn(emb_dim, H, generator=gen), dim=0
+            )  # (emb_dim, H)
+            slot_embs = np.stack(
+                [self._slot_embeddings[sid] for sid in slot_ids_list]
+            )  # (S, emb_dim)
+            protos = torch.from_numpy(slot_embs).float() @ proj  # (S, H)
+            self._proto_tensors = F.normalize(protos, dim=-1)     # (S, H)
 
         protos = self._proto_tensors.to(device=device, dtype=query.float().dtype)
         sims = F.normalize(query.float(), dim=-1) @ protos.T  # (B, S)
