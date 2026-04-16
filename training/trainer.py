@@ -61,6 +61,7 @@ def _pre_register_similarity_router(model: Any, period: str) -> None:
         dummy = router._encoder.encode("dummy", normalize_embeddings=True)
         emb_dim = dummy.shape[0]
 
+    newly_registered = 0
     for slot_id in model._active_slot_ids:
         if slot_id in router._slot_metadata:
             continue  # already registered; preserve existing semantics
@@ -73,6 +74,9 @@ def _pre_register_similarity_router(model: Any, period: str) -> None:
         # Invalidate cached prototype tensors so __call__ rebuilds them.
         if hasattr(router, "_proto_tensors"):
             del router._proto_tensors
+        newly_registered += 1
+    total_registered = len(router._slot_embeddings)
+    print(f"  Router pre-registration: {newly_registered} new, {total_registered} total slots registered")
 
 
 def _update_similarity_router_from_slot_content(model: Any) -> None:

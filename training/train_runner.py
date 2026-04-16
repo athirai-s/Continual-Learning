@@ -154,7 +154,20 @@ def load_real_model_and_tokenizer(cfg: TrainConfig, checkpoint_path: str) -> tup
         **_real_model_load_kwargs(cfg),
     )
     _prepare_real_model_for_training(model, cfg)
-    return _wrap_model_for_method(model, cfg), tokenizer
+    model = _wrap_model_for_method(model, cfg)
+    # For CASM/SMF, restore memory state from casm_memory.pt / smf_memory.pt.
+    # _wrap_model_for_method creates a fresh wrapper with init weights; without
+    # this call any inspection or eval on the returned model sees init-state
+    # slot banks rather than the trained ones.
+    if cfg.method == "casm":
+        from .casm_model import CASMModelWrapper
+        if isinstance(model, CASMModelWrapper):
+            CASMModelWrapper.load_memory_into(model, checkpoint_path)
+    elif cfg.method == "smf":
+        from .smf_model import SMFModelWrapper
+        if isinstance(model, SMFModelWrapper):
+            SMFModelWrapper.load_memory_into(model, checkpoint_path)
+    return model, tokenizer
 
 
 def build_real_dataset(unit: str, cfg: TrainConfig):
@@ -348,7 +361,16 @@ def load_synthetic_model_and_tokenizer(cfg: TrainConfig, checkpoint_path: str) -
         return model, tokenizer
     tokenizer = SyntheticTokenizer.from_pretrained(checkpoint_path)
     model = load_synthetic_model(checkpoint_path)
-    return _wrap_model_for_method(model, cfg), tokenizer
+    model = _wrap_model_for_method(model, cfg)
+    if cfg.method == "casm":
+        from .casm_model import CASMModelWrapper
+        if isinstance(model, CASMModelWrapper):
+            CASMModelWrapper.load_memory_into(model, checkpoint_path)
+    elif cfg.method == "smf":
+        from .smf_model import SMFModelWrapper
+        if isinstance(model, SMFModelWrapper):
+            SMFModelWrapper.load_memory_into(model, checkpoint_path)
+    return model, tokenizer
 
 
 def _build_fake_synthetic_dataset(unit: str, cfg: TrainConfig):
@@ -666,10 +688,11 @@ def run_training(
             results.append(result)
 
             print("Training result:")
-            print(f"  Final loss: {result['train_loss_final']}")
-            print(f"  Passages trained: {result['n_passages_trained']}")
-            print(f"  Contradiction passages: {result['n_contradiction_passages']}")
-            print(f"  Train duration (sec): {result['train_duration_sec']:.2f}")
+            print(f"  Final loss:            {result['train_loss_final']:.4f}")
+            print(f"  Optimizer steps:       {result['optimizer_steps_total']}")
+            print(f"  Passages trained:      {result['n_passages_trained']}")
+            print(f"  Contradiction passages:{result['n_contradiction_passages']}")
+            print(f"  Train duration (sec):  {result['train_duration_sec']:.2f}")
             print(f"Checkpoint saved to: {checkpoint_path}")
             resume_state = None
 
