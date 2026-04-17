@@ -98,6 +98,10 @@ def run_period_evaluation(
     evaluator = TemporalEvaluator()
     generation_model = GenerationAdapter(model, tokenizer)
 
+    # Set current period so period-deterministic routing uses the correct slot subset.
+    if hasattr(model, "_current_period"):
+        model._current_period = unit
+
     split_results: dict[str, dict[str, Any]] = {}
     for split in determine_eval_splits(cfg):
         dataset.load(split)

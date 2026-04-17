@@ -61,6 +61,7 @@ class CASMRouter(nn.Module):
         query: torch.Tensor,
         top_k: int = 1,
         time_signal: Optional[torch.Tensor] = None,
+        candidate_slots: Optional[list] = None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute routing decisions.
 
@@ -68,16 +69,20 @@ class CASMRouter(nn.Module):
             query: (..., hidden_size) — query representation per example.
             top_k: number of slots to select; must be <= num_slots.
             time_signal: optional temporal context; currently unused.
+            candidate_slots: if provided, restrict routing to these slot indices.
 
         Returns:
             slot_ids: (..., top_k) long tensor — indices into the slot bank.
             weights: (..., top_k) float tensor — softmax-normalised routing weights.
         """
-        if top_k > self.num_slots:
-            raise ValueError(
-                f"top_k={top_k} exceeds num_slots={self.num_slots}"
-            )
         logits = self.net(query.to(self.net[0].weight.dtype)) / self.temperature  # (..., num_slots)
+        if candidate_slots is not None and len(candidate_slots) < self.num_slots:
+            mask = torch.full_like(logits, float("-inf"))
+            mask[..., candidate_slots] = logits[..., candidate_slots]
+            logits = mask
+            top_k = min(top_k, len(candidate_slots))
+        elif top_k > self.num_slots:
+            raise ValueError(f"top_k={top_k} exceeds num_slots={self.num_slots}")
         top_values, slot_ids = torch.topk(logits, k=top_k, dim=-1)
         weights = F.softmax(top_values, dim=-1)
         return slot_ids, weights
@@ -195,6 +200,10 @@ class CASMModelWrapper(nn.Module):
         self._routing_slot_ids: Optional[torch.Tensor] = None   # (B, top_k)
         self._routing_weights: Optional[torch.Tensor] = None    # (B, top_k)
 
+        # Period-deterministic slot assignment — built by set_period_slot_map().
+        self._period_slot_map: Optional[dict] = None
+        self._current_period: Optional[str] = None
+
         # Hook on the last N transformer layers (default: last layer only)
         num_injection = cfg.casm_num_injection_layers or 1
         self._num_injection_layers: int = min(num_injection, len(transformer_layers))
@@ -268,6 +277,41 @@ class CASMModelWrapper(nn.Module):
         if slot_id in self._active_slot_ids:
             self._active_slot_ids.remove(slot_id)
         self._closed_slot_ids.add(slot_id)
+
+    def set_period_slot_map(self, period_order: list) -> None:
+        """Assign a contiguous block of slots to each period.
+
+        Must be called before training starts when casm_slots_per_period is set.
+        Validates that casm_num_slots == len(period_order) * casm_slots_per_period.
+        """
+        spp = self._casm_cfg.casm_slots_per_period
+        if spp is None:
+            return
+        expected = len(period_order) * spp
+        if len(self._active_slot_ids) != expected:
+            raise ValueError(
+                f"casm_num_slots={len(self._active_slot_ids)} must equal "
+                f"len(periods)={len(period_order)} * casm_slots_per_period={spp} = {expected}"
+            )
+        self._period_slot_map = {
+            period: list(range(i * spp, (i + 1) * spp))
+            for i, period in enumerate(period_order)
+        }
+
+    def _get_candidate_slots(self) -> list:
+        """Return slot IDs eligible for routing given the current period.
+
+        Falls back to all active slots if the period-slot map is not configured
+        or _current_period is unknown (e.g. before the first period is set).
+        """
+        if (
+            self._period_slot_map is not None
+            and self._current_period is not None
+            and self._current_period in self._period_slot_map
+        ):
+            assigned = set(self._period_slot_map[self._current_period])
+            return [s for s in self._active_slot_ids if s in assigned]
+        return list(self._active_slot_ids)
 
     # ------------------------------------------------------------------
     # Forward hooks
@@ -344,8 +388,9 @@ class CASMModelWrapper(nn.Module):
             embeds = _get_input_embeddings(self.backbone, input_ids)  # (B, T, H)
             query = embeds[:, -8:, :].mean(dim=1)  # (B, H) — last-8 mean avoids "is"-token collapse
 
-            top_k = min(self._casm_cfg.casm_top_k, len(self._active_slot_ids))  # type: ignore[arg-type]
-            slot_ids, weights = self.router(query, top_k=top_k)  # (B, top_k)
+            candidate_slots = self._get_candidate_slots()
+            top_k = min(self._casm_cfg.casm_top_k, len(candidate_slots))  # type: ignore[arg-type]
+            slot_ids, weights = self.router(query, top_k=top_k, candidate_slots=candidate_slots)  # (B, top_k)
 
             for idx in slot_ids.view(-1).tolist():
                 if idx in self._slot_usage_counts:
@@ -442,6 +487,8 @@ class CASMModelWrapper(nn.Module):
             "next_slot_idx": self._next_slot_idx,
             "memory_size": self._memory_size,
             "slot_usage_counts": dict(self._slot_usage_counts),
+            "period_slot_map": self._period_slot_map,
+            "current_period": self._current_period,
         }
         torch.save(state, os.path.join(path, "casm_memory.pt"))
 
@@ -525,6 +572,11 @@ class CASMModelWrapper(nn.Module):
             all_slot_ids = set(state["active_slot_ids"]) | set(state["closed_slot_ids"])
             wrapper._slot_usage_counts = {sid: 0 for sid in all_slot_ids}
 
+        if "period_slot_map" in state and state["period_slot_map"] is not None:
+            wrapper._period_slot_map = state["period_slot_map"]
+        if "current_period" in state:
+            wrapper._current_period = state["current_period"]
+
     def generate(self, input_ids: Optional[torch.Tensor] = None, **kwargs: Any) -> Any:
         """Delegate generation to backbone with memory injection active.
 
@@ -537,8 +589,9 @@ class CASMModelWrapper(nn.Module):
             with torch.no_grad():
                 embeds = _get_input_embeddings(self.backbone, input_ids)  # (B, T, H)
                 query = embeds[:, -8:, :].mean(dim=1)  # (B, H) — last-8 mean avoids "is"-token collapse
-                top_k = min(self._casm_cfg.casm_top_k, len(self._active_slot_ids))  # type: ignore[arg-type]
-                slot_ids, weights = self.router(query, top_k=top_k)
+                candidate_slots = self._get_candidate_slots()
+                top_k = min(self._casm_cfg.casm_top_k, len(candidate_slots))  # type: ignore[arg-type]
+                slot_ids, weights = self.router(query, top_k=top_k, candidate_slots=candidate_slots)
             self._routing_slot_ids = slot_ids
             self._routing_weights = weights
         try:

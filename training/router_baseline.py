@@ -138,6 +138,7 @@ class SimilarityRouter:
         self,
         query: "torch.Tensor",
         top_k: int = 1,
+        candidate_slots: "Optional[list[int]]" = None,
         **kwargs,
     ) -> "tuple[torch.Tensor, torch.Tensor]":
         """Tensor routing interface matching CASMRouter.forward.
@@ -151,8 +152,11 @@ class SimilarityRouter:
         falls back to slot-0 if no slots are registered yet.
 
         Args:
-            query:  (B, H) float tensor — mean input token embeddings.
-            top_k:  number of slots to select.
+            query:           (B, H) float tensor — mean input token embeddings.
+            top_k:           number of slots to select.
+            candidate_slots: if provided, restrict routing to these slot IDs.
+                             The proto tensor cache is skipped when this is set
+                             (rebuilt from the candidate subset each call).
 
         Returns:
             slot_ids: (B, top_k) long tensor — slot indices.
@@ -165,7 +169,15 @@ class SimilarityRouter:
         device = query.device
         B, H = query.shape
 
-        slot_ids_list = sorted(self._slot_embeddings.keys())
+        all_ids = sorted(self._slot_embeddings.keys())
+        if candidate_slots is not None:
+            candidate_set = set(candidate_slots)
+            slot_ids_list = [s for s in all_ids if s in candidate_set]
+            if not slot_ids_list:
+                slot_ids_list = all_ids  # safety fallback
+        else:
+            slot_ids_list = all_ids
+
         n_slots = len(slot_ids_list)
         k = min(top_k, max(n_slots, 1))
 
@@ -175,34 +187,45 @@ class SimilarityRouter:
             return ids, wts
 
         # Build prototype tensors in LLM hidden-state space (S, H).
-        # Rebuilt whenever the slot count or hidden size changes.
         #
-        # Two cases:
+        # When candidate_slots is provided, always build from the candidate
+        # subset — skip the global cache so different period subsets don't
+        # stomp each other.  When candidate_slots is None, use the cached
+        # global proto matrix rebuilt whenever slot count or hidden size changes.
+        #
+        # Two cases for embedding→proto mapping:
         #   emb_dim == H  — embeddings are already in LLM space (written by
         #                   _update_similarity_router_from_slot_content after
-        #                   each training period).  Use them directly; a random
-        #                   projection would destroy the directional signal.
+        #                   each training period).  Use them directly.
         #   emb_dim != H  — sentence-transformer embeddings (384-dim).  Project
         #                   to LLM space via a fixed random matrix.
-        if (
+        use_cache = candidate_slots is None
+        if use_cache and (
             not hasattr(self, "_proto_tensors")
             or self._proto_tensors.shape != (n_slots, H)
         ):
+            use_cache = False  # cache stale — rebuild and re-store
+
+        if not use_cache:
             emb_dim = next(iter(self._slot_embeddings.values())).shape[0]
             slot_embs = np.stack(
                 [self._slot_embeddings[sid] for sid in slot_ids_list]
             )  # (S, emb_dim)
             if emb_dim == H:
-                protos = torch.from_numpy(slot_embs).float()           # (S, H) — use directly
+                protos = torch.from_numpy(slot_embs).float()
             else:
                 gen = torch.Generator().manual_seed(42)
                 proj = F.normalize(
                     torch.randn(emb_dim, H, generator=gen), dim=0
-                )  # (emb_dim, H)
-                protos = torch.from_numpy(slot_embs).float() @ proj    # (S, H)
-            self._proto_tensors = F.normalize(protos, dim=-1)          # (S, H)
+                )
+                protos = torch.from_numpy(slot_embs).float() @ proj
+            protos = F.normalize(protos, dim=-1)
+            if candidate_slots is None:
+                self._proto_tensors = protos  # only cache when not filtering
+        else:
+            protos = self._proto_tensors  # type: ignore[attr-defined]
 
-        protos = self._proto_tensors.to(device=device, dtype=query.float().dtype)
+        protos = protos.to(device=device, dtype=query.float().dtype)
         sims = F.normalize(query.float(), dim=-1) @ protos.T  # (B, S)
 
         top_vals, top_local = torch.topk(sims, k=k, dim=-1)  # (B, k)

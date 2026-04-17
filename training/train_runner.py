@@ -558,6 +558,10 @@ def run_training(
         results: list[dict[str, Any]] = []
         training_plan = build_training_plan(cfg, training_units)
         units = training_plan.units
+
+        # Build period-to-slot partition map before any training begins.
+        if cfg.casm_slots_per_period is not None and hasattr(model, "set_period_slot_map"):
+            model.set_period_slot_map(units)
         if resume_state is not None and resume_state.current_unit not in units:
             raise ValueError(f"Resume unit {resume_state.current_unit!r} is not in the training plan")
         if resume_state is not None and not resume_state.metadata_only:

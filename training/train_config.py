@@ -60,6 +60,7 @@ class TrainConfig:
     casm_memory_size: Optional[int] = None
     casm_num_injection_layers: Optional[int] = None
     casm_router_type: str = "mlp"  # 'mlp' = CASMRouter (learned), 'similarity' = SimilarityRouter (cosine, no training)
+    casm_slots_per_period: Optional[int] = None  # if set, partitions slot bank into non-overlapping per-period subsets
 
     def validate(self) -> None:
         if self.method not in {"full_ft", "lora", "smf", "casm"}:
@@ -146,6 +147,8 @@ class TrainConfig:
             raise ValueError("casm_overlap_weight must be >= 0")
         if self.casm_memory_size is not None and self.casm_memory_size <= 0:
             raise ValueError("casm_memory_size must be > 0")
+        if self.casm_slots_per_period is not None and self.casm_slots_per_period < 1:
+            raise ValueError("casm_slots_per_period must be >= 1")
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

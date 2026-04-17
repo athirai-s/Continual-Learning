@@ -61,8 +61,23 @@ def _pre_register_similarity_router(model: Any, period: str) -> None:
         dummy = router._encoder.encode("dummy", normalize_embeddings=True)
         emb_dim = dummy.shape[0]
 
+    # When period-deterministic routing is active, only register the slots
+    # assigned to this period.  Registering all slots in period 1 would give
+    # future-period slots a "2018" metadata label and prevent them from being
+    # re-registered with the correct period label later (the "already registered"
+    # guard would skip them).  Restricting to candidate slots fixes this.
+    candidate_set = set(model._active_slot_ids)
+    if (
+        hasattr(model, "_period_slot_map")
+        and model._period_slot_map is not None
+        and period in model._period_slot_map
+    ):
+        candidate_set = set(model._period_slot_map[period])
+
     newly_registered = 0
     for slot_id in model._active_slot_ids:
+        if slot_id not in candidate_set:
+            continue  # belongs to a different period — register when its period comes
         if slot_id in router._slot_metadata:
             continue  # already registered; preserve existing semantics
         # Seed by slot_id for reproducibility across runs.
@@ -502,6 +517,10 @@ class CASFTrainer:
         resume_state: ResumeState | None = None,
     ) -> dict[str, Any]:
         start = time.time()
+
+        # Set current period for period-deterministic slot routing.
+        if hasattr(self.model, "_current_period"):
+            self.model._current_period = period
 
         if dataset is None:
             raise ValueError("dataset is required to provide probes for the training unit")
