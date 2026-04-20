@@ -19,9 +19,9 @@ set -euo pipefail
 METHOD="${1:?Usage: sbatch train_carc_synthetic_job.sh <full_ft|lora|smf|casm>}"
 
 module purge
-module load gcc/12.3.0 cuda/12.4.1
+module load gcc/12.3.0 cuda/12.4.1 python/3.11.9
 
 cd /project2/jieyuz_1727/Continual-Learning
-source /project2/jieyuz_1727/Continual-Learning/venv/bin/activate
+source /scratch1/ramyakri/cl_venv/bin/activate
 
 python -u train_carc_synthetic.py --method "$METHOD"
