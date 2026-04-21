@@ -39,9 +39,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -54,6 +55,7 @@ from casf_dataset_api import (
     TemporalEvaluator,
 )
 from casf_dataset_api.casf_types import EvalResult
+from training.train_config import TrainConfig
 
 PERIODS = ["2018", "2020", "2022", "2024"]
 
@@ -66,7 +68,7 @@ class HFModelWrapper:
 
     def __init__(
         self,
-        model: AutoModelForCausalLM,
+        model: Any,
         tokenizer: AutoTokenizer,
         device: torch.device,
         max_new_tokens: int = 20,
@@ -94,6 +96,91 @@ class HFModelWrapper:
         # Decode only the newly generated tokens
         new_ids = output_ids[0][inputs["input_ids"].shape[-1]:]
         return self.tokenizer.decode(new_ids, skip_special_tokens=True).strip()
+
+
+# ---------------------------------------------------------------------------
+# Method-aware checkpoint loader
+#
+# Mirrors run_step3_eval.load_model() and train_runner.load_real_model_and_tokenizer:
+# reads train_config.json from the checkpoint, rebuilds the method wrapper
+# (CASM/SMF/LoRA), and restores memory state via load_memory_into.  Without
+# this, a CASM checkpoint evaluates as the raw frozen backbone.
+
+def load_checkpoint_for_eval(
+    checkpoint_path: Path,
+    device: torch.device,
+) -> tuple[Any, AutoTokenizer, str, Optional[TrainConfig]]:
+    """Return (model_or_wrapper, tokenizer, method, cfg).
+
+    model_or_wrapper is ready for inference: CASM/SMF are wrapped and memory
+    loaded; LoRA has its adapter attached; full_ft / pretrained returns plain
+    AutoModelForCausalLM.
+    """
+    checkpoint_path = Path(checkpoint_path)
+    config_path = checkpoint_path / "train_config.json"
+    cfg: Optional[TrainConfig] = None
+    cfg_dict: dict = {}
+    if config_path.exists():
+        with open(config_path) as f:
+            cfg_dict = json.load(f)
+        cfg = TrainConfig.from_dict(cfg_dict)
+        method = cfg.method
+    else:
+        method = "full_ft"
+
+    tokenizer = AutoTokenizer.from_pretrained(checkpoint_path)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    dtype = torch.bfloat16 if device.type == "cuda" else torch.float32
+
+    # LoRA: load base model then attach adapter.
+    lora_path = checkpoint_path / "adapter_config.json"
+    if lora_path.exists():
+        from peft import PeftModel
+        base_model_name = cfg_dict.get("model_name", str(checkpoint_path))
+        base_model = AutoModelForCausalLM.from_pretrained(
+            base_model_name, torch_dtype=dtype
+        )
+        model = PeftModel.from_pretrained(base_model, str(checkpoint_path))
+        model.to(device).eval()
+        return model, tokenizer, "lora", cfg
+
+    base_model = AutoModelForCausalLM.from_pretrained(
+        checkpoint_path, torch_dtype=dtype
+    )
+
+    # SMF: wrap and restore memory.
+    smf_path = checkpoint_path / "smf_memory.pt"
+    if smf_path.exists():
+        from training.smf_model import SMFModelWrapper
+        if cfg is None:
+            raise RuntimeError(
+                f"SMF checkpoint at {checkpoint_path} missing train_config.json; "
+                "cannot reconstruct wrapper."
+            )
+        wrapper = SMFModelWrapper(base_model, cfg)
+        SMFModelWrapper.load_memory_into(wrapper, str(checkpoint_path))
+        wrapper.to(device).eval()
+        return wrapper, tokenizer, "smf", cfg
+
+    # CASM: wrap and restore slot bank + router state.
+    casm_path = checkpoint_path / "casm_memory.pt"
+    if casm_path.exists():
+        from training.casm_model import CASMModelWrapper
+        if cfg is None:
+            raise RuntimeError(
+                f"CASM checkpoint at {checkpoint_path} missing train_config.json; "
+                "cannot reconstruct wrapper."
+            )
+        wrapper = CASMModelWrapper(base_model, cfg)
+        CASMModelWrapper.load_memory_into(wrapper, str(checkpoint_path))
+        wrapper.to(device).eval()
+        return wrapper, tokenizer, "casm", cfg
+
+    # Plain model (full_ft or pretrained).
+    base_model.to(device).eval()
+    return base_model, tokenizer, method, cfg
 
 
 # ---------------------------------------------------------------------------
@@ -155,6 +242,14 @@ def evaluate_period(
     slot_map: Optional[dict] = None,
     use_augmented: bool = False,
 ) -> dict:
+    # For CASM with period-deterministic slot masking, the underlying wrapper
+    # decides which slot subset to route to based on _current_period.  Without
+    # this the eval always uses the last training period's slots, which silently
+    # mis-routes earlier periods' probes.  See run_period_evaluation().
+    underlying = model_wrapper.model
+    if hasattr(underlying, "_current_period"):
+        underlying._current_period = period
+
     ds = SyntheticDataset(
         period,
         probes_path=probes_path,
@@ -296,12 +391,14 @@ def main() -> None:
     print(f"Device: {device}")
     print(f"Loading checkpoint: {args.checkpoint}")
 
-    tokenizer = AutoTokenizer.from_pretrained(args.checkpoint)
-    model = AutoModelForCausalLM.from_pretrained(
-        args.checkpoint,
-        torch_dtype=torch.bfloat16 if device.type == "cuda" else torch.float32,
-    )
-    model.to(device).eval()
+    model, tokenizer, method, cfg = load_checkpoint_for_eval(args.checkpoint, device)
+    print(f"Method: {method}")
+    if cfg is not None and method == "casm":
+        print(
+            f"CASM config: num_slots={cfg.casm_num_slots} "
+            f"top_k={cfg.casm_top_k} "
+            f"slots_per_period={cfg.casm_slots_per_period}"
+        )
 
     wrapper = HFModelWrapper(model, tokenizer, device)
     evaluator = TemporalEvaluator()
