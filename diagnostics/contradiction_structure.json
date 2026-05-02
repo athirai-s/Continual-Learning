@@ -1,0 +1,84 @@
+{
+  "temporal_wiki": {
+    "dataset": "TemporalWiki",
+    "per_period": [
+      {
+        "period": "aug_sep",
+        "n_changed": 1603,
+        "n_unchanged": 6935,
+        "sequential_contradictions": 0,
+        "contradiction_rate": 0.0
+      },
+      {
+        "period": "sep_oct",
+        "n_changed": 1782,
+        "n_unchanged": 7339,
+        "sequential_contradictions": 3,
+        "contradiction_rate": 0.0016835016835016834
+      },
+      {
+        "period": "oct_nov",
+        "n_changed": 1209,
+        "n_unchanged": 7313,
+        "sequential_contradictions": 2,
+        "contradiction_rate": 0.0016542597187758478
+      },
+      {
+        "period": "nov_dec",
+        "n_changed": 1727,
+        "n_unchanged": 7293,
+        "sequential_contradictions": 0,
+        "contradiction_rate": 0.0
+      }
+    ],
+    "pairwise_changed_key_overlap": {
+      "aug_sep<->sep_oct": 3,
+      "aug_sep<->oct_nov": 1,
+      "aug_sep<->nov_dec": 0,
+      "sep_oct<->oct_nov": 2,
+      "sep_oct<->nov_dec": 0,
+      "oct_nov<->nov_dec": 0
+    }
+  },
+  "synthetic": {
+    "dataset": "Synthetic",
+    "per_period": [
+      {
+        "period": "2018",
+        "n_changed": 605,
+        "n_unchanged": 0,
+        "sequential_contradictions": 0,
+        "contradiction_rate": 0.0
+      },
+      {
+        "period": "2020",
+        "n_changed": 150,
+        "n_unchanged": 455,
+        "sequential_contradictions": 150,
+        "contradiction_rate": 1.0
+      },
+      {
+        "period": "2022",
+        "n_changed": 149,
+        "n_unchanged": 456,
+        "sequential_contradictions": 149,
+        "contradiction_rate": 1.0
+      },
+      {
+        "period": "2024",
+        "n_changed": 150,
+        "n_unchanged": 455,
+        "sequential_contradictions": 150,
+        "contradiction_rate": 1.0
+      }
+    ],
+    "pairwise_changed_key_overlap": {
+      "2018<->2020": 150,
+      "2018<->2022": 149,
+      "2018<->2024": 150,
+      "2020<->2022": 0,
+      "2020<->2024": 0,
+      "2022<->2024": 0
+    }
+  }
+}
