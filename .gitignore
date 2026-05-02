@@ -22,6 +22,8 @@ explore/WikiFactDiffDataset/data/
 
 # ── Other ─────────────────────────────────────────────────────────
 registry.json
+git_log.txt
+docs/archive/git_log.txt
 checkpoints/
 .claude/
 .env

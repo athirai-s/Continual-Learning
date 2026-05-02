@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --account=jieyuz_1727
-#SBATCH --output=lora_3b_%j.log
+#SBATCH --output=smf_3b_%j.log
 
 set -euo pipefail
 
@@ -14,6 +14,7 @@ module purge
 module load gcc/12.3.0 cuda/12.4.1
 
 cd /project2/jieyuz_1727/Continual-Learning
+export PYTHONPATH="$PWD:${PYTHONPATH:-}"
 source /project2/jieyuz_1727/Continual-Learning/venv/bin/activate
 
-python run_lora.py
+python scripts/experiments/run_smf.py

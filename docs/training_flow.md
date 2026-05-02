@@ -1,7 +1,7 @@
 # Training Flow
 
 This document describes the end-to-end training pipeline as configured in
-`train_colab.ipynb`, including how the augmented dataset was created and how it
+`notebooks/train_colab.ipynb`, including how the augmented dataset was created and how it
 flows through training and evaluation.
 
 ---
@@ -91,7 +91,7 @@ same facts.
 
 ## Notebook Walkthrough
 
-The notebook (`train_colab.ipynb`) is the single entry point for running
+The notebook (`notebooks/train_colab.ipynb`) is the single entry point for running
 experiments.  All configuration lives in the first code cell; the remaining
 cells are run top-to-bottom without editing.
 
@@ -247,7 +247,7 @@ through its standard interface (`load()`, `get_probes()`,
 
 | File | Role |
 |---|---|
-| `train_colab.ipynb` | Notebook entry point — configuration and orchestration |
+| `notebooks/train_colab.ipynb` | Notebook entry point — configuration and orchestration |
 | `training/train_runner.py` | `run_training()`, `build_augmented_dataset()` |
 | `training/trainer.py` | `CASFTrainer` — per-period training loop |
 | `training/train_config.py` | `TrainConfig` dataclass and validation |

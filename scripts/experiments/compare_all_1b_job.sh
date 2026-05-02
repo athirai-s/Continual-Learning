@@ -12,6 +12,7 @@ module purge
 module load gcc/12.3.0 cuda/12.4.1
 
 cd /project2/jieyuz_1727/Continual-Learning
+export PYTHONPATH="$PWD:${PYTHONPATH:-}"
 source /project2/jieyuz_1727/Continual-Learning/venv/bin/activate
 
-python -u compare_all_1b.py
+python -u scripts/experiments/compare_all_1b.py

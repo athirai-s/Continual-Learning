@@ -8,7 +8,7 @@ Shows:
   3. Plasticity / Stability / Loss / BWT plots
 
 Run in Colab or on CARC after all step2 jobs + step3 eval are complete:
-    python compare_all_1b.py
+    PYTHONPATH=. python scripts/experiments/compare_all_1b.py
 """
 
 import json

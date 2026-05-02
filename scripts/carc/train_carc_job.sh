@@ -9,19 +9,20 @@
 #SBATCH --output=train_carc_%j.log
 
 # Usage:
-#   sbatch train_carc_job.sh full_ft
-#   sbatch train_carc_job.sh lora
-#   sbatch train_carc_job.sh smf
-#   sbatch train_carc_job.sh casm
+#   sbatch scripts/carc/train_carc_job.sh full_ft
+#   sbatch scripts/carc/train_carc_job.sh lora
+#   sbatch scripts/carc/train_carc_job.sh smf
+#   sbatch scripts/carc/train_carc_job.sh casm
 
 set -euo pipefail
 
-METHOD="${1:?Usage: sbatch train_carc_job.sh <full_ft|lora|smf|casm>}"
+METHOD="${1:?Usage: sbatch scripts/carc/train_carc_job.sh <full_ft|lora|smf|casm>}"
 
 module purge
 module load gcc/12.3.0 cuda/12.4.1
 
 cd /project2/jieyuz_1727/Continual-Learning
+export PYTHONPATH="$PWD:${PYTHONPATH:-}"
 source /project2/jieyuz_1727/Continual-Learning/venv/bin/activate
 
-python -u train_carc.py --method "$METHOD"
+python -u scripts/carc/train_carc.py --method "$METHOD"

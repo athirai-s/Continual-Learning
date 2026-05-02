@@ -2,10 +2,10 @@
 train_carc.py — CARC training script converted from train_colab.ipynb.
 
 Usage:
-    python train_carc.py --method full_ft
-    python train_carc.py --method lora
-    python train_carc.py --method smf
-    python train_carc.py --method casm
+    PYTHONPATH=. python scripts/carc/train_carc.py --method full_ft
+    PYTHONPATH=. python scripts/carc/train_carc.py --method lora
+    PYTHONPATH=. python scripts/carc/train_carc.py --method smf
+    PYTHONPATH=. python scripts/carc/train_carc.py --method casm
 
 Trains on all 4 periods (aug_sep, sep_oct, oct_nov, nov_dec) using
 meta-llama/Llama-3.2-3B by default.  Checkpoints are saved to

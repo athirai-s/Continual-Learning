@@ -15,6 +15,7 @@ export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 
 cd /project2/jieyuz_1727/Continual-Learning
+export PYTHONPATH="$PWD:${PYTHONPATH:-}"
 source /project2/jieyuz_1727/Continual-Learning/venv/bin/activate
 
-python -u run_step2_casm.py
+python -u scripts/experiments/run_step2_casm.py

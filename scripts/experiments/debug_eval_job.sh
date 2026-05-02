@@ -1,20 +1,20 @@
 #!/bin/bash
 #SBATCH --partition=gpu
-#SBATCH --gres=gpu:a40:1
-#SBATCH --cpus-per-task=8
+#SBATCH --gres=gpu:1
 #SBATCH --mem=32G
-#SBATCH --time=04:00:00
+#SBATCH --time=01:00:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
 #SBATCH --account=jieyuz_1727
-#SBATCH --output=step2_lora_%j.log
+#SBATCH --output=debug_eval_%j.log
+
+set -euo pipefail
 
 module purge
 module load gcc/12.3.0 cuda/12.4.1
 
-export OPENBLAS_NUM_THREADS=1
-export OMP_NUM_THREADS=1
-export MKL_NUM_THREADS=1
-
 cd /project2/jieyuz_1727/Continual-Learning
+export PYTHONPATH="$PWD:${PYTHONPATH:-}"
 source /project2/jieyuz_1727/Continual-Learning/venv/bin/activate
 
-python -u run_step2_lora.py
+python scripts/experiments/debug_eval.py
